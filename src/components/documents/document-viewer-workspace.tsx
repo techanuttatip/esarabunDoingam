@@ -60,59 +60,17 @@ import { AntiLeakWatermark } from "@/features/security/components/anti-leak-wate
 import { ThaiGaruda } from "@/components/shared/thai-garuda";
 import { DocVerificationSeal } from "@/components/shared/doc-verification-seal";
 
-// Realistic Royal Blue Handwritten Signature Vectors matching Thai Government Official Endorsements
-function SignatureThanyawarat({ className = "h-8 text-[#003399]" }: { className?: string }) {
+// Digital Signature Component (Renders actual signature image from profile or clean Thai signature font)
+function DigitalSignature({ name, signatureUrl, className = "h-8" }: { name: string; signatureUrl?: string; className?: string }) {
+  if (signatureUrl) {
+    return <img src={signatureUrl} alt={`ลายมือชื่อ ${name}`} className={`${className} object-contain`} />;
+  }
   return (
-    <svg viewBox="0 0 160 45" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <path d="M10 25C25 10 35 35 45 20C55 5 65 30 80 15C95 30 110 5 125 25C135 38 145 12 155 22" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M30 38C50 32 90 30 130 35" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function SignatureThitiwat({ className = "h-8 text-[#003399]" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 160 45" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <path d="M15 30C25 15 40 10 45 28C50 40 60 12 75 18C90 24 105 10 120 22C130 30 140 15 150 20" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M20 35C45 33 80 32 125 36" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function SignatureSukanyamat({ className = "h-8 text-[#003399]" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 160 45" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <path d="M20 28C30 12 40 38 55 15C70 8 85 32 100 18C115 10 130 25 145 20" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M35 38C60 30 100 32 140 35" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function SignatureChoorasak({ className = "h-8 text-[#003399]" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 160 45" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <path d="M15 25C30 5 45 40 60 15C75 5 90 35 110 12C125 28 140 10 150 22" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M25 36C55 32 95 30 135 34" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function SignatureSomkiat({ className = "h-8 text-[#003399]" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 160 45" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <path d="M10 20C28 8 40 35 55 18C70 6 85 28 105 14C120 25 135 10 152 24" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M20 38C60 32 100 30 145 35" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function SignatureSamang({ className = "h-10 text-[#003399]" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 180 50" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <circle cx="45" cy="22" r="14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
-      <path d="M55 26C70 12 85 35 100 18C115 8 130 30 145 15C155 24 165 18 172 25" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M30 40C65 35 115 32 165 38" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
+    <div className="h-7 flex items-center justify-end pr-1">
+      <span className="font-serif italic font-black text-sm text-[#003399] select-none tracking-wide">
+        {name}
+      </span>
+    </div>
   );
 }
 
@@ -315,223 +273,50 @@ export function DocumentViewerWorkspace({
     setTimeout(() => setIsSuccessToast(false), 3000);
   };
 
-  // Role switching dynamically adapted to department workflow
-  const [activeIdentityIndex, setActiveIdentityIndex] = useState(0);
+  // Dynamic User Identities from Session & System Users
+  const [systemUsers, setSystemUsers] = useState<any[]>([]);
+  const [selectedSignerId, setSelectedSignerId] = useState<string>("CURRENT_USER");
 
-  const getIdentitiesForDept = (dept: string) => {
-    if (dept === "กองช่าง") {
-      return [
-        {
-          title: "๑. เจ้าหน้าที่ผู้ปฏิบัติงาน (นายวุฒิไกร หน่อแก้ว)",
-          name: "นายวุฒิไกร หน่อแก้ว",
-          position: "เจ้าพนักงานป้องกันและบรรเทาสาธารณภัย",
-          tier: "staff",
-          quickPhrases: [
-            "+ เรียน หัวหน้าฝ่าย เพื่อโปรดพิจารณา",
-            "+ ตรวจสอบพื้นที่เสี่ยงและแผนเผชิญเหตุเรียบร้อยแล้ว",
-            "+ ขอเสนอตั้งงบประมาณเตรียมความพร้อมอุทกภัย",
-          ],
-        },
-        {
-          title: "๒. หัวหน้าฝ่ายแบบแผนและก่อสร้าง (นายสมศักดิ์ หน่อคำ)",
-          name: "นายสมศักดิ์ หน่อคำ",
-          position: "หัวหน้าฝ่ายแบบแผนและก่อสร้าง",
-          tier: "division_head",
-          quickPhrases: [
-            "+ เรียน ผอ.กองช่าง เพื่อโปรดพิจารณา",
-            "+ ตรวจสอบแบบแปลนและรายการประมาณราคาแล้วเห็นชอบ",
-            "+ เอกสารถูกต้องตามหลักวิศวกรรม",
-          ],
-        },
-        {
-          title: "๓. ผู้อำนวยการกองช่าง (นายประเสริฐ ยิ่งยง)",
-          name: "นายประเสริฐ ยิ่งยง",
-          position: "ผู้อำนวยการกองช่าง (นักบริหารงานช่าง ระดับกลาง)",
-          tier: "dept_head",
-          quickPhrases: [
-            "+ เรียน รองปลัด อบต. เพื่อโปรดพิจารณากลั่นกรอง",
-            "+ เห็นชอบตามเสนอ มอบหมายงานดำเนินต่อ",
-            "+ เสนอขออนุมัติตามระเบียบ",
-          ],
-        },
-        {
-          title: "๔. รองปลัด อบต. (นางสาวศิริพร ใจบุญ)",
-          name: "นางสาวศิริพร ใจบุญ",
-          position: "รองปลัดองค์การบริหารส่วนตำบลดอยงาม",
-          tier: "deputy_palad",
-          quickPhrases: [
-            "+ เรียน ปลัด อบต. เพื่อโปรดพิจารณากลั่นกรอง",
-            "+ ตรวจสอบความถูกต้องของแผนงานแล้ว",
-            "+ เห็นชอบตามที่กองช่างเสนอ",
-          ],
-        },
-        {
-          title: "๕. ปลัด อบต. (นายธีระยุทธ มงคลชัย)",
-          name: "นายธีระยุทธ มงคลชัย",
-          position: "ปลัดองค์การบริหารส่วนตำบลดอยงาม",
-          tier: "palad",
-          quickPhrases: [
-            "+ เรียน รองนายก อบต. (คนที่ ๒) เพื่อโปรดพิจารณาอนุมัติ/สั่งการ",
-            "+ ตรวจสอบระเบียบกฎหมายแล้วถูกต้อง",
-            "+ เห็นชอบตามที่กองช่างเสนอ",
-          ],
-        },
-        {
-          title: "๖. รองนายก อบต. คนที่ ๒ (นายสมเกียรติ พัฒนา - กำกับกองช่าง)",
-          name: "นายสมเกียรติ พัฒนา",
-          position: "รองนายกองค์การบริหารส่วนตำบลดอยงาม",
-          tier: "executive",
-          quickPhrases: [
-            "+ อนุมัติ / ให้ดำเนินการตามระเบียบ",
-            "+ เห็นชอบตามเสนอ มอบหมายกองช่างดำเนินการ",
-            "+ เสนอนายก อบต. เพื่อโปรดทราบ/อนุมัติงบเกินอำนาจ",
-          ],
-        },
-        {
-          title: "๗. นายก อบต. (นายประสิทธิ์ มั่นคง)",
-          name: "นายประสิทธิ์ มั่นคง",
-          position: "นายกองค์การบริหารส่วนตำบลดอยงาม",
-          tier: "executive",
-          quickPhrases: [
-            "+ อนุมัติ / ดำเนินการตามระเบียบ",
-            "+ ทราบ / มอบหมายสำนักปลัดแจ้งทุกหมู่บ้าน",
-            "+ อนุมัติจัดสรรงบประมาณตามเสนอ",
-          ],
-        },
-      ];
-    } else if (dept === "กองคลัง") {
-      return [
-        {
-          title: "๑. เจ้าหน้าที่การเงินและบัญชี (นางสาวสมร กองเงิน)",
-          name: "นางสาวสมร กองเงิน",
-          position: "นักวิชาการเงินและบัญชีปฏิบัติการ",
-          tier: "staff",
-          quickPhrases: [
-            "+ เรียน หัวหน้าฝ่าย / ผอ.กองคลัง เพื่อโปรดพิจารณา",
-            "+ ตรวจสอบระเบียบการจัดทำงบประมาณ พ.ศ. ๒๕๗๐ ถูกต้องแล้ว",
-            "+ เห็นควรเสนอตั้งคณะทำงานจัดทำร่างข้อบัญญัติงบประมาณ",
-          ],
-        },
-        {
-          title: "๒. หัวหน้าฝ่ายการเงินและงบประมาณ (นางนวลฉวี ทองคำ)",
-          name: "นางนวลฉวี ทองคำ",
-          position: "หัวหน้าฝ่ายการเงินและบัญชี",
-          tier: "division_head",
-          quickPhrases: [
-            "+ เรียน ผอ.กองคลัง เพื่อโปรดพิจารณา",
-            "+ ตรวจสอบยอดเงินคงเหลือและข้อบัญญัติแล้วถูกต้อง",
-            "+ เห็นชอบตามเสนอ",
-          ],
-        },
-        {
-          title: "๓. ผู้อำนวยการกองคลัง (นางวรรณา นามเงิน)",
-          name: "นางวรรณา นามเงิน",
-          position: "ผู้อำนวยการกองคลัง (นักบริหารงานการคลัง)",
-          tier: "dept_head",
-          quickPhrases: [
-            "+ เรียน ปลัด อบต. เพื่อโปรดพิจารณากลั่นกรอง",
-            "+ ตรวจสอบแล้วเห็นชอบตามเสนอ",
-            "+ เสนอแต่งตั้งคณะกรรมการยกร่างข้อบัญญัติงบประมาณ พ.ศ. ๒๕๗๐",
-          ],
-        },
-        {
-          title: "๔. ปลัด อบต. (นายธีระยุทธ มงคลชัย)",
-          name: "นายธีระยุทธ มงคลชัย",
-          position: "ปลัดองค์การบริหารส่วนตำบลดอยงาม",
-          tier: "palad",
-          quickPhrases: [
-            "+ เรียน นายก อบต.ดอยงาม เพื่อโปรดพิจารณาอนุมัติ/สั่งการ",
-            "+ ตรวจสอบตามระเบียบ มท. ว่าด้วยวิธีการงบประมาณ ๒๕๖๓ แล้วถูกต้อง",
-            "+ เห็นชอบตามที่กองคลังเสนอ",
-          ],
-        },
-        {
-          title: "๕. นายก อบต. (นายประสิทธิ์ มั่นคง)",
-          name: "นายประสิทธิ์ มั่นคง",
-          position: "นายกองค์การบริหารส่วนตำบลดอยงาม",
-          tier: "executive",
-          quickPhrases: [
-            "+ อนุมัติ / ให้ดำเนินการตามระเบียบโดยเคร่งครัด",
-            "+ มอบหมายกองคลังและสำนักปลัดจัดประชุมชี้แจงทุกกอง",
-            "+ อนุมัติแต่งตั้งคณะทำงานยกร่างงบประมาณ พ.ศ. ๒๕๗๐",
-          ],
-        },
-      ];
-    } else {
-      // สำนักปลัด (Matching exact Doi Ngam SAO authentic document)
-      return [
-        {
-          title: "๑. เจ้าพนักงานธุรการ / เจ้าของเรื่อง (น.ส.ธัญวรรัตน์ ตาสาย)",
-          name: "นางสาวธัญวรรัตน์ ตาสาย",
-          position: "เจ้าพนักงานธุรการชำนาญงาน",
-          tier: "staff",
-          quickPhrases: [
-            "+ เพื่อโปรดทราบ / ดำเนินการประชาสัมพันธ์สร้างความรู้ความเข้าใจเพื่อป้องกันการหลอกลวงทางออนไลน์ (Scammer) แก่ประชาชนในพื้นที่",
-            "+ ตรวจสอบความถูกต้องของหนังสือและสิ่งที่ส่งมาด้วยแล้ว",
-            "+ ขอส่งเรื่องเพื่อโปรดพิจารณาอนุมัติ/สั่งการ",
-          ],
-        },
-        {
-          title: "๒. หัวหน้าฝ่ายบริหารงานทั่วไป (นายฐิติวัฒน์ รักแม่)",
-          name: "นายฐิติวัฒน์ รักแม่",
-          position: "หัวหน้าฝ่ายบริหารงานทั่วไป",
-          tier: "division_head",
-          quickPhrases: [
-            "+ เพื่อโปรดทราบ / มอบหมายงานธุรการแจ้งเวียนและรายงานผลตามกำหนด",
-            "+ ตรวจสอบแล้วเห็นชอบตามเสนอ",
-            "+ เสนอดำเนินการตามระเบียบ",
-          ],
-        },
-        {
-          title: "๓. หัวหน้าสำนักปลัด (นางสุกัญญามาศ เทพวงค์)",
-          name: "นางสุกัญญามาศ เทพวงค์",
-          position: "หัวหน้าสำนักปลัด (นักบริหารงานทั่วไป ระดับกลาง)",
-          tier: "dept_head",
-          quickPhrases: [
-            "+ เห็นควรประชาสัมพันธ์และรายงาน",
-            "+ ตรวจสอบแล้วเห็นชอบตามเสนอ มอบหมายเจ้าหน้าที่ดำเนินต่อ",
-            "+ เรียน ปลัด อบต. เพื่อโปรดพิจารณากลั่นกรอง",
-          ],
-        },
-        {
-          title: "๔. รองปลัด อบต. (ว่าที่ร้อยตรี ชูรศักดิ์ แสนอังวัง)",
-          name: "ว่าที่ร้อยตรี ชูรศักดิ์ แสนอังวัง",
-          position: "รองปลัดองค์การบริหารส่วนตำบลดอยงาม",
-          tier: "deputy_palad",
-          quickPhrases: [
-            "+ เรียน นายก อบต. เพื่อโปรดทราบ และพิจารณาดำเนินการต่อไป",
-            "+ ตรวจสอบระเบียบกฎหมายแล้วถูกต้อง เห็นชอบตามเสนอ",
-            "+ เสนอขออนุมัติสั่งการตามเสนอ",
-          ],
-        },
-        {
-          title: "๕. ปลัด อบต. (จ่าเอก สมเกียรติ พินิจอักษร)",
-          name: "จ่าเอก สมเกียรติ พินิจอักษร",
-          position: "ปลัดองค์การบริหารส่วนตำบลดอยงาม",
-          tier: "palad",
-          quickPhrases: [
-            "+ เรียน นายก อบต. เพื่อโปรดพิจารณาอนุมัติ",
-            "+ ตรวจสอบความถูกต้องเรียบร้อยแล้ว เห็นชอบตามเสนอ",
-            "+ มอบหมายสำนักปลัดดำเนินการตามขั้นตอน",
-          ],
-        },
-        {
-          title: "๖. นายก อบต. (นายสำอางค์ ธรรมโก)",
-          name: "นายสำอางค์ ธรรมโก",
-          position: "นายกองค์การบริหารส่วนตำบลดอยงาม",
-          tier: "executive",
-          quickPhrases: [
-            "+ อนุมัติ / ดำเนินการตามเสนอ",
-            "+ ทราบ / มอบหมายสำนักปลัดดำเนินการประชาสัมพันธ์และรายงานผล",
-            "+ อนุมัติสั่งการตามเสนอ",
-          ],
-        },
-      ];
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedUsers = localStorage.getItem("smartsarabun_custom_users");
+        if (savedUsers) {
+          setSystemUsers(JSON.parse(savedUsers));
+        }
+      } catch (e) {}
     }
-  };
+  }, []);
 
-  const testIdentities = getIdentitiesForDept(selectedDeptBox);
-  const activeIdentity = testIdentities[Math.min(activeIdentityIndex, testIdentities.length - 1)];
+  // Determine current active signer
+  const activeSigner = (() => {
+    if (selectedSignerId !== "CURRENT_USER") {
+      const found = systemUsers.find((u) => u.id === selectedSignerId || u.username === selectedSignerId);
+      if (found) {
+        return {
+          name: found.fullName,
+          position: found.position || "เจ้าหน้าที่",
+          department: found.department || selectedDeptBox,
+          role: found.role || "OFFICER",
+        };
+      }
+    }
+    return {
+      name: session?.user?.name || "ผู้ดูแลระบบสารบรรณ",
+      position: session?.user?.position || "ผู้ดูแลระบบสารบรรณอิเล็กทรอนิกส์",
+      department: session?.user?.department || selectedDeptBox,
+      role: session?.user?.roles?.[0] || "SUPER_ADMIN",
+    };
+  })();
+
+  const standardQuickPhrases = [
+    "+ เพื่อโปรดทราบและพิจารณาดำเนินการต่อไป",
+    "+ ตรวจสอบความถูกต้องของหนังสือและระเบียบแล้ว เห็นชอบตามเสนอ",
+    "+ เสนอขออนุมัติสั่งการตามเสนอ",
+    "+ มอบหมายงานธุรการแจ้งเวียนทุกส่วนราชการและกองงานทราบ",
+    "+ เห็นควรดำเนินการตามระเบียบต่อไป",
+    "+ อนุมัติ / ดำเนินการตามเสนอ",
+  ];
 
   // Handle PDF Upload
   const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -546,23 +331,32 @@ export function DocumentViewerWorkspace({
   const handleAddEndorsement = () => {
     const finalNote = [
       selectedQuickAction.join(" / "),
-      customEndorseNote,
+      customEndorseNote.trim(),
     ].filter(Boolean).join(" — ");
 
+    if (!finalNote) {
+      alert("กรุณาระบุข้อความเกษียน หรือเลือกคำเกษียนด่วน");
+      return;
+    }
+
+    // Get real signature if uploaded in profile
+    const savedSignature = typeof window !== "undefined" ? localStorage.getItem("smartsarabun_user_signature") : null;
+
     const newEndorsement = {
-      actor: activeIdentity.name,
-      position: activeIdentity.position,
-      tier: activeIdentity.tier,
-      action: activeIdentity.title.split(" (")[0],
-      note: finalNote || "เพื่อโปรดพิจารณา",
+      actor: activeSigner.name,
+      position: activeSigner.position,
+      tier: activeSigner.role.toLowerCase(),
+      action: selectedQuickAction.length > 0 ? selectedQuickAction[0].replace(/^\+\s*/, "") : "บันทึกเกษียน",
+      note: finalNote,
+      signatureUrl: savedSignature || undefined,
       date: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) + " " + new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.",
     };
 
-    setCurrentDoc({
-      ...currentDoc,
+    setCurrentDoc((prev) => ({
+      ...prev,
       targetDept: selectedDeptBox,
-      endorsements: [...(currentDoc.endorsements || []), newEndorsement],
-    });
+      endorsements: [...(prev.endorsements || []), newEndorsement],
+    }));
 
     setCustomEndorseNote("");
     setSelectedQuickAction([]);
@@ -927,109 +721,55 @@ export function DocumentViewerWorkspace({
               )}
 
               {/* ------------------------------------------------------------- */}
-              {/* 5. AUTHENTIC 6-TIER ENDORSEMENT SECTION (การเกษียน ๖ ลำดับชั้น อบต.ดอยงาม) */}
+              {/* 5. AUTHENTIC ENDORSEMENT SECTION (ใบปะหน้าเกษียนหนังสือ อบต.ดอยงาม) */}
               {/* ------------------------------------------------------------- */}
-              <div className="mt-6 pt-4 border-t-2 border-dashed border-slate-300 font-serif relative">
-                <div className="text-center font-bold text-[10px] text-slate-500 uppercase tracking-widest bg-slate-100 py-0.5 rounded mb-4">
-                  บันทึกการเกษียนหนังสือตามลำดับชั้นบังคับบัญชา (อบต.ดอยงาม)
+              <div className="mt-8 pt-5 border-t-2 border-dashed border-slate-300 font-serif relative">
+                <div className="flex items-center justify-between bg-slate-100 px-3.5 py-1.5 rounded-lg mb-4">
+                  <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                    <PenTool className="w-3.5 h-3.5 text-blue-700" />
+                    บันทึกการเกษียนหนังสือตามลำดับชั้นบังคับบัญชา (อบต.ดอยงาม)
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-500 font-bold">
+                    {currentDoc.endorsements && currentDoc.endorsements.length > 0
+                      ? `จำนวน ${currentDoc.endorsements.length} บันทึกเกษียน`
+                      : "ยังไม่มีบันทึกเกษียน"}
+                  </span>
                 </div>
 
-                {/* 6 Authentic Endorsement Blocks Grid (Matching Real Document Layout) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-xs">
-                  {/* [1] เจ้าหน้าที่ธุรการ / เจ้าของเรื่อง (ซ้ายบน) */}
-                  <div className="p-3 bg-blue-50/30 rounded-lg border border-blue-200 relative">
-                    <div className="font-bold text-blue-950 mb-1">
-                      เรียน นายกองค์การบริหารส่วนตำบลดอยงาม
-                    </div>
-                    <div className="space-y-0.5 text-slate-800 text-[11px] leading-snug">
-                      <p>- เพื่อโปรดทราบ</p>
-                      <p>- ดำเนินการประชาสัมพันธ์สร้างความรู้ความเข้าใจเพื่อป้องกันการหลอกลวงทางออนไลน์ (Scammer) แก่ประชาชนในพื้นที่</p>
-                    </div>
-                    <div className="mt-2 flex flex-col items-end text-right">
-                      <SignatureThanyawarat className="h-7 text-[#003399]" />
-                      <p className="font-bold text-slate-900 text-[11px]">(นางสาวธัญวรรัตน์ ตาสาย)</p>
-                      <p className="text-[10px] text-slate-600">เจ้าพนักงานธุรการชำนาญงาน</p>
-                    </div>
-                  </div>
-
-                  {/* [4] รองปลัด อบต.ดอยงาม (ขวาบน) */}
-                  <div className="p-3 bg-amber-50/30 rounded-lg border border-amber-200 relative">
-                    <div className="font-bold text-amber-950 mb-1">
-                      เรียน นายก อบต. เพื่อโปรดทราบ และพิจารณาดำเนินการต่อไป
-                    </div>
-                    <div className="mt-4 flex flex-col items-end text-right">
-                      <SignatureChoorasak className="h-7 text-[#003399]" />
-                      <p className="font-bold text-slate-900 text-[11px]">(ว่าที่ร้อยตรี ชูรศักดิ์ แสนอังวัง)</p>
-                      <p className="text-[10px] text-slate-600">รองปลัดองค์การบริหารส่วนตำบลดอยงาม</p>
-                    </div>
-                  </div>
-
-                  {/* [2] หัวหน้าฝ่ายบริหารงานทั่วไป (ซ้ายกลาง) */}
-                  <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-200 relative">
-                    <div className="space-y-0.5 text-slate-800 text-[11px] leading-snug">
-                      <p>- เพื่อโปรดทราบ</p>
-                      <p>- มอบหมายงานธุรการแจ้งเวียนและรายงานผลตามกำหนด</p>
-                    </div>
-                    <div className="mt-3 flex flex-col items-end text-right">
-                      <SignatureThitiwat className="h-7 text-[#003399]" />
-                      <p className="font-bold text-slate-900 text-[11px]">(นายฐิติวัฒน์ รักแม่)</p>
-                      <p className="text-[10px] text-slate-600">หัวหน้าฝ่ายบริหารงานทั่วไป</p>
-                    </div>
-                  </div>
-
-                  {/* [5] ปลัด อบต.ดอยงาม (ขวากลาง) */}
-                  <div className="p-3 bg-amber-50/40 rounded-lg border border-amber-300 relative">
-                    <div className="font-bold text-amber-950 mb-1">
-                      - เรียน นายก อบต. เพื่อโปรดพิจารณาอนุมัติ
-                    </div>
-                    <div className="mt-3 flex flex-col items-end text-right">
-                      <SignatureSomkiat className="h-7 text-[#003399]" />
-                      <p className="font-bold text-slate-900 text-[11px]">(จ่าเอก สมเกียรติ พินิจอักษร)</p>
-                      <p className="text-[10px] text-slate-600">ปลัดองค์การบริหารส่วนตำบลดอยงาม</p>
-                    </div>
-                  </div>
-
-                  {/* [3] หัวหน้าสำนักปลัด (ซ้ายล่าง) */}
-                  <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-200 relative">
-                    <div className="space-y-0.5 text-slate-800 text-[11px] leading-snug">
-                      <p>- เห็นควรประชาสัมพันธ์และรายงาน</p>
-                    </div>
-                    <div className="mt-4 flex flex-col items-end text-right">
-                      <SignatureSukanyamat className="h-7 text-[#003399]" />
-                      <p className="font-bold text-slate-900 text-[11px]">(นางสุกัญญามาศ เทพวงค์)</p>
-                      <p className="text-[10px] text-slate-600">หัวหน้าสำนักปลัด</p>
-                    </div>
-                  </div>
-
-                  {/* [6] นายก อบต.ดอยงาม - คำสั่งการขั้นสุดท้าย (ขวาล่าง) */}
-                  <div className="p-3 bg-emerald-50/50 rounded-lg border-2 border-emerald-400 relative shadow-xs">
-                    <div className="font-bold text-emerald-950 mb-1">
-                      - อนุมัติ / ดำเนินการตามเสนอ
-                    </div>
-                    <div className="mt-3 flex flex-col items-end text-right">
-                      <SignatureSamang className="h-9 text-[#003399]" />
-                      <p className="font-bold text-slate-900 text-[11px]">(นายสำอางค์ ธรรมโก)</p>
-                      <p className="text-[10px] text-emerald-800 font-bold">นายกองค์การบริหารส่วนตำบลดอยงาม</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional dynamically added endorsements (if user submits more) */}
-                {currentDoc.endorsements && currentDoc.endorsements.length > 6 && (
-                  <div className="mt-4 pt-3 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {currentDoc.endorsements.slice(6).map((end, idx) => (
-                      <div key={idx} className="p-3 bg-blue-50/50 rounded-lg border border-blue-200 text-xs">
-                        <span className="text-[9.5px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded inline-block mb-1">
-                          {end.action || `บันทึกเพิ่มเติมลำดับที่ ${idx + 7}`}
-                        </span>
-                        <p className="text-slate-900 font-medium my-1">{end.note}</p>
-                        <div className="text-right text-[10px] text-slate-500 mt-2">
-                          <p className="font-bold text-slate-800">({end.actor})</p>
-                          <p>{end.position}</p>
-                          <p className="font-mono text-slate-400">{end.date}</p>
+                {/* Dynamically Render Real Endorsements */}
+                {currentDoc.endorsements && currentDoc.endorsements.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    {currentDoc.endorsements.map((end, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3.5 bg-blue-50/40 rounded-xl border-2 border-blue-200/80 text-slate-900 relative space-y-2 shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between border-b border-blue-200 pb-1">
+                          <span className="text-[10px] font-bold text-blue-900 bg-blue-100 px-2 py-0.5 rounded">
+                            {end.action || `ลำดับที่ ${idx + 1}`}
+                          </span>
+                          <span className="text-[9.5px] font-mono text-slate-400">{end.date}</span>
+                        </div>
+                        <p className="text-slate-900 font-medium whitespace-pre-line leading-relaxed">
+                          {end.note}
+                        </p>
+                        <div className="pt-2 border-t border-blue-100 flex flex-col items-end text-right">
+                          <DigitalSignature name={end.actor} signatureUrl={end.signatureUrl} />
+                          <p className="font-bold text-slate-900 text-[11px]">({end.actor})</p>
+                          <p className="text-[10px] text-slate-600 font-medium">{end.position}</p>
                         </div>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="p-8 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-2 bg-slate-50/50">
+                    <PenTool className="w-8 h-8 text-slate-300 mx-auto" />
+                    <p className="text-xs font-bold text-slate-600">
+                      ยังไม่มีบันทึกเกษียนสำหรับหนังสือฉบับนี้
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      กรุณาใช้แถบเมนู <strong>&quot;เกษียน / สั่งการ&quot;</strong> ทางด้านขวา เพื่อพิมพ์ข้อความและประทับลายมือชื่อดิจิทัล
+                    </p>
                   </div>
                 )}
               </div>
@@ -1190,18 +930,38 @@ export function DocumentViewerWorkspace({
                   </button>
                 </div>
 
-                {/* Identity Selector */}
-                <div className="space-y-1">
-                  <label className="text-[11px] text-slate-600 font-bold">สลับตำแหน่งผู้เกษียน (Role Persona):</label>
-                  <select
-                    value={activeIdentityIndex}
-                    onChange={(e) => setActiveIdentityIndex(Number(e.target.value))}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0052FF]"
-                  >
-                    {testIdentities.map((id, idx) => (
-                      <option key={idx} value={idx}>{id.title}</option>
-                    ))}
-                  </select>
+                {/* Identity / Signer Selector */}
+                <div className="space-y-1.5 p-3 rounded-xl bg-white border border-amber-200">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] text-slate-700 font-black">ผู้ลงนามเกษียน (Endorser / Signer):</label>
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                      {activeSigner.role}
+                    </span>
+                  </div>
+
+                  {systemUsers.length > 0 ? (
+                    <select
+                      value={selectedSignerId}
+                      onChange={(e) => setSelectedSignerId(e.target.value)}
+                      className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50/50 font-bold text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-[#0052FF]"
+                    >
+                      <option value="CURRENT_USER">
+                        👤 บัญชีปัจจุบัน: {session?.user?.name || "ผู้ใช้งาน"} ({session?.user?.position || "เจ้าหน้าที่"})
+                      </option>
+                      {systemUsers.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.fullName} — {u.position} ({u.department})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="p-2 rounded-lg bg-blue-50/50 border border-blue-100 flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-slate-900 block text-xs">{activeSigner.name}</span>
+                        <span className="text-[11px] text-slate-600">{activeSigner.position} — {activeSigner.department}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Quick Stamp Chips (3 Seconds) */}
@@ -1210,7 +970,7 @@ export function DocumentViewerWorkspace({
                     ⚡ คำเกษียนด่วน Quick Stamp (๓ วินาที):
                   </span>
                   <div className="flex flex-wrap gap-1.5">
-                    {activeIdentity.quickPhrases.map((phrase, idx) => (
+                    {standardQuickPhrases.map((phrase, idx) => (
                       <button
                         key={idx}
                         type="button"
