@@ -1,0 +1,241 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 214 32% 96%; /* Crystal Light #f0f4f9 */
+    --foreground: 222.2 84% 4.9%; /* #0f172a */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221 100% 50%; /* Vibrant Royal Blue #0052FF */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 199 89% 48%; /* Cyan #0284c7 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221 100% 50%;
+
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-[#f0f4f9] text-slate-900 min-h-screen selection:bg-blue-600 selection:text-white;
+    font-family: 'Sarabun', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* =========================================================================
+   CRYSTAL LIGHT GLASSMORPHISM CORE STYLES (Light Frosted Glass 2026)
+========================================================================= */
+
+/* 1. Crystal Light Glass Cards & Panels */
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-card-hover:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 82, 255, 0.35);
+  box-shadow: 0 20px 40px -10px rgba(0, 82, 255, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04);
+  transform: translateY(-3px);
+}
+
+/* 2. Light Glass Panels & Docks */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.05);
+}
+
+.glass-dock {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+/* 3. Light Glass Buttons */
+.glass-btn-primary {
+  background: linear-gradient(135deg, #0052FF 0%, #0284c7 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 18px -2px rgba(0, 82, 255, 0.3);
+  color: #ffffff;
+  transition: all 0.2s ease-out;
+}
+.glass-btn-primary:hover {
+  background: linear-gradient(135deg, #0046db 0%, #0369a1 100%);
+  box-shadow: 0 10px 24px -2px rgba(0, 82, 255, 0.45);
+  transform: translateY(-2px);
+}
+.glass-btn-primary:active {
+  transform: scale(0.97);
+}
+
+.glass-btn-secondary {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  color: #1e293b;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease-out;
+}
+.glass-btn-secondary:hover {
+  background: #ffffff;
+  border-color: rgba(0, 82, 255, 0.3);
+  color: #0052FF;
+  box-shadow: 0 6px 16px rgba(0, 82, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+/* 4. Light Glass Inputs */
+.glass-input {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  color: #0f172a;
+  transition: all 0.2s ease-out;
+}
+.glass-input:focus {
+  background: #ffffff;
+  border-color: #0052FF;
+  box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.15);
+  outline: none;
+}
+
+/* 5. Light Pastel Ambient Orbs */
+.glow-orb-light-blue {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.16) 0%, rgba(59, 130, 246, 0) 70%);
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+.glow-orb-light-cyan {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.14) 0%, rgba(14, 165, 233, 0) 70%);
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+.glow-orb-light-purple {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, rgba(168, 85, 247, 0) 70%);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+/* 6. Custom Smooth Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 82, 255, 0.6);
+}
+
+/* =========================================================================
+   OFFICIAL THAI GOVERNMENT DOCUMENT PRINT STYLESHEET (A4 Standard)
+========================================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 14pt !important;
+    line-height: 1.5 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything except the dedicated print canvas */
+  header,
+  nav,
+  aside,
+  footer,
+  .no-print,
+  button,
+  .app-sidebar,
+  .app-topbar,
+  [data-no-print="true"] {
+    display: none !important;
+  }
+
+  /* Print Paper Target */
+  #official-paper-print-area,
+  .print-only-paper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 2.5cm 2cm 2cm 3cm !important; /* Standard Thai Gov Margins: Top 2.5cm, Bottom 2cm, Right 2cm, Left 3cm */
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
+    background: #ffffff !important;
+    display: block !important;
+    visibility: visible !important;
+    z-index: 99999 !important;
+  }
+}

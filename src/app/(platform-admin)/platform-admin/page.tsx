@@ -1,0 +1,909 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import {
+  Server,
+  Building2,
+  Users,
+  HardDrive,
+  Cpu,
+  Activity,
+  ShieldCheck,
+  Zap,
+  SlidersHorizontal,
+  Plus,
+  RefreshCw,
+  TrendingUp,
+  AlertTriangle,
+  Lock,
+  Layers,
+  ArrowRight,
+  CheckCircle2,
+  Globe,
+  Database,
+  Radio,
+  Terminal,
+  Play,
+  Pause,
+  Trash2,
+  Copy,
+  Check,
+  X,
+  Search,
+  Sparkles,
+  ChevronRight,
+  ShieldAlert,
+  Wifi,
+  Gauge,
+  Sliders,
+  Maximize2,
+  CloudLightning,
+  FileSignature,
+  Image as ImageIcon,
+  Calendar,
+  FileText,
+  Clock,
+  ExternalLink,
+  Award,
+  Upload,
+  HelpCircle,
+  Briefcase,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+export type OrgStatus = "ACTIVE" | "TRIAL" | "SUSPENDED" | "EXPIRED";
+
+export interface EnterpriseContract {
+  contractNo: string;
+  poNumber: string;
+  termYears: number;
+  startDate: string;
+  endDate: string;
+  daysRemaining: number;
+  contractValueThb: string;
+  slaTier: "PLATINUM" | "GOLD" | "SILVER";
+  coordinatorName: string;
+  coordinatorPhone: string;
+  customDomain: string;
+}
+
+export interface PlatformTenantItem {
+  id: string;
+  name: string;
+  code: string;
+  region: string;
+  cluster: string;
+  planName: string;
+  status: OrgStatus;
+  currentUsers: number;
+  maxUsers: number;
+  storageUsedGb: number;
+  maxStorageGb: number;
+  docsThisMonth: number;
+  qps: number;
+  renewalDate: string;
+  contract: EnterpriseContract;
+  branding: {
+    logoUrl: string;
+    stampCount: number;
+    hasWatermark: boolean;
+    digitalCertValid: boolean;
+  };
+}
+
+const initialTenants: PlatformTenantItem[] = [
+  {
+    id: "org-01",
+    name: "องค์การบริหารส่วนตำบลดอยงาม",
+    code: "DOIGAM-SAO",
+    region: "อำเภอพาน จังหวัดเชียงราย",
+    cluster: "CNX-01 (Northern Edge)",
+    planName: "Gov Enterprise (ราชการส่วนท้องถิ่น)",
+    status: "ACTIVE",
+    currentUsers: 14,
+    maxUsers: 50,
+    storageUsedGb: 12.8,
+    maxStorageGb: 100,
+    docsThisMonth: 801,
+    qps: 18.4,
+    renewalDate: "30 ก.ย. 2570",
+    contract: {
+      contractNo: "CN-69/042-DOIGAM",
+      poNumber: "PO-2569-0188",
+      termYears: 3,
+      startDate: "1 ต.ค. 2567",
+      endDate: "30 ก.ย. 2570",
+      daysRemaining: 395,
+      contractValueThb: "240,000 บาท/ปี",
+      slaTier: "PLATINUM",
+      coordinatorName: "นายสมศักดิ์ สุขใจ (หัวหน้าสำนักปลัด)",
+      coordinatorPhone: "053-958-111",
+      customDomain: "sarabun.doigam.go.th",
+    },
+    branding: {
+      logoUrl: "/images/doigam-logo.png",
+      stampCount: 4,
+      hasWatermark: true,
+      digitalCertValid: true,
+    },
+  },
+  {
+    id: "org-02",
+    name: "เทศบาลตำบลพาน",
+    code: "PHAN-SUBDISTRICT",
+    region: "อำเภอพาน จังหวัดเชียงราย",
+    cluster: "CNX-01 (Northern Edge)",
+    planName: "Gov Enterprise (ราชการส่วนท้องถิ่น)",
+    status: "ACTIVE",
+    currentUsers: 28,
+    maxUsers: 80,
+    storageUsedGb: 24.5,
+    maxStorageGb: 200,
+    docsThisMonth: 1420,
+    qps: 34.2,
+    renewalDate: "15 พ.ย. 2570",
+    contract: {
+      contractNo: "CN-69/108-PHAN",
+      poNumber: "PO-2569-0304",
+      termYears: 2,
+      startDate: "15 พ.ย. 2568",
+      endDate: "15 พ.ย. 2570",
+      daysRemaining: 441,
+      contractValueThb: "360,000 บาท/ปี",
+      slaTier: "PLATINUM",
+      coordinatorName: "นางสาวดวงใจ เมืองพาน (ผอ.กองยุทธศาสตร์)",
+      coordinatorPhone: "053-721-222",
+      customDomain: "sarabun.phan.go.th",
+    },
+    branding: {
+      logoUrl: "/images/doigam-logo.png",
+      stampCount: 6,
+      hasWatermark: true,
+      digitalCertValid: true,
+    },
+  },
+  {
+    id: "org-03",
+    name: "องค์การบริหารส่วนตำบลแม่เย็น",
+    code: "MAEYEN-SAO",
+    region: "อำเภอพาน จังหวัดเชียงราย",
+    cluster: "BKK-01 (Central)",
+    planName: "Starter Tier (ทดลองใช้งาน)",
+    status: "TRIAL",
+    currentUsers: 6,
+    maxUsers: 10,
+    storageUsedGb: 3.2,
+    maxStorageGb: 20,
+    docsThisMonth: 145,
+    qps: 5.1,
+    renewalDate: "15 ก.ย. 2569",
+    contract: {
+      contractNo: "TRIAL-69/009",
+      poNumber: "N/A (ช่วงทดลองราชการ)",
+      termYears: 0.25,
+      startDate: "15 มิ.ย. 2569",
+      endDate: "15 ก.ย. 2569",
+      daysRemaining: 15,
+      contractValueThb: "ทดลองใช้งานฟรี (30 วัน)",
+      slaTier: "SILVER",
+      coordinatorName: "นายบุญมี แม่เย็น (จนท.ธุรการ)",
+      coordinatorPhone: "053-958-333",
+      customDomain: "maeyen.smartsarabun.cloud",
+    },
+    branding: {
+      logoUrl: "/images/doigam-logo.png",
+      stampCount: 2,
+      hasWatermark: false,
+      digitalCertValid: false,
+    },
+  },
+  {
+    id: "org-04",
+    name: "องค์การบริหารส่วนตำบลสันกลาง",
+    code: "SANKLANG-SAO",
+    region: "อำเภอพาน จังหวัดเชียงราย",
+    cluster: "CNX-01 (Northern Edge)",
+    planName: "Standard Tier",
+    status: "ACTIVE",
+    currentUsers: 18,
+    maxUsers: 30,
+    storageUsedGb: 16.0,
+    maxStorageGb: 50,
+    docsThisMonth: 620,
+    qps: 14.8,
+    renewalDate: "31 ธ.ค. 2569",
+    contract: {
+      contractNo: "CN-69/012-SANKLANG",
+      poNumber: "PO-2569-0045",
+      termYears: 1,
+      startDate: "1 ม.ค. 2569",
+      endDate: "31 ธ.ค. 2569",
+      daysRemaining: 122,
+      contractValueThb: "120,000 บาท/ปี",
+      slaTier: "GOLD",
+      coordinatorName: "นายพิทักษ์ สันกลาง (นิติกรชำนาญการ)",
+      coordinatorPhone: "053-958-444",
+      customDomain: "sarabun.sanklang.go.th",
+    },
+    branding: {
+      logoUrl: "/images/doigam-logo.png",
+      stampCount: 3,
+      hasWatermark: true,
+      digitalCertValid: true,
+    },
+  },
+];
+
+const mockLogs = [
+  { time: "13:08:12", tag: "AUTH", color: "text-emerald-600 bg-emerald-50 border-emerald-200", msg: "Keycloak OIDC JWT token verified for [DOIGAM-SAO:u-som-sak] (ThaID DOPA OK)" },
+  { time: "13:08:14", tag: "POSTGRES", color: "text-blue-600 bg-blue-50 border-blue-200", msg: "RLS multi-tenant query executed: SELECT FROM documents WHERE org_id = 'DOIGAM-SAO' (1.8ms)" },
+  { time: "13:08:16", tag: "CONTRACT", color: "text-amber-600 bg-amber-50 border-amber-200", msg: "Contract validity check: CN-69/042-DOIGAM active (395 days remaining, SLA: PLATINUM)" },
+  { time: "13:08:18", tag: "S3-STORAGE", color: "text-indigo-600 bg-indigo-50 border-indigo-200", msg: "Immutable PDF uploaded: /s3/DOIGAM-SAO/2569/doc-4589.pdf (SHA-256 Verified, Encrypted)" },
+  { time: "13:08:20", tag: "AI-OCR", color: "text-cyan-600 bg-cyan-50 border-cyan-200", msg: "Gemini 2.5 Flash Thai OCR extracted 9 fields with 98.4% confidence (0.9s)" },
+  { time: "13:08:22", tag: "E-SEAL", color: "text-rose-600 bg-rose-50 border-rose-200", msg: "Official Gov Crest e-Seal stamped with digital timestamp (ETSI PAdES compliant)" },
+];
+
+export default function PlatformAdminDashboardPage() {
+  const [tenants, setTenants] = useState<PlatformTenantItem[]>(initialTenants);
+  const [activeTab, setActiveTab] = useState<"overview" | "tenants" | "contracts" | "branding" | "terminal">("overview");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTenantForInspector, setSelectedTenantForInspector] = useState<PlatformTenantItem | null>(null);
+
+  // Telemetry Realtime Tickers
+  const [dbLatency, setDbLatency] = useState(1.8);
+  const [qpsTicker, setQpsTicker] = useState(842);
+  const [cpuUsage, setCpuUsage] = useState(14.2);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDbLatency(Number((1.6 + Math.random() * 0.5).toFixed(1)));
+      setQpsTicker(Math.floor(820 + Math.random() * 50));
+      setCpuUsage(Number((13.5 + Math.random() * 2.5).toFixed(1)));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const totalTenants = tenants.length;
+  const activeTenants = tenants.filter((t) => t.status === "ACTIVE").length;
+  const totalUsers = tenants.reduce((acc, t) => acc + t.currentUsers, 0);
+  const totalDocs = tenants.reduce((acc, t) => acc + t.docsThisMonth, 0);
+  const totalStorage = tenants.reduce((acc, t) => acc + t.storageUsedGb, 0).toFixed(1);
+
+  const filteredTenants = tenants.filter((t) =>
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.contract.contractNo.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-screen bg-[#f0f4f9] text-slate-900 font-sans relative overflow-x-hidden selection:bg-[#0052FF] selection:text-white">
+      {/* Background Pastel Ambient Glow Orbs for Crystal Light Glassmorphism */}
+      <div className="glow-orb-light-blue -top-20 -left-20 w-[600px] h-[600px] opacity-70" />
+      <div className="glow-orb-light-cyan top-[30%] -right-20 w-[700px] h-[700px] opacity-65" />
+      <div className="glow-orb-light-purple -bottom-20 left-1/3 w-[650px] h-[650px] opacity-60" />
+
+      {/* 1. TOP COMMAND BAR (Crystal Light Frosted Glass Dock) */}
+      <header className="sticky top-0 z-50 bg-white/75 backdrop-blur-2xl border-b border-slate-200/80 px-4 sm:px-8 py-3.5 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#0052FF] to-[#0284c7] text-white flex items-center justify-center shadow-md shadow-blue-500/25 border border-white/60">
+            <ShieldAlert className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-black tracking-tight text-slate-900">
+                SaaS Super Admin Command Center
+              </h1>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                CONFIDENTIAL • LEVEL 0
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 font-medium">
+              ศูนย์ควบคุมคลาวด์สารบรรณภาครัฐ & บริหารสัญญา อปท. ทั่วประเทศ (Multi-Tenant Platform)
+            </p>
+          </div>
+        </div>
+
+        {/* Live Telemetry Pill Bar */}
+        <div className="hidden lg:flex items-center gap-3 bg-slate-100/80 backdrop-blur-md px-3.5 py-1.5 rounded-2xl border border-slate-200 text-xs font-mono">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-slate-500">Postgres RLS:</span>
+            <span className="font-bold text-slate-900">{dbLatency}ms</span>
+          </div>
+          <span className="text-slate-300">|</span>
+          <div className="flex items-center gap-1.5">
+            <Activity className="w-3.5 h-3.5 text-[#0052FF]" />
+            <span className="text-slate-500">Throughput:</span>
+            <span className="font-bold text-[#0052FF]">{qpsTicker} QPS</span>
+          </div>
+          <span className="text-slate-300">|</span>
+          <div className="flex items-center gap-1.5">
+            <HardDrive className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="text-slate-500">MinIO S3:</span>
+            <span className="font-bold text-indigo-600">{totalStorage} GB / 10 TB</span>
+          </div>
+          <span className="text-slate-300">|</span>
+          <div className="flex items-center gap-1.5">
+            <Cpu className="w-3.5 h-3.5 text-cyan-600" />
+            <span className="text-slate-500">CPU Load:</span>
+            <span className="font-bold text-cyan-600">{cpuUsage}%</span>
+          </div>
+        </div>
+      </header>
+
+      {/* MAIN CONTAINER */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8 relative z-10">
+        {/* 2. NAVIGATION TABS */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+          <div className="flex items-center gap-2 bg-slate-200/60 p-1.5 rounded-2xl border border-slate-300/60 backdrop-blur-md">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === "overview"
+                  ? "bg-white text-slate-900 shadow-xs font-black"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Gauge className="w-4 h-4 text-[#0052FF]" />
+              <span>ภาพรวมระบบ (Overview)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("tenants")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === "tenants"
+                  ? "bg-white text-slate-900 shadow-xs font-black"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Building2 className="w-4 h-4 text-cyan-600" />
+              <span>องค์กร & ผู้ใช้งาน ({totalTenants})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("contracts")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === "contracts"
+                  ? "bg-white text-slate-900 shadow-xs font-black"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <FileSignature className="w-4 h-4 text-amber-600" />
+              <span>สัญญา & จัดซื้อภาครัฐ (Contracts & SLA)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("branding")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === "branding"
+                  ? "bg-white text-slate-900 shadow-xs font-black"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <ImageIcon className="w-4 h-4 text-purple-600" />
+              <span>คลังรูปภาพ & ตราประทับดิจิทัล (Asset Hub)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("terminal")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === "terminal"
+                  ? "bg-white text-slate-900 shadow-xs font-black"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Terminal className="w-4 h-4 text-emerald-600" />
+              <span>Live Console Stream</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="ค้นหา อปท., รหัส, เลขที่สัญญา..."
+                className="pl-10 pr-4 py-2 bg-white/80 border border-slate-200 rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0052FF] w-64 shadow-2xs backdrop-blur-md"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* TAB 1: OVERVIEW */}
+        {activeTab === "overview" && (
+          <div className="space-y-8">
+            {/* 4 Crystal Light Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="glass-card glass-card-hover rounded-3xl p-5 bg-white/75 backdrop-blur-xl border border-white/90 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+                  <span>อปท. ที่ใช้งาน (Active Tenants)</span>
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0052FF] flex items-center justify-center border border-blue-200 shadow-2xs">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-3xl font-black text-slate-900 font-mono tracking-tight">
+                    {activeTenants} <span className="text-sm text-slate-400 font-normal">/ {totalTenants} แห่ง</span>
+                  </h3>
+                  <p className="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1 font-mono">
+                    <TrendingUp className="w-3.5 h-3.5" /> 100% On-time SLA
+                  </p>
+                </div>
+              </div>
+
+              <div className="glass-card glass-card-hover rounded-3xl p-5 bg-white/75 backdrop-blur-xl border border-white/90 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+                  <span>ผู้ใช้งานภาครัฐทั้งหมด (Gov Users)</span>
+                  <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center border border-cyan-200 shadow-2xs">
+                    <Users className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-3xl font-black text-slate-900 font-mono tracking-tight">
+                    {totalUsers} <span className="text-sm text-slate-400 font-normal">บัญชี</span>
+                  </h3>
+                  <p className="text-xs text-blue-600 font-bold mt-1 font-mono">
+                    รองรับได้สูงสุด 500 บัญชี
+                  </p>
+                </div>
+              </div>
+
+              <div className="glass-card glass-card-hover rounded-3xl p-5 bg-white/75 backdrop-blur-xl border border-white/90 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+                  <span>เอกสารออกเลข/รับส่งเดือนนี้</span>
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200 shadow-2xs">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-3xl font-black text-slate-900 font-mono tracking-tight">
+                    {totalDocs.toLocaleString()} <span className="text-sm text-slate-400 font-normal">ฉบับ</span>
+                  </h3>
+                  <p className="text-xs text-amber-700 font-bold mt-1 font-mono">
+                    บันทึกถาวรลง S3 Private Bucket
+                  </p>
+                </div>
+              </div>
+
+              <div className="glass-card glass-card-hover rounded-3xl p-5 bg-white/75 backdrop-blur-xl border border-white/90 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+                  <span>มูลค่าสัญญารวม (Contract ARR)</span>
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-2xs">
+                    <Award className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-3xl font-black text-slate-900 font-mono tracking-tight">
+                    720,000 <span className="text-sm text-slate-400 font-normal">บาท/ปี</span>
+                  </h3>
+                  <p className="text-xs text-emerald-600 font-bold mt-1 font-mono">
+                    สัญญาระยะยาว 1-3 ปี (Gov Procurement)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Enterprise Readiness Check for Big Gov Sales */}
+            <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/90 shadow-sm bg-white/80 backdrop-blur-2xl space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#0052FF] uppercase tracking-wider mb-1">
+                    <ShieldCheck className="w-4 h-4 text-[#0052FF]" />
+                    <span>ENTERPRISE & LARGE-SCALE GOVERNMENT CAPABILITY</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                    ความพร้อมสำหรับขายหน่วยงานขนาดใหญ่ (อบจ., เทศบาลนคร, กระทรวง, กรม)
+                  </h3>
+                </div>
+                <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+                  ✓ Enterprise Certified
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                  <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
+                    <FileSignature className="w-4 h-4" />
+                    <span>๑. การจัดการสัญญา & ใบสั่งจ้าง (PO/TOR)</span>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    รองรับสัญญา 1 ปี / 3 ปี / 5 ปี, มีระบบนับถอยหลังแจ้งเตือนต่อสัญญา 30/60/90 วันล่วงหน้า, ระบุข้อมูลคณะกรรมการตรวจรับพัสดุ
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                  <div className="flex items-center gap-2 text-cyan-600 font-bold text-sm">
+                    <ImageIcon className="w-4 h-4" />
+                    <span>๒. คลังรูปภาพ โลโก้ & ตราประทับแยก อปท.</span>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    ระบบแยก S3 Multi-tenant Bucket, ลายน้ำราชการอัตโนมัติ, ตราครุฑมาตรฐาน, ตราประจำตำแหน่ง และ Digital Certificate (e-Seal)
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                  <div className="flex items-center gap-2 text-purple-600 font-bold text-sm">
+                    <Globe className="w-4 h-4" />
+                    <span>๓. Custom Subdomain & Dedicated URL</span>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    ผูกโดเมนเฉพาะของหน่วยงาน เช่น <code>sarabun.doigam.go.th</code>, <code>e-sarabun.chiangmai.go.th</code> พร้อม SSL/TLS 1.3 ฟรี
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
+                    <Lock className="w-4 h-4" />
+                    <span>๔. ThaID & Enterprise SSO Integration</span>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    เชื่อมต่อบัตรประชาชนดิจิทัล (ThaID กรมการปกครอง), Keycloak OIDC, และ Microsoft Entra ID / Active Directory ของภาครัฐ
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                  <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
+                    <Award className="w-4 h-4" />
+                    <span>๕. SLA 99.95% & Disaster Recovery (DR)</span>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    สำรองข้อมูลข้าม Regional Data Center (BKK-01 และ CNX-01 Edge) รับประกัน RPO &lt; 15 นาที และมีสายด่วน Support 24/7
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                  <div className="flex items-center gap-2 text-rose-600 font-bold text-sm">
+                    <Radio className="w-4 h-4" />
+                    <span>๖. ส่งหนังสือข้าม อปท. (Cross-Tenant Routing)</span>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    ส่งต่อหนังสือราชการข้าม อบต./เทศบาล/อบจ. ได้ทันทีโดยไม่ต้องพิมพ์กระดาษ มีระบบแจ้งเตือนเข้าสมุดทะเบียนรับปลายทางอัตโนมัติ
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: TENANTS & ORGANIZATIONS */}
+        {activeTab === "tenants" && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredTenants.map((t) => (
+                <div
+                  key={t.id}
+                  className="glass-card rounded-3xl p-6 bg-white/80 backdrop-blur-xl border border-white/90 shadow-xs hover:border-blue-300 transition-all space-y-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                        <img src={t.branding.logoUrl} alt={t.name} className="w-full h-full object-contain" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-base text-slate-900">{t.name}</h4>
+                          <span className="text-[10px] font-mono font-bold bg-blue-50 text-[#0052FF] px-2 py-0.5 rounded-md border border-blue-200">
+                            {t.code}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">{t.region}</p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${
+                        t.status === "ACTIVE"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-amber-50 text-amber-800 border border-amber-200"
+                      }`}
+                    >
+                      ● {t.status}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-xs">
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                      <span className="text-[10px] text-slate-400 block font-medium">ผู้ใช้งาน</span>
+                      <span className="font-bold text-slate-900 font-mono">{t.currentUsers} / {t.maxUsers}</span>
+                    </div>
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                      <span className="text-[10px] text-slate-400 block font-medium">พื้นที่ MinIO S3</span>
+                      <span className="font-bold text-slate-900 font-mono">{t.storageUsedGb} / {t.maxStorageGb} GB</span>
+                    </div>
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                      <span className="text-[10px] text-slate-400 block font-medium">สัญญาคงเหลือ</span>
+                      <span className="font-bold text-emerald-600 font-mono">{t.contract.daysRemaining} วัน</span>
+                    </div>
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                      <span className="text-[10px] text-slate-400 block font-medium">โดเมนเฉพาะ</span>
+                      <span className="font-bold text-blue-600 font-mono text-[11px] truncate block" title={t.contract.customDomain}>
+                        {t.contract.customDomain}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="text-xs text-slate-500 font-mono">
+                      <span>เลขที่สัญญา: </span>
+                      <strong className="text-slate-800">{t.contract.contractNo}</strong>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedTenantForInspector(t)}
+                      className="text-xs font-bold rounded-xl gap-1"
+                    >
+                      <span>จัดการสัญญา & โควต้า</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: CONTRACTS & PROCUREMENT (สัญญา & จัดซื้อภาครัฐ) */}
+        {activeTab === "contracts" && (
+          <div className="glass-card rounded-3xl p-6 sm:p-8 bg-white/80 backdrop-blur-2xl border border-white/90 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-xl font-black text-slate-900">
+                  ระบบบริหารสัญญา & การจัดซื้อจัดจ้างภาครัฐ (Government Contract & License Manager)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  ติดตามรอบสัญญา, เลขที่ใบสั่งจ้าง (PO), ระยะเวลา SLA, และวันหมดอายุของแต่ละ อปท. เพื่อให้การต่อสัญญาราชการไม่สะดุด
+                </p>
+              </div>
+              <Button size="sm" variant="signature" className="gap-1.5">
+                <Plus className="w-4 h-4" />
+                <span>เพิ่มสัญญาจัดซื้อภาครัฐ</span>
+              </Button>
+            </div>
+
+            <div className="divide-y divide-slate-200">
+              {filteredTenants.map((t) => (
+                <div key={t.id} className="py-4.5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-sm text-slate-900">{t.name}</span>
+                      <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
+                        {t.contract.contractNo}
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        SLA: {t.contract.slaTier}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                      <span>ใบสั่งจ้าง (PO): <strong>{t.contract.poNumber}</strong></span>
+                      <span>ระยะเวลา: <strong>{t.contract.termYears} ปี ({t.contract.startDate} - {t.contract.endDate})</strong></span>
+                      <span>มูลค่า: <strong className="text-slate-800">{t.contract.contractValueThb}</strong></span>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      ผู้ประสานงาน: <strong>{t.contract.coordinatorName}</strong> (โทร {t.contract.coordinatorPhone})
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <span className="text-xs text-slate-400 block font-medium">สถานะสัญญา</span>
+                      <span className="font-bold text-sm text-emerald-600 font-mono">
+                        คงเหลือ {t.contract.daysRemaining} วัน
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedTenantForInspector(t)}
+                      className="rounded-xl text-xs font-bold"
+                    >
+                      แก้ไขสัญญา
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: ASSET HUB (คลังรูปภาพ & ตราประทับ) */}
+        {activeTab === "branding" && (
+          <div className="glass-card rounded-3xl p-6 sm:p-8 bg-white/80 backdrop-blur-2xl border border-white/90 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-xl font-black text-slate-900">
+                  คลังรูปภาพ โลโก้ & ตราประทับดิจิทัลประจำหน่วยงาน (Tenant Asset Management)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  จัดการตราครุฑประจำ อปท., ตราสัญลักษณ์, ตราประทับรับหนังสือ, ลายน้ำราชการ, และใบรับรองดิจิทัล (Digital Certificate)
+                </p>
+              </div>
+              <Button size="sm" variant="outline" className="gap-1.5">
+                <Upload className="w-4 h-4 text-blue-600" />
+                <span>อัปโหลดชุดตราประทับใหม่</span>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredTenants.map((t) => (
+                <div key={t.id} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 p-2 shrink-0 flex items-center justify-center">
+                      <img src={t.branding.logoUrl} alt={t.name} className="w-full h-full object-contain" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900">{t.name}</h4>
+                      <p className="text-xs text-slate-400">{t.code} • S3 Storage Bucket: <code>sarabun-{t.code.toLowerCase()}</code></p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70 text-center">
+                      <span className="text-[10px] text-slate-400 block font-medium">ตราประทับในระบบ</span>
+                      <span className="font-bold text-slate-900 font-mono text-sm">{t.branding.stampCount} ตรา</span>
+                    </div>
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70 text-center">
+                      <span className="text-[10px] text-slate-400 block font-medium">ลายน้ำราชการ</span>
+                      <span className={`font-bold font-mono text-xs ${t.branding.hasWatermark ? "text-emerald-600" : "text-slate-400"}`}>
+                        {t.branding.hasWatermark ? "✓ เปิดใช้งาน" : "✕ ปิด"}
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70 text-center">
+                      <span className="text-[10px] text-slate-400 block font-medium">ใบรับรองดิจิทัล</span>
+                      <span className={`font-bold font-mono text-xs ${t.branding.digitalCertValid ? "text-emerald-600" : "text-amber-600"}`}>
+                        {t.branding.digitalCertValid ? "✓ ถูกต้อง (ETSI)" : "รอยืนยัน"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span className="text-xs text-slate-500">
+                      ขนาดโลโก้: <strong>512x512 PNG (Transparent)</strong>
+                    </span>
+                    <Button size="sm" variant="ghost" className="text-xs text-[#0052FF] font-bold">
+                      แก้ไขรูปภาพ / ตราประทับ
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: LIVE TERMINAL STREAM */}
+        {activeTab === "terminal" && (
+          <div className="glass-card rounded-3xl p-6 bg-slate-950 text-slate-200 font-mono text-xs shadow-xl border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-emerald-400" />
+                <span className="font-bold text-white">LIVE CLOUD PLATFORM TELEMETRY LOGS</span>
+              </div>
+              <span className="text-[11px] text-slate-400">WebSocket Connected: wss://telemetry.smartsarabun.cloud/v1</span>
+            </div>
+
+            <div className="space-y-2 py-2 max-h-96 overflow-y-auto">
+              {mockLogs.map((log, idx) => (
+                <div key={idx} className="flex items-start gap-3 py-1 hover:bg-slate-900/60 rounded-lg px-2 transition-colors">
+                  <span className="text-slate-500 shrink-0">{log.time}</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 border ${log.color}`}>
+                    {log.tag}
+                  </span>
+                  <span className="text-slate-300">{log.msg}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* 3. MODAL: TENANT CONTRACT & QUOTA INSPECTOR */}
+      {selectedTenantForInspector && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass-card rounded-3xl p-6 sm:p-8 bg-white max-w-2xl w-full border border-slate-200 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-lg font-black text-slate-900">
+                  จัดการสัญญา & โควต้า — {selectedTenantForInspector.name}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  รหัสหน่วยงาน: {selectedTenantForInspector.code} • เลขที่สัญญา: {selectedTenantForInspector.contract.contractNo}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedTenantForInspector(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">เลขที่สัญญา (Contract No.)</label>
+                  <input
+                    type="text"
+                    defaultValue={selectedTenantForInspector.contract.contractNo}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">เลขที่ใบสั่งซื้อ/สั่งจ้าง (PO Number)</label>
+                  <input
+                    type="text"
+                    defaultValue={selectedTenantForInspector.contract.poNumber}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">ระยะเวลาสัญญา (ปี)</label>
+                  <input
+                    type="number"
+                    defaultValue={selectedTenantForInspector.contract.termYears}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">โควต้าผู้ใช้งาน (Max Users)</label>
+                  <input
+                    type="number"
+                    defaultValue={selectedTenantForInspector.maxUsers}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">โควต้าพื้นที่ S3 (GB)</label>
+                  <input
+                    type="number"
+                    defaultValue={selectedTenantForInspector.maxStorageGb}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">โดเมนเฉพาะ (Custom Domain)</label>
+                <input
+                  type="text"
+                  defaultValue={selectedTenantForInspector.contract.customDomain}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-blue-700 font-bold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">ผู้ประสานงานหน่วยงาน & คณะกรรมการตรวจรับ</label>
+                <input
+                  type="text"
+                  defaultValue={`${selectedTenantForInspector.contract.coordinatorName} (โทร ${selectedTenantForInspector.contract.coordinatorPhone})`}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
+              <Button variant="outline" onClick={() => setSelectedTenantForInspector(null)} className="rounded-xl">
+                ยกเลิก
+              </Button>
+              <Button
+                variant="signature"
+                onClick={() => {
+                  alert("บันทึกข้อมูลสัญญาและปรับโควต้า อปท. สำเร็จเรียบร้อย!");
+                  setSelectedTenantForInspector(null);
+                }}
+                className="rounded-xl"
+              >
+                บันทึกการเปลี่ยนแปลง
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
