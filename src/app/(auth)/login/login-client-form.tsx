@@ -87,6 +87,45 @@ export function LoginClientForm() {
   const [passwordChangeError, setPasswordChangeError] = useState("");
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
 
+  const getAllAccounts = (): OfficialUserAccount[] => {
+    let list = [...officialAccounts];
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("smartsarabun_custom_users");
+        if (raw) {
+          const customUsers = JSON.parse(raw);
+          const mapped: OfficialUserAccount[] = customUsers.map((u: any) => ({
+            id: u.id,
+            accountId: u.code || `USR-${u.id.substring(0, 6)}`,
+            thaiName: `${u.firstName} ${u.lastName}`,
+            aliases: [u.email, u.username, u.firstName, u.lastName].filter(Boolean),
+            username: u.username || u.email,
+            defaultPassword: u.initialPassword || "123456",
+            user: {
+              id: u.id,
+              accountId: u.code || `USR-${u.id.substring(0, 6)}`,
+              name: `${u.firstName} ${u.lastName}`,
+              firstName: u.firstName,
+              lastName: u.lastName,
+              email: u.email,
+              position: u.position || "เจ้าหน้าที่",
+              department: u.department || "สำนักปลัด",
+              roles: u.roles || ["OFFICER"],
+              mustChangePassword: u.mustChangePassword !== false,
+            },
+            badge: u.position || "เจ้าหน้าที่",
+            color: "text-blue-700 bg-blue-50 border-blue-200",
+            icon: User,
+          }));
+          list = [...list, ...mapped];
+        }
+      } catch (err) {
+        console.error("Failed to load custom users:", err);
+      }
+    }
+    return list;
+  };
+
   // Auto detect matched account as user types
   useEffect(() => {
     if (!usernameInput.trim()) {
@@ -94,7 +133,8 @@ export function LoginClientForm() {
       return;
     }
     const clean = usernameInput.trim().toLowerCase();
-    const found = officialAccounts.find(
+    const all = getAllAccounts();
+    const found = all.find(
       (acc) =>
         acc.thaiName.toLowerCase().includes(clean) ||
         acc.username.toLowerCase() === clean ||
@@ -117,7 +157,8 @@ export function LoginClientForm() {
 
     setTimeout(() => {
       const clean = usernameInput.trim().toLowerCase();
-      const targetAcc = officialAccounts.find(
+      const all = getAllAccounts();
+      const targetAcc = all.find(
         (acc) =>
           acc.thaiName.toLowerCase().includes(clean) ||
           acc.username.toLowerCase() === clean ||
@@ -202,11 +243,11 @@ export function LoginClientForm() {
     };
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("smartsarabun_custom_session", JSON.stringify(sessionData));
-      localStorage.setItem("smartsarabun_user_profile", JSON.stringify(acc.user));
-      localStorage.setItem("smartsarabun_session_login_time", Date.now().toString());
-      document.cookie = "smart_sarabun_session=1; path=/; max-age=28800; SameSite=Lax";
-      document.cookie = `smart_sarabun_role=${acc.user.roles[0]}; path=/; max-age=28800; SameSite=Lax`;
+      sessionStorage.setItem("smartsarabun_active_session", JSON.stringify(sessionData));
+      sessionStorage.setItem("smartsarabun_session_login_time", Date.now().toString());
+      // Session cookie without max-age / expires: dies automatically when browser or tab is closed
+      document.cookie = "smart_sarabun_session=1; path=/; SameSite=Lax";
+      document.cookie = `smart_sarabun_role=${acc.user.roles[0]}; path=/; SameSite=Lax`;
       window.location.href = "/";
     }
   };

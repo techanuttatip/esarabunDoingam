@@ -59,8 +59,21 @@ const initialUsers: CivilServantUser[] = [
   },
 ];
 
+const USERS_STORAGE_KEY = "smartsarabun_custom_users";
+
 export default function UsersManagementPage() {
-  const [users, setUsers] = useState<CivilServantUser[]>(initialUsers);
+  const [users, setUsers] = useState<CivilServantUser[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(USERS_STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (err) {
+        console.error("Failed to load users:", err);
+      }
+    }
+    return initialUsers;
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [selectedRole, setSelectedRole] = useState("ALL");
@@ -80,6 +93,7 @@ export default function UsersManagementPage() {
     section: "งานบริหารทั่วไปและสารบรรณกลาง",
     role: "OFFICER",
     scope: "OWN" as DataScope,
+    initialPassword: "Doigam@2569",
     email: "",
     phone: "",
   });
@@ -100,14 +114,18 @@ export default function UsersManagementPage() {
   });
 
   const handleToggleStatus = (id: string) => {
-    setUsers((prev) =>
-      prev.map((u) => {
+    setUsers((prev) => {
+      const updated = prev.map((u) => {
         if (u.id === id) {
-          return { ...u, status: u.status === "active" ? "inactive" : "active" };
+          return { ...u, status: (u.status === "active" ? "inactive" : "active") as "active" | "inactive" };
         }
         return u;
-      })
-    );
+      });
+      if (typeof window !== "undefined") {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   const handleAddUser = (e: React.FormEvent) => {
@@ -131,7 +149,12 @@ export default function UsersManagementPage() {
       lastLogin: "ยังไม่เคยเข้าสู่ระบบ",
     };
 
-    setUsers([newUser, ...users]);
+    const updatedUsers = [newUser, ...users];
+    setUsers(updatedUsers);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+    }
+
     setShowAddModal(false);
     setFormData({
       username: "",
@@ -143,6 +166,7 @@ export default function UsersManagementPage() {
       section: "งานบริหารทั่วไปและสารบรรณกลาง",
       role: "OFFICER",
       scope: "OWN",
+      initialPassword: "Doigam@2569",
       email: "",
       phone: "",
     });

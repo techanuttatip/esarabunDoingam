@@ -1,10 +1,12 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Clock, AlertTriangle, RefreshCw, LogOut, ShieldCheck } from "lucide-react";
 
 export interface SessionUser {
-  id?: string;
+  id: string;
+  accountId?: string;
   name?: string | null;
   firstName?: string;
   lastName?: string;
@@ -15,6 +17,7 @@ export interface SessionUser {
   department?: string | null;
   departmentId?: string | null;
   position?: string | null;
+  mustChangePassword?: boolean;
 }
 
 export interface SessionData {
@@ -30,23 +33,11 @@ interface SessionContextType {
   updateProfile: (updated: Partial<SessionUser>) => void;
 }
 
-const defaultAdminUser: SessionUser = {
-  id: "e4a2d8a0-4a8a-4c22-9f33-111111111111",
-  name: "นายสมศักดิ์ สุขใจ",
-  firstName: "สมศักดิ์",
-  lastName: "สุขใจ",
-  email: "somsak.s@doigam.go.th",
-  phone: "081-999-8877",
-  position: "ปลัด อบต.ดอยงาม (Super Admin)",
-  department: "สำนักปลัด อบต.ดอยงาม",
-  roles: ["SUPER_ADMIN", "ADMIN", "PALAD"],
-};
-
-const DEFAULT_SESSION_HOURS = 8; // 8 Official Government Working Hours (08:30 - 16:30)
+const DEFAULT_SESSION_HOURS = 8; // 8 Official Government Working Hours
 
 const SessionContext = createContext<SessionContextType>({
-  data: { user: defaultAdminUser },
-  status: "authenticated",
+  data: null,
+  status: "loading",
   remainingSeconds: DEFAULT_SESSION_HOURS * 3600,
   extendSession: () => {},
   updateProfile: () => {},
@@ -54,89 +45,100 @@ const SessionContext = createContext<SessionContextType>({
 
 export function SessionProvider({
   children,
-  session = null,
 }: {
   children: React.ReactNode;
-  session?: SessionData | null;
 }) {
-  const [currentUser, setCurrentUser] = useState<SessionUser>(() => {
-    if (session?.user) return session.user;
-    return defaultAdminUser;
-  });
+  const pathname = usePathname();
+  const router = useRouter();
 
+  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
+  const [status, setStatus] = useState<"authenticated" | "unauthenticated" | "loading">("loading");
   const [remainingSeconds, setRemainingSeconds] = useState<number>(DEFAULT_SESSION_HOURS * 3600);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [isExtending, setIsExtending] = useState(false);
 
-  // Extend session handler (เพิ่มเวลา Session อีก 8 ชั่วโมง)
+  // Extend session handler
   const extendSession = useCallback(() => {
     setIsExtending(true);
     if (typeof window !== "undefined") {
-      localStorage.setItem("smartsarabun_session_login_time", Date.now().toString());
-      sessionStorage.setItem("smartsarabun_session_active", "true");
+      sessionStorage.setItem("smartsarabun_session_login_time", Date.now().toString());
     }
     setRemainingSeconds(DEFAULT_SESSION_HOURS * 3600);
     setShowWarningModal(false);
     setTimeout(() => setIsExtending(false), 500);
   }, []);
 
-  // Hydrate from localStorage on client and initialize Session Tracking
+  // Strict Tab/Browser Lifecycle Check: Reads strictly from sessionStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Check if user profile is saved
-    const saved = localStorage.getItem("smartsarabun_user_profile");
-    if (saved) {
+    const checkSession = () => {
       try {
-        const parsed = JSON.parse(saved);
-        setCurrentUser((prev) => ({ ...prev, ...parsed }));
-      } catch (e) {
-        // ignore
-      }
-    }
+        const rawSession = sessionStorage.getItem("smartsarabun_active_session");
+        if (!rawSession) {
+          setCurrentUser(null);
+          setStatus("unauthenticated");
+          // If accessing dashboard pages without active tab session, redirect to login
+          if (pathname && !pathname.startsWith("/login") && !pathname.startsWith("/platform-admin")) {
+            router.replace("/login");
+          }
+          return;
+        }
 
-    // Initialize or verify session timestamp
-    let loginTime = localStorage.getItem("smartsarabun_session_login_time");
-    if (!loginTime) {
-      loginTime = Date.now().toString();
-      localStorage.setItem("smartsarabun_session_login_time", loginTime);
-      sessionStorage.setItem("smartsarabun_session_active", "true");
-    }
+        const parsed = JSON.parse(rawSession);
+        const user = parsed.user || parsed;
+        setCurrentUser(user);
+        setStatus("authenticated");
+
+        // Verify session time
+        let loginTime = sessionStorage.getItem("smartsarabun_session_login_time");
+        if (!loginTime) {
+          loginTime = Date.now().toString();
+          sessionStorage.setItem("smartsarabun_session_login_time", loginTime);
+        }
+      } catch (err) {
+        console.error("Session parse error:", err);
+        setCurrentUser(null);
+        setStatus("unauthenticated");
+      }
+    };
+
+    checkSession();
 
     // Timer loop: checks remaining seconds every 1 second
     const interval = setInterval(() => {
-      const currentLoginTime = Number(localStorage.getItem("smartsarabun_session_login_time") || Date.now());
+      const loginTime = sessionStorage.getItem("smartsarabun_session_login_time");
+      if (!loginTime) return;
+
+      const currentLoginTime = Number(loginTime);
       const maxDurationMs = DEFAULT_SESSION_HOURS * 3600 * 1000;
       const elapsedMs = Date.now() - currentLoginTime;
       const leftSec = Math.max(0, Math.floor((maxDurationMs - elapsedMs) / 1000));
 
       setRemainingSeconds(leftSec);
 
-      // Warning when less than 180 seconds (3 minutes) left
       if (leftSec > 0 && leftSec <= 180) {
         setShowWarningModal(true);
       } else if (leftSec <= 0) {
-        // Auto logout when 8-hour government session expires
         clearInterval(interval);
         signOut({ callbackUrl: "/login?reason=session_expired" });
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [pathname, router]);
 
   const updateProfile = (updated: Partial<SessionUser>) => {
-    setCurrentUser((prev) => {
-      const next = { ...prev, ...updated };
-      if (updated.firstName || updated.lastName) {
-        const title = prev.name?.startsWith("นางสาว") ? "นางสาว" : prev.name?.startsWith("นาง") ? "นาง" : "นาย";
-        next.name = `${title}${updated.firstName || prev.firstName || ""} ${updated.lastName || prev.lastName || ""}`.trim();
-      }
-      if (typeof window !== "undefined") {
-        localStorage.setItem("smartsarabun_user_profile", JSON.stringify(next));
-      }
-      return next;
-    });
+    if (!currentUser) return;
+    const next = { ...currentUser, ...updated };
+    if (updated.firstName || updated.lastName) {
+      const title = currentUser.name?.startsWith("นางสาว") ? "นางสาว" : currentUser.name?.startsWith("นาง") ? "นาง" : "นาย";
+      next.name = `${title}${updated.firstName || currentUser.firstName || ""} ${updated.lastName || currentUser.lastName || ""}`.trim();
+    }
+    setCurrentUser(next);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("smartsarabun_active_session", JSON.stringify({ user: next }));
+    }
   };
 
   const formatHoursMinutes = (totalSeconds: number) => {
@@ -152,8 +154,8 @@ export function SessionProvider({
   return (
     <SessionContext.Provider
       value={{
-        data: { user: currentUser },
-        status: "authenticated",
+        data: currentUser ? { user: currentUser } : null,
+        status,
         remainingSeconds,
         extendSession,
         updateProfile,
@@ -161,7 +163,7 @@ export function SessionProvider({
     >
       {children}
 
-      {/* Session Expiry Warning Modal (นับถอยหลัง 3 นาทีก่อนหมดเวลาราชการ 8 ชม.) */}
+      {/* Session Expiry Warning Modal */}
       {showWarningModal && (
         <div className="fixed inset-0 z-[999999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-in fade-in">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border-2 border-amber-400 space-y-4 animate-in zoom-in-95 text-slate-900">
@@ -174,7 +176,7 @@ export function SessionProvider({
                 Session กำลังจะหมดอายุการใช้งาน
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                ตามนโยบายความมั่นคงปลอดภัยภาครัฐ ระบบจะตัดการเชื่อมต่ออัตโนมัติเมื่อครบ <strong>๘ ชั่วโมง (หมดเวลาราชการ)</strong>
+                ตามนโยบายความมั่นคงปลอดภัยภาครัฐ ระบบจะตัดการเชื่อมต่ออัตโนมัติเมื่อครบ <strong>๘ ชั่วโมง</strong>
               </p>
             </div>
 
@@ -222,10 +224,10 @@ export function useSession() {
 
 export async function signOut(options?: { callbackUrl?: string }) {
   if (typeof window !== "undefined") {
-    localStorage.removeItem("smartsarabun_user_profile");
-    localStorage.removeItem("smartsarabun_session_login_time");
     sessionStorage.clear();
-    // Redirect to login page
+    // Clear cookies with no-age so they expire immediately
+    document.cookie = "smart_sarabun_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "smart_sarabun_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     window.location.href = options?.callbackUrl || "/login";
   }
 }

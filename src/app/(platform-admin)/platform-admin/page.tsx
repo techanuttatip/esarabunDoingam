@@ -114,126 +114,21 @@ const initialTenants: PlatformTenantItem[] = [
     qps: 18.4,
     renewalDate: "30 ก.ย. 2570",
     contract: {
-      contractNo: "CN-69/042-DOIGAM",
-      poNumber: "PO-2569-0188",
-      termYears: 3,
-      startDate: "1 ต.ค. 2567",
-      endDate: "30 ก.ย. 2570",
-      daysRemaining: 395,
-      contractValueThb: "240,000 บาท/ปี",
+      contractNo: "DG-SaaS-2569/001",
+      poNumber: "PO-2569-0001",
+      termYears: 1,
+      startDate: "1 ต.ค. 2568",
+      endDate: "30 ก.ย. 2569",
+      daysRemaining: 30,
+      contractValueThb: "ทดลองใช้งาน ๓๐ วัน",
       slaTier: "PLATINUM",
       coordinatorName: "นายสมศักดิ์ สุขใจ (หัวหน้าสำนักปลัด)",
-      coordinatorPhone: "053-958-111",
+      coordinatorPhone: "053-958-100",
       customDomain: "sarabun.doigam.go.th",
     },
     branding: {
       logoUrl: "/images/doigam-logo.png",
-      stampCount: 4,
-      hasWatermark: true,
-      digitalCertValid: true,
-    },
-  },
-  {
-    id: "org-02",
-    name: "เทศบาลตำบลพาน",
-    code: "PHAN-SUBDISTRICT",
-    region: "อำเภอพาน จังหวัดเชียงราย",
-    cluster: "CNX-01 (Northern Edge)",
-    planName: "Gov Enterprise (ราชการส่วนท้องถิ่น)",
-    status: "ACTIVE",
-    currentUsers: 28,
-    maxUsers: 80,
-    storageUsedGb: 24.5,
-    maxStorageGb: 200,
-    docsThisMonth: 1420,
-    qps: 34.2,
-    renewalDate: "15 พ.ย. 2570",
-    contract: {
-      contractNo: "CN-69/108-PHAN",
-      poNumber: "PO-2569-0304",
-      termYears: 2,
-      startDate: "15 พ.ย. 2568",
-      endDate: "15 พ.ย. 2570",
-      daysRemaining: 441,
-      contractValueThb: "360,000 บาท/ปี",
-      slaTier: "PLATINUM",
-      coordinatorName: "นางสาวดวงใจ เมืองพาน (ผอ.กองยุทธศาสตร์)",
-      coordinatorPhone: "053-721-222",
-      customDomain: "sarabun.phan.go.th",
-    },
-    branding: {
-      logoUrl: "/images/doigam-logo.png",
-      stampCount: 6,
-      hasWatermark: true,
-      digitalCertValid: true,
-    },
-  },
-  {
-    id: "org-03",
-    name: "องค์การบริหารส่วนตำบลแม่เย็น",
-    code: "MAEYEN-SAO",
-    region: "อำเภอพาน จังหวัดเชียงราย",
-    cluster: "BKK-01 (Central)",
-    planName: "Starter Tier (ทดลองใช้งาน)",
-    status: "TRIAL",
-    currentUsers: 6,
-    maxUsers: 10,
-    storageUsedGb: 3.2,
-    maxStorageGb: 20,
-    docsThisMonth: 145,
-    qps: 5.1,
-    renewalDate: "15 ก.ย. 2569",
-    contract: {
-      contractNo: "TRIAL-69/009",
-      poNumber: "N/A (ช่วงทดลองราชการ)",
-      termYears: 0.25,
-      startDate: "15 มิ.ย. 2569",
-      endDate: "15 ก.ย. 2569",
-      daysRemaining: 15,
-      contractValueThb: "ทดลองใช้งานฟรี (30 วัน)",
-      slaTier: "SILVER",
-      coordinatorName: "นายบุญมี แม่เย็น (จนท.ธุรการ)",
-      coordinatorPhone: "053-958-333",
-      customDomain: "maeyen.smartsarabun.cloud",
-    },
-    branding: {
-      logoUrl: "/images/doigam-logo.png",
-      stampCount: 2,
-      hasWatermark: false,
-      digitalCertValid: false,
-    },
-  },
-  {
-    id: "org-04",
-    name: "องค์การบริหารส่วนตำบลสันกลาง",
-    code: "SANKLANG-SAO",
-    region: "อำเภอพาน จังหวัดเชียงราย",
-    cluster: "CNX-01 (Northern Edge)",
-    planName: "Standard Tier",
-    status: "ACTIVE",
-    currentUsers: 18,
-    maxUsers: 30,
-    storageUsedGb: 16.0,
-    maxStorageGb: 50,
-    docsThisMonth: 620,
-    qps: 14.8,
-    renewalDate: "31 ธ.ค. 2569",
-    contract: {
-      contractNo: "CN-69/012-SANKLANG",
-      poNumber: "PO-2569-0045",
-      termYears: 1,
-      startDate: "1 ม.ค. 2569",
-      endDate: "31 ธ.ค. 2569",
-      daysRemaining: 122,
-      contractValueThb: "120,000 บาท/ปี",
-      slaTier: "GOLD",
-      coordinatorName: "นายพิทักษ์ สันกลาง (นิติกรชำนาญการ)",
-      coordinatorPhone: "053-958-444",
-      customDomain: "sarabun.sanklang.go.th",
-    },
-    branding: {
-      logoUrl: "/images/doigam-logo.png",
-      stampCount: 3,
+      stampCount: 1,
       hasWatermark: true,
       digitalCertValid: true,
     },
@@ -983,80 +878,106 @@ export default function PlatformAdminDashboardPage() {
           </div>
         )}
 
-        {/* TAB 2: TENANTS & ORGANIZATIONS */}
+        {/* TAB 2: TENANTS & ORGANIZATIONS (CARD VIEW) */}
         {activeTab === "tenants" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-black text-slate-900">ทะเบียน อปท. & หน่วยงานผู้ใช้งาน (Tenant Directory)</h3>
+                <p className="text-xs text-slate-500 mt-0.5">รายชื่อองค์กรปกครองส่วนท้องถิ่นที่ใช้บริการระบบ SmartSarabun Cloud</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredTenants.map((t) => (
                 <div
                   key={t.id}
-                  className="glass-card rounded-3xl p-6 bg-white/80 backdrop-blur-xl border border-white/90 shadow-xs hover:border-blue-300 transition-all space-y-4"
+                  className="glass-card rounded-3xl p-6 bg-white/90 backdrop-blur-xl border border-slate-200 shadow-md hover:shadow-xl hover:border-blue-400 transition-all space-y-5"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
-                        <img src={t.branding.logoUrl} alt={t.name} className="w-full h-full object-contain" />
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 p-2 flex items-center justify-center shrink-0 shadow-sm">
+                        <Building2 className="w-8 h-8 text-[#0052FF]" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-base text-slate-900">{t.name}</h4>
-                          <span className="text-[10px] font-mono font-bold bg-blue-50 text-[#0052FF] px-2 py-0.5 rounded-md border border-blue-200">
-                            {t.code}
-                          </span>
+                          <h4 className="font-extrabold text-base sm:text-lg text-slate-900">{saasConfig.name || t.name}</h4>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">{t.region}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs font-mono font-bold bg-blue-50 text-[#0052FF] px-2.5 py-0.5 rounded-md border border-blue-200">
+                            {saasConfig.code || t.code}
+                          </span>
+                          <span className="text-xs text-slate-500">• {saasConfig.docPrefix || "ชร ๕๒๐๐๑/ว"}</span>
+                        </div>
                       </div>
                     </div>
 
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${
-                        t.status === "ACTIVE"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-amber-50 text-amber-800 border border-amber-200"
-                      }`}
-                    >
-                      ● {t.status}
-                    </span>
+                    {saasConfig.licenseStatus === "ACTIVE" ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                        🟢 ACTIVE
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                        ⏳ TRIAL 30 DAYS
+                      </span>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100 text-xs">
                     <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
-                      <span className="text-[10px] text-slate-400 block font-medium">ผู้ใช้งาน</span>
-                      <span className="font-bold text-slate-900 font-mono">{t.currentUsers} / {t.maxUsers}</span>
+                      <span className="text-[10px] text-slate-400 block font-medium">โควต้าผู้ใช้งาน</span>
+                      <span className="font-bold text-slate-900 font-mono">1 / {saasConfig.maxUsers} Users</span>
                     </div>
                     <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
-                      <span className="text-[10px] text-slate-400 block font-medium">พื้นที่ MinIO S3</span>
-                      <span className="font-bold text-slate-900 font-mono">{t.storageUsedGb} / {t.maxStorageGb} GB</span>
+                      <span className="text-[10px] text-slate-400 block font-medium">พื้นที่จัดเก็บ MinIO</span>
+                      <span className="font-bold text-slate-900 font-mono">0 / {(saasConfig.maxStorageMb / 1024).toFixed(0)} GB</span>
                     </div>
                     <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
-                      <span className="text-[10px] text-slate-400 block font-medium">สัญญาคงเหลือ</span>
-                      <span className="font-bold text-emerald-600 font-mono">{t.contract.daysRemaining} วัน</span>
+                      <span className="text-[10px] text-slate-400 block font-medium">วันทดลองคงเหลือ</span>
+                      <span className="font-bold text-amber-600 font-mono">{calculateDaysRemaining(saasConfig.trialExpiresAt)} วัน</span>
                     </div>
                     <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
-                      <span className="text-[10px] text-slate-400 block font-medium">โดเมนเฉพาะ</span>
-                      <span className="font-bold text-blue-600 font-mono text-[11px] truncate block" title={t.contract.customDomain}>
-                        {t.contract.customDomain}
+                      <span className="text-[10px] text-slate-400 block font-medium">เลขที่สัญญา</span>
+                      <span className="font-bold text-slate-800 font-mono text-[11px] truncate block">
+                        {saasConfig.contractNo || "DG-SaaS-2569/001"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="text-xs text-slate-500 font-mono">
-                      <span>เลขที่สัญญา: </span>
-                      <strong className="text-slate-800">{t.contract.contractNo}</strong>
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <div className="text-xs text-slate-500">
+                      <span>ผู้ดูแลระบบ: </span>
+                      <strong className="text-blue-700 font-mono">techanut0@gmail.com</strong>
                     </div>
                     <Button
                       size="sm"
-                      variant="outline"
-                      onClick={() => setSelectedTenantForInspector(t)}
-                      className="text-xs font-bold rounded-xl gap-1"
+                      onClick={() => setActiveTab("saas_config")}
+                      className="bg-gradient-to-r from-[#0052FF] to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs rounded-xl h-9 px-4 gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer"
                     >
-                      <span>จัดการสัญญา & โควต้า</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      <Sliders className="w-3.5 h-3.5" />
+                      <span>⚙️ เข้าไปจัดการข้อมูล (Manage Tenant)</span>
                     </Button>
                   </div>
                 </div>
               ))}
+
+              {/* Add New Tenant Card */}
+              <div
+                onClick={() => {
+                  alert("ฟังก์ชันสร้าง Tenant ใหม่อัตโนมัติ: กรุณาติดต่อทีม Dev เพื่อลงทะเบียน Database Sub-tenant");
+                }}
+                className="rounded-3xl p-8 border-2 border-dashed border-slate-300 bg-white/50 hover:bg-white hover:border-blue-400 transition-all flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs group"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-[#0052FF] flex items-center justify-center transition-colors mb-3">
+                  <Plus className="w-7 h-7" />
+                </div>
+                <h4 className="font-bold text-base text-slate-900 group-hover:text-[#0052FF]">
+                  + เพิ่ม อปท. / เทศบาลใหม่ (Add New Tenant)
+                </h4>
+                <p className="text-xs text-slate-500 max-w-xs mt-1">
+                  สร้าง Sub-domain, ฐานข้อมูล และโควต้า 30-Day Trial ให้กับ อบต. หรือเทศบาลแห่งใหม่
+                </p>
+              </div>
             </div>
           </div>
         )}
