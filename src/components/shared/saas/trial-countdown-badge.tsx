@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, ShieldAlert, Lock, Clock, CheckCircle2, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { Lock, Clock, CheckCircle2 } from "lucide-react";
 import {
   getTenantSaaSConfig,
   calculateDaysRemaining,
@@ -36,18 +35,13 @@ export function TrialCountdownBadge() {
 
   if (config.licenseStatus === "SUSPENDED" || config.licenseStatus === "EXPIRED" || daysRemaining <= 0) {
     return (
-      <Link
-        href="/platform-admin"
-        className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold animate-pulse shadow-sm shadow-rose-500/10 hover:bg-rose-100 transition-colors"
-      >
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold animate-pulse shadow-sm shadow-rose-500/10">
         <Lock className="w-3.5 h-3.5 text-rose-600" />
-        <span>หมดอายุการทดลองใช้งาน (ล็อกระบบ)</span>
-        <ChevronRight className="w-3 h-3 text-rose-500" />
-      </Link>
+        <span>หมดอายุการทดลองใช้งาน (กรุณาติดต่อเจ้าหน้าที่)</span>
+      </div>
     );
   }
 
-  // Color gradient based on remaining days
   const isUrgent = daysRemaining <= 7;
   const isWarning = daysRemaining <= 14;
 
@@ -58,18 +52,13 @@ export function TrialCountdownBadge() {
     : "bg-blue-50 border-blue-200/90 text-blue-700 ring-1 ring-blue-500/20";
 
   return (
-    <Link
-      href="/platform-admin"
-      title="คลิกเพื่อเข้าสู่ระบบศูนย์ควบคุม SaaS Platform Admin"
-      className={`hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-all shadow-sm hover:shadow-md hover:scale-[1.02] cursor-pointer ${badgeColor}`}
+    <div
+      className={`hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium shadow-sm ${badgeColor}`}
     >
       <Clock className="w-3.5 h-3.5 shrink-0" />
       <span>
         ทดลองใช้ 30 วัน: <strong className="font-semibold">{daysRemaining} วัน</strong>
       </span>
-      <span className="hidden md:inline-block text-[10px] px-1.5 py-0.2 rounded bg-white/80 border border-slate-200 text-slate-600 font-mono">
-        SaaS Dev
-      </span>
-    </Link>
+    </div>
   );
 }

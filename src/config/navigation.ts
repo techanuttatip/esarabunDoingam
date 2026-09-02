@@ -139,15 +139,6 @@ export const navigationConfig: {
       roles: ["SUPER_ADMIN", "ADMIN"],
       section: "admin",
     },
-    {
-      title: "แพลตฟอร์ม SaaS",
-      href: "/platform-admin",
-      icon: Server,
-      badge: "SaaS Admin",
-      badgeVariant: "amber",
-      roles: ["SUPER_ADMIN", "PLATFORM_ADMIN"],
-      section: "admin",
-    },
   ],
 };
 

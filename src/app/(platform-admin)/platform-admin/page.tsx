@@ -238,6 +238,78 @@ export default function PlatformAdminDashboardPage() {
     t.contract.contractNo.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const [isDevAuthenticated, setIsDevAuthenticated] = useState(false);
+  const [masterKeyInput, setMasterKeyInput] = useState("");
+  const [authError, setAuthError] = useState("");
+
+  const handleDevUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (masterKeyInput === "00830125" || masterKeyInput === "techanut0@gmail.com") {
+      setIsDevAuthenticated(true);
+      setAuthError("");
+    } else {
+      setAuthError("รหัส Master Key ไม่ถูกต้อง — หน้านี้สงวนเฉพาะทีมวิศวกรผู้พัฒนาระบบเท่านั้น กรุณาติดต่อเจ้าหน้าที่");
+    }
+  };
+
+  if (!isDevAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 text-slate-100 selection:bg-rose-600 selection:text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-radial-gradient from-rose-950/30 via-slate-950 to-slate-950" />
+        <Card className="w-full max-w-md bg-slate-900/90 border-slate-800 backdrop-blur-2xl p-8 rounded-3xl text-center space-y-6 shadow-2xl relative z-10 border">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-rose-950/50">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+              <Lock className="w-3 h-3" />
+              <span>DEV ACCESS ONLY • LEVEL 0</span>
+            </div>
+            <h2 className="text-xl font-black text-white">พื้นที่สงวนเฉพาะทีมผู้พัฒนาระบบคลาวด์</h2>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              หน้านี้สำหรับทีมวิศวกรผู้ดูแลระบบแพลตฟอร์ม SaaS เท่านั้น ผู้ใช้งานทั่วไปกรุณาติดต่อเจ้าหน้าที่เพื่อรับบริการ
+            </p>
+          </div>
+
+          {authError && (
+            <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold animate-in fade-in">
+              {authError}
+            </div>
+          )}
+
+          <form onSubmit={handleDevUnlock} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                placeholder="กรอก Developer Master Key..."
+                value={masterKeyInput}
+                onChange={(e) => setMasterKeyInput(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 font-mono text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl h-11 shadow-lg shadow-blue-600/30 cursor-pointer text-xs"
+            >
+              ปลดล็อกศูนย์ควบคุม SaaS (Dev Unlock)
+            </Button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-800">
+            <a
+              href="/login"
+              className="text-xs text-slate-400 hover:text-white transition-colors block font-medium"
+            >
+              ← กลับสู่หน้าระบบสารบรรณ (ผู้ใช้งานทั่วไป)
+            </a>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f0f4f9] text-slate-900 font-sans relative overflow-x-hidden selection:bg-[#0052FF] selection:text-white">
       {/* Background Pastel Ambient Glow Orbs for Crystal Light Glassmorphism */}
