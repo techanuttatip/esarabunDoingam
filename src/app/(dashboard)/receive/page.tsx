@@ -37,6 +37,8 @@ import {
 import { StampModal } from "@/features/stamps/components/stamp-modal";
 import { AiAssistantModal } from "@/features/ai/components/ai-assistant-modal";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
+import { getActiveDepartments, DepartmentOption } from "@/lib/departments";
+import { useEffect } from "react";
 
 export type SpeedLevel = "ปกติ" | "ด่วน" | "ด่วนมาก" | "ด่วนที่สุด";
 export type SecretLevel = "ปกติ" | "ลับ" | "ลับมาก" | "ลับที่สุด";
@@ -73,11 +75,21 @@ const initialIncomingList: IncomingDocItem[] = [];
 
 export default function ReceivePage() {
   const [documents, setDocuments] = useState<IncomingDocItem[]>(initialIncomingList);
+  const [availableDepartments, setAvailableDepartments] = useState<DepartmentOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [selectedSpeed, setSelectedSpeed] = useState("ALL");
   const [selectedSecret, setSelectedSecret] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+
+  useEffect(() => {
+    const depts = getActiveDepartments();
+    setAvailableDepartments(depts);
+    if (depts.length > 0) {
+      setFormData((prev) => ({ ...prev, targetDept: depts[0].name }));
+      setForwardDept(depts[0].name);
+    }
+  }, []);
 
   // View / Detail State
   const [selectedDoc, setSelectedDoc] = useState<IncomingDocItem | null>(null);
@@ -416,11 +428,11 @@ export default function ReceivePage() {
             className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
           >
             <option value="ALL">ทุกสำนัก/กอง</option>
-            <option value="สำนักปลัด">สำนักปลัด</option>
-            <option value="กองคลัง">กองคลัง</option>
-            <option value="กองช่าง">กองช่าง</option>
-            <option value="กองการศึกษาฯ">กองการศึกษาฯ</option>
-            <option value="กองสาธารณสุข">กองสาธารณสุข</option>
+            {availableDepartments.map((d) => (
+              <option key={d.id} value={d.name}>
+                {d.name}
+              </option>
+            ))}
           </select>
 
           <select
@@ -968,17 +980,27 @@ export default function ReceivePage() {
 
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">ส่งต่อให้กอง :</label>
-                  <select
-                    value={formData.targetDept}
-                    onChange={(e) => setFormData({ ...formData, targetDept: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-bold bg-white"
-                  >
-                    <option value="สำนักปลัด">สำนักปลัด</option>
-                    <option value="กองคลัง">กองคลัง</option>
-                    <option value="กองช่าง">กองช่าง</option>
-                    <option value="กองการศึกษาฯ">กองการศึกษาฯ</option>
-                    <option value="กองสาธารณสุข">กองสาธารณสุข</option>
-                  </select>
+                  {availableDepartments.length > 0 ? (
+                    <select
+                      value={formData.targetDept}
+                      onChange={(e) => setFormData({ ...formData, targetDept: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-bold bg-white"
+                    >
+                      {availableDepartments.map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name} {d.code ? `(${d.code})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select
+                      value={formData.targetDept}
+                      onChange={(e) => setFormData({ ...formData, targetDept: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50 text-xs font-bold text-slate-700"
+                    >
+                      <option value="">(ยังไม่ได้สร้างกองงานในระบบ)</option>
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -1033,18 +1055,27 @@ export default function ReceivePage() {
             <form onSubmit={handleForwardSubmit} className="p-6 space-y-4 text-xs">
               <div>
                 <label className="font-bold text-slate-700 block mb-1">เลือกสำนัก/กอง ผู้รับผิดชอบ * :</label>
-                <select
-                  value={forwardDept}
-                  onChange={(e) => setForwardDept(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-bold bg-white"
-                >
-                  <option value="สำนักปลัด">สำนักปลัด</option>
-                  <option value="กองคลัง">กองคลัง</option>
-                  <option value="กองช่าง">กองช่าง</option>
-                  <option value="กองการศึกษาฯ">กองการศึกษา ศาสนาและวัฒนธรรม</option>
-                  <option value="กองสาธารณสุข">กองสาธารณสุขและสิ่งแวดล้อม</option>
-                  <option value="หน่วยตรวจสอบภายใน">หน่วยตรวจสอบภายใน</option>
-                </select>
+                {availableDepartments.length > 0 ? (
+                  <select
+                    value={forwardDept}
+                    onChange={(e) => setForwardDept(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-bold bg-white"
+                  >
+                    {availableDepartments.map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name} {d.code ? `(${d.code})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <select
+                    value={forwardDept}
+                    onChange={(e) => setForwardDept(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50 text-xs font-bold text-slate-700"
+                  >
+                    <option value="">(ยังไม่ได้สร้างกองงานในระบบ)</option>
+                  </select>
+                )}
               </div>
 
               <div>

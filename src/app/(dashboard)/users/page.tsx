@@ -24,6 +24,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { SYSTEM_ROLES, DataScope } from "@/config/permissions";
+import { getActiveDepartments, DepartmentOption } from "@/lib/departments";
+import Link from "next/link";
+import { useEffect } from "react";
 
 interface CivilServantUser {
   id: string;
@@ -81,6 +84,15 @@ export default function UsersManagementPage() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [selectedUserForReset, setSelectedUserForReset] = useState<CivilServantUser | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [availableDepartments, setAvailableDepartments] = useState<DepartmentOption[]>([]);
+
+  useEffect(() => {
+    const depts = getActiveDepartments();
+    setAvailableDepartments(depts);
+    if (depts.length > 0) {
+      setFormData((prev) => ({ ...prev, department: depts[0].name }));
+    }
+  }, []);
 
   // New User Form State
   const [formData, setFormData] = useState({
@@ -89,8 +101,8 @@ export default function UsersManagementPage() {
     firstName: "",
     lastName: "",
     position: "",
-    department: "สำนักปลัด",
-    section: "งานบริหารทั่วไปและสารบรรณกลาง",
+    department: "",
+    section: "",
     role: "OFFICER",
     scope: "OWN" as DataScope,
     initialPassword: "Doigam@2569",
@@ -220,11 +232,11 @@ export default function UsersManagementPage() {
             className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
           >
             <option value="ALL">ทุกสำนัก/กอง</option>
-            <option value="สำนักปลัด">สำนักปลัด</option>
-            <option value="กองคลัง">กองคลัง</option>
-            <option value="กองช่าง">กองช่าง</option>
-            <option value="กองการศึกษาฯ">กองการศึกษาฯ</option>
-            <option value="กองสาธารณสุข">กองสาธารณสุข</option>
+            {availableDepartments.map((d) => (
+              <option key={d.id} value={d.name}>
+                {d.name}
+              </option>
+            ))}
           </select>
 
           <select
@@ -439,18 +451,27 @@ export default function UsersManagementPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 text-xs block mb-1">สำนัก/กอง :</label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-white"
-                  >
-                    <option value="สำนักปลัด">สำนักปลัด</option>
-                    <option value="กองคลัง">กองคลัง</option>
-                    <option value="กองช่าง">กองช่าง</option>
-                    <option value="กองการศึกษาฯ">กองการศึกษา ศาสนาและวัฒนธรรม</option>
-                    <option value="กองสาธารณสุข">กองสาธารณสุขและสิ่งแวดล้อม</option>
-                    <option value="หน่วยตรวจสอบภายใน">หน่วยตรวจสอบภายใน</option>
-                  </select>
+                  {availableDepartments.length > 0 ? (
+                    <select
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-white"
+                    >
+                      {availableDepartments.map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name} {d.code ? `(${d.code})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50 text-xs sm:text-sm font-bold text-slate-700"
+                    >
+                      <option value="">(ยังไม่ได้สร้างกองงานในระบบ)</option>
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="font-bold text-slate-700 text-xs block mb-1">บทบาทระบบ (Role) :</label>

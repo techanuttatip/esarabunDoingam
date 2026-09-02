@@ -30,6 +30,9 @@ import {
   FileCheck,
 } from "lucide-react";
 
+import { getActiveDepartments, DepartmentOption } from "@/lib/departments";
+import { useEffect } from "react";
+
 export type SpeedLevel = "ปกติ" | "ด่วน" | "ด่วนมาก" | "ด่วนที่สุด";
 export type SecretLevel = "ปกติ" | "ลับ" | "ลับมาก" | "ลับที่สุด";
 export type OutgoingStatus = "draft" | "reserved" | "reviewed" | "issued" | "sent" | "archived" | "cancelled";
@@ -61,10 +64,19 @@ const initialOutgoingList: OutgoingDocItem[] = [];
 
 export default function SendPage() {
   const [documents, setDocuments] = useState<OutgoingDocItem[]>(initialOutgoingList);
+  const [availableDepartments, setAvailableDepartments] = useState<DepartmentOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [selectedSpeed, setSelectedSpeed] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+
+  useEffect(() => {
+    const depts = getActiveDepartments();
+    setAvailableDepartments(depts);
+    if (depts.length > 0) {
+      setFormData((prev) => ({ ...prev, fromDept: depts[0].name }));
+    }
+  }, []);
 
   // Detail Modal State
   const [selectedDoc, setSelectedDoc] = useState<OutgoingDocItem | null>(null);
@@ -79,11 +91,11 @@ export default function SendPage() {
     docType: "หนังสือภายนอก",
     speed: "ปกติ" as SpeedLevel,
     secret: "ปกติ" as SecretLevel,
-    fromDept: "กองช่าง",
-    fromSection: "งานก่อสร้างและผังเมือง",
-    seriesCode: "OUTGOING_ENG",
+    fromDept: "",
+    fromSection: "",
+    seriesCode: "OUTGOING_DOC",
     docDate: "2026-08-28",
-    responsibleStaff: "นายวิศวกร ช่างมั่น",
+    responsibleStaff: "เจ้าหน้าที่ผู้รับผิดชอบ",
     notes: "",
   });
 
@@ -112,21 +124,10 @@ export default function SendPage() {
     return true;
   });
 
-  const getPrefixByDept = (dept: string) => {
-    switch (dept) {
-      case "สำนักปลัด":
-        return "ชร 52001/ว";
-      case "กองคลัง":
-        return "ชร 52002/ว";
-      case "กองช่าง":
-        return "ชร 52003/ว";
-      case "กองการศึกษาฯ":
-        return "ชร 52004/ว";
-      case "กองสาธารณสุข":
-        return "ชร 52005/ว";
-      default:
-        return "ชร 52001/ว";
-    }
+  const getPrefixByDept = (deptName: string) => {
+    const found = availableDepartments.find((d) => d.name === deptName);
+    if (found && found.docPrefix) return found.docPrefix;
+    return "ชร ๕๒๐๐๑/ว";
   };
 
   const handleCreateSubmit = (e: React.FormEvent) => {
@@ -363,11 +364,11 @@ export default function SendPage() {
             className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
           >
             <option value="ALL">ทุกสำนัก/กอง</option>
-            <option value="สำนักปลัด">สำนักปลัด (ชร 52001)</option>
-            <option value="กองคลัง">กองคลัง (ชร 52002)</option>
-            <option value="กองช่าง">กองช่าง (ชร 52003)</option>
-            <option value="กองการศึกษาฯ">กองการศึกษาฯ (ชร 52004)</option>
-            <option value="กองสาธารณสุข">กองสาธารณสุข (ชร 52005)</option>
+            {availableDepartments.map((d) => (
+              <option key={d.id} value={d.name}>
+                {d.name} {d.code ? `(${d.code})` : ""}
+              </option>
+            ))}
           </select>
 
           <select
@@ -722,17 +723,27 @@ export default function SendPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">กองเจ้าของเรื่อง * :</label>
-                  <select
-                    value={formData.fromDept}
-                    onChange={(e) => setFormData({ ...formData, fromDept: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-bold bg-white"
-                  >
-                    <option value="สำนักปลัด">สำนักปลัด (ชร 52001)</option>
-                    <option value="กองคลัง">กองคลัง (ชร 52002)</option>
-                    <option value="กองช่าง">กองช่าง (ชร 52003)</option>
-                    <option value="กองการศึกษาฯ">กองการศึกษา ศาสนาและวัฒนธรรม (ชร 52004)</option>
-                    <option value="กองสาธารณสุข">กองสาธารณสุขและสิ่งแวดล้อม (ชร 52005)</option>
-                  </select>
+                  {availableDepartments.length > 0 ? (
+                    <select
+                      value={formData.fromDept}
+                      onChange={(e) => setFormData({ ...formData, fromDept: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-bold bg-white"
+                    >
+                      {availableDepartments.map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name} {d.docPrefix ? `(${d.docPrefix})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select
+                      value={formData.fromDept}
+                      onChange={(e) => setFormData({ ...formData, fromDept: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50 text-xs font-bold text-slate-700"
+                    >
+                      <option value="">(ยังไม่ได้สร้างกองงานในระบบ)</option>
+                    </select>
+                  )}
                 </div>
 
                 <div>

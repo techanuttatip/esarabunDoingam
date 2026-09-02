@@ -26,12 +26,16 @@ import {
   Download,
 } from "lucide-react";
 import { useSession } from "@/components/providers/session-provider";
+import { getActiveDepartments, DepartmentOption } from "@/lib/departments";
 
 export default function ProfileAndSignaturePage() {
   const { data: session, updateProfile } = useSession();
   const user = session?.user;
 
   const [activeTab, setActiveTab] = useState<"signature" | "profile" | "certificate">("signature");
+
+  // Dynamic Departments from Organization Setup
+  const [availableDepartments, setAvailableDepartments] = useState<DepartmentOption[]>([]);
 
   // Profile Form State
   const [title, setTitle] = useState(
@@ -50,10 +54,19 @@ export default function ProfileAndSignaturePage() {
     user?.lastName || user?.name?.replace(/^(นาย|นางสาว|นาง|ว่าที่ ร\.ต\.)\s*/, "").split(" ")[1] || "สุขใจ"
   );
   const [position, setPosition] = useState(user?.position || "ปลัด อบต.ดอยงาม (Super Admin)");
-  const [department, setDepartment] = useState(user?.department || "สำนักปลัด อบต.ดอยงาม");
+  const [department, setDepartment] = useState(user?.department || "");
   const [email, setEmail] = useState(user?.email || "somsak.s@doigam.go.th");
   const [phone, setPhone] = useState(user?.phone || "081-999-8877");
   const [isProfileSaved, setIsProfileSaved] = useState(false);
+
+  // Load available departments
+  useEffect(() => {
+    const depts = getActiveDepartments();
+    setAvailableDepartments(depts);
+    if (!department && depts.length > 0) {
+      setDepartment(depts[0].name);
+    }
+  }, []);
 
   // Signature Studio State
   const [signatureMode, setSignatureMode] = useState<"draw" | "upload" | "font">("draw");
@@ -561,19 +574,46 @@ export default function ProfileAndSignaturePage() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">สังกัดสำนัก/กองงาน :</label>
-                  <select
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-bold bg-white text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
-                  >
-                    <option value="สำนักปลัด อบต.ดอยงาม">สำนักปลัด อบต.ดอยงาม</option>
-                    <option value="กองคลัง อบต.ดอยงาม">กองคลัง อบต.ดอยงาม</option>
-                    <option value="กองช่าง อบต.ดอยงาม">กองช่าง อบต.ดอยงาม</option>
-                    <option value="กองการศึกษา ศาสนาและวัฒนธรรม">กองการศึกษา ศาสนาและวัฒนธรรม</option>
-                    <option value="กองสาธารณสุขและสิ่งแวดล้อม">กองสาธารณสุขและสิ่งแวดล้อม</option>
-                    <option value="สำนักนายก อบต.ดอยงาม">สำนักนายก อบต.ดอยงาม</option>
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-slate-700 block">สังกัดสำนัก/กองงาน :</label>
+                    <a
+                      href="/organization"
+                      className="text-[11px] text-[#0052FF] hover:underline font-bold"
+                    >
+                      + จัดการโครงสร้างกองงาน
+                    </a>
+                  </div>
+                  {availableDepartments.length > 0 ? (
+                    <select
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-bold bg-white text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                    >
+                      {availableDepartments.map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name} {d.code ? `(${d.code})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="space-y-1">
+                      <select
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-amber-300 bg-amber-50/50 text-slate-700 text-xs font-medium"
+                      >
+                        <option value="">(ยังไม่ได้สร้างกองงานในระบบ — กรุณาสร้างที่เมนูโครงสร้างองค์กร)</option>
+                        {department && <option value={department}>{department}</option>}
+                      </select>
+                      <p className="text-[11px] text-amber-700">
+                        * ยังไม่มีกองงาน กรุณาไปที่เมนู{" "}
+                        <a href="/organization" className="underline font-bold text-[#0052FF]">
+                          โครงสร้างองค์กร
+                        </a>{" "}
+                        เพื่อเพิ่มกอง/สำนัก
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
