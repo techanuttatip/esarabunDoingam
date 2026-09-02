@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import {
   Menu,
@@ -10,18 +10,40 @@ import {
 import { navigationConfig, NavItem } from "@/config/navigation";
 import { useSession } from "@/components/providers/session-provider";
 import { DoiNgamLogoEmblem } from "@/components/shared/doigam-logo-emblem";
+import { getTenantSaaSConfig, TenantSaaSConfig } from "@/config/tenant-config";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [tenantConfig, setTenantConfig] = useState<TenantSaaSConfig>(getTenantSaaSConfig());
+
+  useEffect(() => {
+    const update = () => setTenantConfig(getTenantSaaSConfig());
+    window.addEventListener("tenant_config_updated", update);
+    return () => window.removeEventListener("tenant_config_updated", update);
+  }, []);
 
   const userRoles = session?.user?.roles || [];
 
   const filterNavItems = (items: NavItem[]) => {
     return items.filter((item) => {
-      if (!item.roles || item.roles.length === 0) return true;
-      return item.roles.some((r) => userRoles.includes(r));
+      // Role check
+      if (item.roles && item.roles.length > 0) {
+        if (!item.roles.some((r) => userRoles.includes(r))) return false;
+      }
+
+      // SaaS Module Check
+      const modules = tenantConfig.enabledModules;
+      if (item.href === "/receive" && !modules.incoming) return false;
+      if (item.href === "/send" && !modules.outgoing) return false;
+      if (item.href === "/approvals" && !modules.endorsement) return false;
+      if (item.href === "/cabinet" && !modules.cabinet) return false;
+      if (item.href === "/templates" && !modules.templates) return false;
+      if (item.href === "/numbers" && !modules.autoNumbering) return false;
+      if (item.href === "/audit" && !modules.auditLog) return false;
+
+      return true;
     });
   };
 

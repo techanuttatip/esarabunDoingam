@@ -48,6 +48,11 @@ import {
   Upload,
   HelpCircle,
   Briefcase,
+  KeyRound,
+  Inbox,
+  Send,
+  PenTool,
+  Hash,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -244,11 +249,73 @@ const mockLogs = [
   { time: "13:08:22", tag: "E-SEAL", color: "text-rose-600 bg-rose-50 border-rose-200", msg: "Official Gov Crest e-Seal stamped with digital timestamp (ETSI PAdES compliant)" },
 ];
 
+import {
+  getTenantSaaSConfig,
+  saveTenantSaaSConfig,
+  TenantSaaSConfig,
+  calculateDaysRemaining,
+} from "@/config/tenant-config";
+
 export default function PlatformAdminDashboardPage() {
   const [tenants, setTenants] = useState<PlatformTenantItem[]>(initialTenants);
-  const [activeTab, setActiveTab] = useState<"overview" | "tenants" | "contracts" | "branding" | "terminal">("overview");
+  const [activeTab, setActiveTab] = useState<"saas_config" | "overview" | "tenants" | "contracts" | "branding" | "terminal">("saas_config");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTenantForInspector, setSelectedTenantForInspector] = useState<PlatformTenantItem | null>(null);
+
+  // Live Tenant SaaS Configuration State for Dev Control
+  const [saasConfig, setSaasConfig] = useState<TenantSaaSConfig>(getTenantSaaSConfig());
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSaasConfig(getTenantSaaSConfig());
+  }, []);
+
+  const handleSaveSaaSConfig = (updated: TenantSaaSConfig) => {
+    setSaasConfig(updated);
+    saveTenantSaaSConfig(updated);
+    setSaveSuccessMsg("บันทึกการตั้งค่าและบังคับใช้กับระบบของ อบต.ดอยงาม สำเร็จเรียบร้อย!");
+    setTimeout(() => setSaveSuccessMsg(null), 4000);
+  };
+
+  const handleAddTrialDays = (days: number) => {
+    const currentEnd = new Date(saasConfig.trialExpiresAt).getTime();
+    const newEnd = new Date(Math.max(Date.now(), currentEnd) + days * 24 * 60 * 60 * 1000);
+    const updated: TenantSaaSConfig = {
+      ...saasConfig,
+      licenseStatus: "TRIAL",
+      trialExpiresAt: newEnd.toISOString(),
+    };
+    handleSaveSaaSConfig(updated);
+  };
+
+  const handleReset30Days = () => {
+    const now = new Date();
+    const newEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const updated: TenantSaaSConfig = {
+      ...saasConfig,
+      licenseStatus: "TRIAL",
+      trialStartDate: now.toISOString(),
+      trialExpiresAt: newEnd.toISOString(),
+    };
+    handleSaveSaaSConfig(updated);
+  };
+
+  const handleActivateFullLicense = () => {
+    const updated: TenantSaaSConfig = {
+      ...saasConfig,
+      licenseStatus: "ACTIVE",
+      licenseTier: "PROFESSIONAL",
+    };
+    handleSaveSaaSConfig(updated);
+  };
+
+  const handleEmergencyLock = () => {
+    const updated: TenantSaaSConfig = {
+      ...saasConfig,
+      licenseStatus: "SUSPENDED",
+    };
+    handleSaveSaaSConfig(updated);
+  };
 
   // Telemetry Realtime Tickers
   const [dbLatency, setDbLatency] = useState(1.8);
@@ -338,6 +405,18 @@ export default function PlatformAdminDashboardPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div className="flex items-center gap-2 bg-slate-200/60 p-1.5 rounded-2xl border border-slate-300/60 backdrop-blur-md">
             <button
+              onClick={() => setActiveTab("saas_config")}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === "saas_config"
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 font-black"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Sliders className="w-4 h-4" />
+              <span>🎛️ ตั้งค่าหน่วยงาน & ควบคุม License (Doi Ngam)</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("overview")}
               className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 activeTab === "overview"
@@ -411,6 +490,342 @@ export default function PlatformAdminDashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* SUCCESS NOTIFICATION TOAST */}
+        {saveSuccessMsg && (
+          <div className="p-4 rounded-2xl bg-emerald-500 text-white flex items-center justify-between shadow-xl shadow-emerald-600/25 border border-emerald-400 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-6 h-6 shrink-0" />
+              <div>
+                <p className="font-bold text-sm">{saveSuccessMsg}</p>
+                <p className="text-xs text-emerald-100">การตั้งค่าถูกส่งต่อไปยังหน้าเว็บของ อบต.ดอยงาม เรียบร้อยแล้วแบบ Real-time</p>
+              </div>
+            </div>
+            <button onClick={() => setSaveSuccessMsg(null)} className="p-1.5 hover:bg-white/20 rounded-lg text-white cursor-pointer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* TAB 0: SAAS TENANT CONFIGURATOR (DEV CONTROL CENTER) */}
+        {activeTab === "saas_config" && (
+          <div className="space-y-8 animate-in fade-in duration-300">
+            {/* 1. Live License Status & 30-Day Controls Card */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-1 rounded-3xl p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl border-slate-700 flex flex-col justify-between relative overflow-hidden">
+                <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl" />
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-mono text-slate-400">TENANT LICENSE STATUS</span>
+                    {saasConfig.licenseStatus === "ACTIVE" ? (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        🟢 ACTIVE (สัญญาทางการ)
+                      </span>
+                    ) : saasConfig.licenseStatus === "SUSPENDED" || saasConfig.licenseStatus === "EXPIRED" ? (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse">
+                        🔴 LOCKED (ล็อกระบบ)
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        ⏳ TRIAL 30 DAYS (ทดลองใช้)
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="text-xl font-black text-white">{saasConfig.name}</h3>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">{saasConfig.code} • {saasConfig.contractNo || "DG-SaaS-2569/001"}</p>
+
+                  <div className="mt-6 p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400">วันคงเหลือ (Trial Remaining):</span>
+                      <span className="text-2xl font-black text-amber-400 font-mono">
+                        {calculateDaysRemaining(saasConfig.trialExpiresAt)} วัน
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-white/10 pt-2">
+                      <span>สิ้นสุดวันที่:</span>
+                      <span className="text-slate-200 font-mono">
+                        {new Date(saasConfig.trialExpiresAt).toLocaleDateString("th-TH", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                  <span>ผู้ดูแลระบบ:</span>
+                  <span className="font-mono text-blue-400">techanut0@gmail.com</span>
+                </div>
+              </Card>
+
+              {/* License Quick Action Controller */}
+              <Card className="lg:col-span-2 rounded-3xl p-6 bg-white/80 backdrop-blur-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <KeyRound className="w-5 h-5 text-[#0052FF]" />
+                    <h3 className="text-base font-bold text-slate-900">แผงควบคุมใบอนุญาต & ล็อกระบบเชิงพาณิชย์ (License Controller)</h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-6">
+                    ควบคุมการขยายวันทดลองใช้งาน, เปิดใช้งานเต็มรูปแบบตามสัญญาจ้าง หรือสั่งล็อกระบบฉุกเฉินเมื่อหมดสัญญา
+                  </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleAddTrialDays(15)}
+                      className="rounded-2xl h-14 flex flex-col items-center justify-center border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700 cursor-pointer"
+                    >
+                      <span className="font-bold text-xs sm:text-sm text-blue-700">+ ๑๕ วัน</span>
+                      <span className="text-[10px] text-slate-500">ขยายเวลาทดลอง</span>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => handleAddTrialDays(30)}
+                      className="rounded-2xl h-14 flex flex-col items-center justify-center border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700 cursor-pointer"
+                    >
+                      <span className="font-bold text-xs sm:text-sm text-blue-700">+ ๓๐ วัน</span>
+                      <span className="text-[10px] text-slate-500">ขยายเวลาทดลอง</span>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      onClick={handleReset30Days}
+                      className="rounded-2xl h-14 flex flex-col items-center justify-center border-slate-200 hover:border-amber-400 hover:bg-amber-50 text-slate-700 cursor-pointer"
+                    >
+                      <span className="font-bold text-xs sm:text-sm text-amber-700">รีเซ็ต ๓๐ วัน</span>
+                      <span className="text-[10px] text-slate-500">เริ่มนับหนึ่งใหม่วันนี้</span>
+                    </Button>
+
+                    <Button
+                      onClick={handleActivateFullLicense}
+                      className="col-span-1 sm:col-span-2 rounded-2xl h-14 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-md shadow-emerald-500/20 gap-2 cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                      <div className="text-left">
+                        <div className="text-xs sm:text-sm font-black">เปิดใช้งานทางการตามสัญญา (Full License)</div>
+                        <div className="text-[10px] text-emerald-100 font-normal">ปลดล็อก 30 วันเป็นสัญญาจ้างประจำปี</div>
+                      </div>
+                    </Button>
+
+                    <Button
+                      onClick={handleEmergencyLock}
+                      className="rounded-2xl h-14 bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md shadow-rose-500/20 gap-2 cursor-pointer"
+                    >
+                      <Lock className="w-5 h-5" />
+                      <div className="text-left">
+                        <div className="text-xs sm:text-sm font-black">ระงับทันที (Lock)</div>
+                        <div className="text-[10px] text-rose-100 font-normal">ล็อกหน้าจอเมื่อหมดสัญญา</div>
+                      </div>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
+                  <span>สถานะปัจจุบัน: <strong>{saasConfig.licenseStatus}</strong> ({saasConfig.licenseTier})</span>
+                  <span>ความจุโควต้า: <strong>{saasConfig.maxUsers} Users</strong> • <strong>{(saasConfig.maxStorageMb / 1024).toFixed(0)} GB Storage</strong></span>
+                </div>
+              </Card>
+            </div>
+
+            {/* 2. Main Config Form: Organization Branding & Feature Toggles */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column: Organization Branding & Details */}
+              <Card className="rounded-3xl p-6 bg-white/85 backdrop-blur-xl border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+                  <Building2 className="w-5 h-5 text-blue-700" />
+                  <h4 className="font-bold text-slate-900 text-base">๑. ข้อมูลองค์กรและอัตลักษณ์หน่วยงาน (Branding & Identity)</h4>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">ชื่อองค์กรปกครองส่วนท้องถิ่น (อปท.):</label>
+                    <input
+                      type="text"
+                      value={saasConfig.name}
+                      onChange={(e) => setSaasConfig({ ...saasConfig, name: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">รหัสองค์กร (Tenant Code):</label>
+                      <input
+                        type="text"
+                        value={saasConfig.code}
+                        onChange={(e) => setSaasConfig({ ...saasConfig, code: e.target.value })}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">รหัสหมวดหนังสือราชการ (Prefix):</label>
+                      <input
+                        type="text"
+                        value={saasConfig.docPrefix}
+                        onChange={(e) => setSaasConfig({ ...saasConfig, docPrefix: e.target.value })}
+                        placeholder="เช่น ชร ๕๒๐๐๑/ว"
+                        className="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-blue-700 focus:ring-2 focus:ring-[#0052FF]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">คำขวัญ / สโลแกนหน่วยงาน:</label>
+                    <input
+                      type="text"
+                      value={saasConfig.slogan}
+                      onChange={(e) => setSaasConfig({ ...saasConfig, slogan: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">ที่อยู่ทำการสำนักงาน:</label>
+                    <input
+                      type="text"
+                      value={saasConfig.address}
+                      onChange={(e) => setSaasConfig({ ...saasConfig, address: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">อีเมลทางการ (Contact Email):</label>
+                      <input
+                        type="email"
+                        value={saasConfig.contactEmail}
+                        onChange={(e) => setSaasConfig({ ...saasConfig, contactEmail: e.target.value })}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">เบอร์โทรศัพท์ (Contact Phone):</label>
+                      <input
+                        type="text"
+                        value={saasConfig.contactPhone}
+                        onChange={(e) => setSaasConfig({ ...saasConfig, contactPhone: e.target.value })}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">โควต้าผู้ใช้งานสูงสุด (Max Users):</label>
+                      <input
+                        type="number"
+                        value={saasConfig.maxUsers}
+                        onChange={(e) => setSaasConfig({ ...saasConfig, maxUsers: Number(e.target.value) })}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">โควต้าพื้นที่เก็บไฟล์ (MB):</label>
+                      <input
+                        type="number"
+                        value={saasConfig.maxStorageMb}
+                        onChange={(e) => setSaasConfig({ ...saasConfig, maxStorageMb: Number(e.target.value) })}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Right Column: Modular Feature Matrix Toggles */}
+              <Card className="rounded-3xl p-6 bg-white/85 backdrop-blur-xl border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-5 h-5 text-indigo-700" />
+                    <h4 className="font-bold text-slate-900 text-base">๒. สวิตช์ เปิด/ปิด โมดูลระบบ (Feature Matrix)</h4>
+                  </div>
+                  <span className="text-[10px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full font-bold">
+                    MODULAR ENGINE
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-500">
+                  เลือกเปิดหรือปิดฟังก์ชันการทำงานตามแพ็กเกจที่ทำสัญญา ระบบจะซ่อนเมนูและปุ่มในหน้าเว็บ อบต.ดอยงาม อัตโนมัติทันที
+                </p>
+
+                <div className="space-y-2.5">
+                  {[
+                    { key: "incoming", label: "ระบบลงรับหนังสือ (Incoming Registration)", desc: "ลงรับหนังสือภายนอกและออกเลขรับอัตโนมัติ", icon: Inbox },
+                    { key: "outgoing", label: "ระบบหนังสือส่ง (Outgoing Documents)", desc: "ร่างหนังสือส่งออก พิมพ์หนังสือภายนอก/ภายใน", icon: Send },
+                    { key: "endorsement", label: "ระบบเกษียน & ลงนามดิจิทัล (Digital Endorsement)", desc: "เกษียนหนังสือตามลำดับชั้น ๖ ระดับ พร้อมลายเซ็น", icon: PenTool },
+                    { key: "aiAssistant", label: "ระบบปัญญาประดิษฐ์ AI Smart Assistant", desc: "OCR สกัดข้อความภาษาไทยและสรุปใจความสำคัญอัตโนมัติ", icon: Sparkles },
+                    { key: "autoNumbering", label: "ระบบสมุดทะเบียน & ออกเลขคุม (Auto Numbering)", desc: "สมุดทะเบียนรับกลาง, ส่งกลาง, ทะเบียนคำสั่ง อบต.", icon: Hash },
+                    { key: "watermark", label: "ระบบลายน้ำรักษาความลับ (Anti-Leak Watermark)", desc: "พิมพ์ลายน้ำชื่อผู้เปิดอ่านเพื่อป้องกันข้อมูลลับรั่วไหล", icon: ShieldCheck },
+                    { key: "cabinet", label: "ระบบตู้เอกสารอิเล็กทรอนิกส์ (Cabinet Hub)", desc: "จัดหมวดหมู่เอกสารย้อนหลังตามระเบียบสารบรรณ", icon: HardDrive },
+                    { key: "templates", label: "ระบบแม่แบบหนังสือราชการ (Standard Templates)", desc: "แม่แบบหนังสือครุฑ, บันทึกข้อความ, คำสั่ง อบต.", icon: FileText },
+                  ].map((mod) => {
+                    const isEnabled = saasConfig.enabledModules[mod.key as keyof typeof saasConfig.enabledModules];
+                    const Icon = mod.icon;
+
+                    return (
+                      <div
+                        key={mod.key}
+                        onClick={() => {
+                          const updated = {
+                            ...saasConfig,
+                            enabledModules: {
+                              ...saasConfig.enabledModules,
+                              [mod.key]: !isEnabled,
+                            },
+                          };
+                          setSaasConfig(updated);
+                        }}
+                        className={`p-3 rounded-2xl border transition-all flex items-center justify-between cursor-pointer select-none ${
+                          isEnabled
+                            ? "bg-blue-50/70 border-blue-200/90 shadow-2xs"
+                            : "bg-slate-50 border-slate-200 opacity-60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isEnabled ? "bg-[#0052FF] text-white" : "bg-slate-200 text-slate-500"}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-slate-900">{mod.label}</div>
+                            <div className="text-[10px] text-slate-500">{mod.desc}</div>
+                          </div>
+                        </div>
+
+                        <div className={`w-10 h-6 rounded-full transition-colors flex items-center p-0.5 ${isEnabled ? "bg-[#0052FF]" : "bg-slate-300"}`}>
+                          <div className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${isEnabled ? "translate-x-4" : "translate-x-0"}`} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            </div>
+
+            {/* 3. Master Save Action Banner */}
+            <div className="bg-white/90 backdrop-blur-2xl border border-slate-200/80 rounded-3xl p-6 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h4 className="text-base font-black text-slate-900">พร้อมบังคับใช้การตั้งค่ากับระบบของ อบต.ดอยงาม</h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  เมื่อกดบันทึก การเปลี่ยนแปลงทั้งหมดจะมีผลต่อหน้าเว็บผู้ใช้งานทันทีโดยไม่ต้องรีสตาร์ทเซิร์ฟเวอร์
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={() => handleSaveSaaSConfig(saasConfig)}
+                className="w-full sm:w-auto bg-gradient-to-r from-[#0052FF] via-indigo-600 to-[#0284c7] hover:from-blue-700 hover:to-indigo-700 text-white font-black rounded-2xl h-12 px-8 shadow-xl shadow-blue-500/25 gap-2 cursor-pointer text-sm"
+              >
+                <Check className="w-5 h-5" />
+                <span>💾 บันทึกและบังคับใช้การตั้งค่าทันที (Save & Apply Live)</span>
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* TAB 1: OVERVIEW */}
         {activeTab === "overview" && (

@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/components/providers/session-provider";
 import { CommandPalette } from "@/components/shared/command-palette";
+import { TrialCountdownBadge } from "@/components/shared/saas/trial-countdown-badge";
 
 export function AppTopbar() {
   const { data: session } = useSession();
@@ -93,6 +94,9 @@ export function AppTopbar() {
 
         {/* Right: Quick Actions & Notifications & Profile */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* SaaS 30-Day Trial Countdown Badge */}
+          <TrialCountdownBadge />
+
           {/* Quick Create Dropdown */}
           <div className="relative">
             <Button

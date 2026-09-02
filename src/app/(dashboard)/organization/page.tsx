@@ -51,114 +51,33 @@ export interface DepartmentItem {
   sections: SectionItem[];
 }
 
-const initialDepartments: DepartmentItem[] = [
-  {
-    id: "dept-1",
-    code: "ชร 52001",
-    name: "สำนักปลัด องค์การบริหารส่วนตำบลดอยงาม",
-    headName: "จ่าเอก สมเกียรติ พินิจอักษร",
-    headPosition: "ปลัด อบต.ดอยงาม",
-    staffCount: 14,
-    phone: "053-958100 ต่อ 11",
-    email: "office@doigam.go.th",
-    docPrefix: "ชร 52001/ว",
-    description: "รับผิดชอบงานสารบรรณกลาง งานนิติการ งานการเจ้าหน้าที่ งานแผนและงบประมาณ",
-    isActive: true,
-    sections: [
-      { id: "sec-101", name: "งานบริหารทั่วไปและสารบรรณกลาง", code: "SEC-GEN", leaderName: "น.ส.ธัญวรรัตน์ ตาสาย", staffCount: 4 },
-      { id: "sec-102", name: "งานวิเคราะห์นโยบายและแผน", code: "SEC-PLAN", leaderName: "นายมงคล วางแผนดี", staffCount: 3 },
-      { id: "sec-103", name: "งานป้องกันและบรรเทาสาธารณภัย", code: "SEC-DISASTER", leaderName: "นายวุฒิไกร หน่อแก้ว", staffCount: 4 },
-    ],
-  },
-  {
-    id: "dept-2",
-    code: "ชร 52002",
-    name: "กองคลัง",
-    headName: "นางสาวสมพร กองเงิน",
-    headPosition: "ผู้อำนวยการกองคลัง",
-    staffCount: 9,
-    phone: "053-958100 ต่อ 14",
-    email: "finance@doigam.go.th",
-    docPrefix: "ชร 52002/ว",
-    description: "รับผิดชอบงานการเงินและบัญชี งานพัสดุและทรัพย์สิน งานจัดเก็บรายได้",
-    isActive: true,
-    sections: [
-      { id: "sec-201", name: "งานการเงินและบัญชี", code: "SEC-ACC", leaderName: "นางวรรณา นามเงิน", staffCount: 3 },
-      { id: "sec-202", name: "งานพัสดุและทรัพย์สิน", code: "SEC-SUPPLY", leaderName: "นายพัสดุ รวดเร็ว", staffCount: 3 },
-      { id: "sec-203", name: "งานจัดเก็บและพัฒนารายได้", code: "SEC-REV", leaderName: "น.ส.ดวงใจ ใจดี", staffCount: 3 },
-    ],
-  },
-  {
-    id: "dept-3",
-    code: "ชร 52003",
-    name: "กองช่าง",
-    headName: "นายประเสริฐ ยิ่งยง",
-    headPosition: "ผู้อำนวยการกองช่าง",
-    staffCount: 11,
-    phone: "053-958100 ต่อ 16",
-    email: "engineer@doigam.go.th",
-    docPrefix: "ชร 52003/ว",
-    description: "รับผิดชอบงานสำรวจออกแบบ งานก่อสร้างโครงสร้างพื้นฐาน งานผังเมือง งานไฟฟ้าสาธารณะ",
-    isActive: true,
-    sections: [
-      { id: "sec-301", name: "งานก่อสร้างและผังเมือง", code: "SEC-ENG", leaderName: "นายวิศวกร ช่างมั่น", staffCount: 5 },
-      { id: "sec-302", name: "งานสาธารณูปโภคและไฟฟ้า", code: "SEC-UTIL", leaderName: "นายช่าง โยธาไทย", staffCount: 4 },
-    ],
-  },
-  {
-    id: "dept-4",
-    code: "ชร 52004",
-    name: "กองการศึกษา ศาสนาและวัฒนธรรม",
-    headName: "นายมานพ รักเรียน",
-    headPosition: "ผู้อำนวยการกองการศึกษาฯ",
-    staffCount: 8,
-    phone: "053-958100 ต่อ 18",
-    email: "education@doigam.go.th",
-    docPrefix: "ชร 52004/ว",
-    description: "รับผิดชอบงานศูนย์พัฒนาเด็กเล็ก งานการศึกษาปฐมวัย งานศาสนา ประเพณี และภูมิปัญญาท้องถิ่น",
-    isActive: true,
-    sections: [
-      { id: "sec-401", name: "งานส่งเสริมการศึกษาและวัฒนธรรม", code: "SEC-EDU", leaderName: "นางกานดา สอนดี", staffCount: 4 },
-      { id: "sec-402", name: "งานศูนย์พัฒนาเด็กเล็ก", code: "SEC-CHILD", leaderName: "นางครู สดใส", staffCount: 4 },
-    ],
-  },
-  {
-    id: "dept-5",
-    code: "ชร 52005",
-    name: "กองสาธารณสุขและสิ่งแวดล้อม",
-    headName: "น.ส.มยุรี พิทักษ์ไทย",
-    headPosition: "ผู้อำนวยการกองสาธารณสุขฯ",
-    staffCount: 7,
-    phone: "053-958100 ต่อ 20",
-    email: "health@doigam.go.th",
-    docPrefix: "ชร 52005/ว",
-    description: "รับผิดชอบงานสุขาภิบาล งานป้องกันควบคุมโรคติดต่อ งานจัดการขยะมูลฝอยและสิ่งแวดล้อม",
-    isActive: true,
-    sections: [
-      { id: "sec-501", name: "งานอนามัยและควบคุมโรค", code: "SEC-HEALTH", leaderName: "นายหมอ ประจำถิ่น", staffCount: 3 },
-      { id: "sec-502", name: "งานรักษาความสะอาดและสิ่งแวดล้อม", code: "SEC-ENV", leaderName: "นายสะอาด รักษ์โลก", staffCount: 4 },
-    ],
-  },
-  {
-    id: "dept-6",
-    code: "ชร 52006",
-    name: "หน่วยตรวจสอบภายใน",
-    headName: "นางเพ็ญศรี สุจริตธรรม",
-    headPosition: "หัวหน้าหน่วยตรวจสอบภายใน",
-    staffCount: 3,
-    phone: "053-958100 ต่อ 22",
-    email: "audit@doigam.go.th",
-    docPrefix: "ชร 52006/",
-    description: "รับผิดชอบการตรวจสอบการเงิน การจัดซื้อจัดจ้าง และการดำเนินงานตามระเบียบราชการ",
-    isActive: true,
-    sections: [
-      { id: "sec-601", name: "งานตรวจสอบการเงินและพัสดุ", code: "SEC-AUD-FIN", leaderName: "นางเพ็ญศรี สุจริตธรรม", staffCount: 2 },
-    ],
-  },
-];
+const initialDepartments: DepartmentItem[] = [];
+
+const ORG_STORAGE_KEY = "smartsarabun_custom_departments";
 
 export default function OrganizationPage() {
-  const [departments, setDepartments] = useState<DepartmentItem[]>(initialDepartments);
+  const [departments, setDepartments] = useState<DepartmentItem[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(ORG_STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (err) {
+        console.error("Failed to load departments:", err);
+      }
+    }
+    return initialDepartments;
+  });
+
+  // Save departments to localStorage whenever changed
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(ORG_STORAGE_KEY, JSON.stringify(departments));
+      } catch (err) {
+        console.error("Failed to save departments:", err);
+      }
+    }
+  }, [departments]);
   const [showAddDeptModal, setShowAddDeptModal] = useState(false);
   const [showEditDeptModal, setShowEditDeptModal] = useState(false);
   const [editingDept, setEditingDept] = useState<DepartmentItem | null>(null);
@@ -388,7 +307,25 @@ export default function OrganizationPage() {
       </div>
 
       {/* Departments Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {departments.length === 0 ? (
+        <Card className="border-dashed border-2 border-slate-300 bg-white/80 backdrop-blur-xl rounded-3xl p-12 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <Building2 className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900">ยังไม่มีกอง/สำนักในโครงสร้างองค์กร</h3>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mt-1 mb-6">
+            เริ่มต้นออกแบบโครงสร้างของหน่วยงานท่าน โดยการกดปุ่มด้านล่างเพื่อเพิ่มกองงานแรก เช่น สำนักปลัด, กองคลัง, กองช่าง ฯลฯ
+          </p>
+          <Button
+            onClick={() => setShowAddDeptModal(true)}
+            className="bg-gradient-to-r from-[#0052FF] to-[#0284c7] hover:from-blue-700 hover:to-sky-700 text-white font-bold rounded-xl h-11 px-6 shadow-md shadow-blue-500/25 gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ เพิ่มกอง/สำนักแรกของหน่วยงาน</span>
+          </Button>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {departments.map((dept) => (
           <Card
             key={dept.id}
@@ -538,6 +475,7 @@ export default function OrganizationPage() {
           </Card>
         ))}
       </div>
+      )}
 
       {/* 1. Modal: เพิ่มสำนัก/กองใหม่ (Add Department) */}
       {showAddDeptModal && (

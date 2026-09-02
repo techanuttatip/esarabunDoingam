@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/shared/sidebar/app-sidebar";
 import { AppTopbar } from "@/components/shared/topbar/app-topbar";
 import { ScreenLockModal } from "@/components/shared/security/screen-lock-modal";
+import { SaaSLockScreen } from "@/components/shared/saas/saas-lock-screen";
 
 export default function DashboardLayout({
   children,
@@ -24,6 +25,7 @@ export default function DashboardLayout({
         </main>
       </div>
       <ScreenLockModal />
+      <SaaSLockScreen />
     </div>
   );
 }
