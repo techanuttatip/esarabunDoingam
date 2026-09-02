@@ -131,13 +131,16 @@ export function SessionProvider({
   const updateProfile = (updated: Partial<SessionUser>) => {
     if (!currentUser) return;
     const next = { ...currentUser, ...updated };
-    if (updated.firstName || updated.lastName) {
+    if (updated.name) {
+      next.name = updated.name;
+    } else if (updated.firstName || updated.lastName) {
       const title = currentUser.name?.startsWith("นางสาว") ? "นางสาว" : currentUser.name?.startsWith("นาง") ? "นาง" : "นาย";
       next.name = `${title}${updated.firstName || currentUser.firstName || ""} ${updated.lastName || currentUser.lastName || ""}`.trim();
     }
     setCurrentUser(next);
     if (typeof window !== "undefined") {
       sessionStorage.setItem("smartsarabun_active_session", JSON.stringify({ user: next }));
+      window.dispatchEvent(new CustomEvent("user_profile_updated", { detail: next }));
     }
   };
 

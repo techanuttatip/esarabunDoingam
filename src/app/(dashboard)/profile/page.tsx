@@ -38,26 +38,39 @@ export default function ProfileAndSignaturePage() {
   const [availableDepartments, setAvailableDepartments] = useState<DepartmentOption[]>([]);
 
   // Profile Form State
-  const [title, setTitle] = useState(
-    user?.name?.startsWith("นางสาว")
-      ? "นางสาว"
-      : user?.name?.startsWith("นาง")
-      ? "นาง"
-      : user?.name?.startsWith("ว่าที่")
-      ? "ว่าที่ ร.ต."
-      : "นาย"
-  );
-  const [firstName, setFirstName] = useState(
-    user?.firstName || user?.name?.replace(/^(นาย|นางสาว|นาง|ว่าที่ ร\.ต\.)\s*/, "").split(" ")[0] || "สมศักดิ์"
-  );
-  const [lastName, setLastName] = useState(
-    user?.lastName || user?.name?.replace(/^(นาย|นางสาว|นาง|ว่าที่ ร\.ต\.)\s*/, "").split(" ")[1] || "สุขใจ"
-  );
-  const [position, setPosition] = useState(user?.position || "ปลัด อบต.ดอยงาม (Super Admin)");
-  const [department, setDepartment] = useState(user?.department || "");
-  const [email, setEmail] = useState(user?.email || "somsak.s@doigam.go.th");
-  const [phone, setPhone] = useState(user?.phone || "081-999-8877");
+  const [title, setTitle] = useState("นาย");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [position, setPosition] = useState("");
+  const [department, setDepartment] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [isProfileSaved, setIsProfileSaved] = useState(false);
+
+  // Sync state whenever user is loaded/updated from session
+  useEffect(() => {
+    if (user) {
+      const rawName = user.name || "";
+      let t = "นาย";
+      if (rawName.startsWith("นางสาว")) t = "นางสาว";
+      else if (rawName.startsWith("นาง")) t = "นาง";
+      else if (rawName.startsWith("ว่าที่")) t = "ว่าที่ ร.ต.";
+      else if (rawName.startsWith("ดร.")) t = "ดร.";
+
+      const cleanName = rawName.replace(/^(นาย|นางสาว|นาง|ว่าที่ ร\.ต\.|ดร\.)\s*/, "");
+      const parts = cleanName.split(" ");
+      const fName = user.firstName || parts[0] || "";
+      const lName = user.lastName || parts.slice(1).join(" ") || "";
+
+      setTitle(t);
+      setFirstName(fName);
+      setLastName(lName);
+      setPosition(user.position || "เจ้าหน้าที่ปฏิบัติงาน");
+      setDepartment(user.department || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+    }
+  }, [user]);
 
   // Load available departments
   useEffect(() => {
@@ -66,7 +79,7 @@ export default function ProfileAndSignaturePage() {
     if (!department && depts.length > 0) {
       setDepartment(depts[0].name);
     }
-  }, []);
+  }, [department]);
 
   // Signature Studio State
   const [signatureMode, setSignatureMode] = useState<"draw" | "upload" | "font">("draw");
@@ -166,16 +179,47 @@ export default function ProfileAndSignaturePage() {
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    const fullName = `${title}${firstName} ${lastName}`.trim();
-    updateProfile({
+    const fullName = `${title}${firstName.trim()} ${lastName.trim()}`.trim();
+    const updatedFields = {
       name: fullName,
-      firstName,
-      lastName,
-      position,
-      department,
-      email,
-      phone,
-    });
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      position: position.trim(),
+      department: department.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+    };
+
+    updateProfile(updatedFields);
+
+    // Also update custom users list if exists
+    if (typeof window !== "undefined" && user) {
+      try {
+        const rawUsers = localStorage.getItem("smartsarabun_custom_users");
+        if (rawUsers) {
+          const userList = JSON.parse(rawUsers);
+          const updatedList = userList.map((u: any) => {
+            if (u.id === user.id || u.username === user.email || u.email === user.email || u.accountId === user.accountId) {
+              return {
+                ...u,
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
+                fullName,
+                position: position.trim(),
+                department: department.trim(),
+                email: email.trim(),
+                phone: phone.trim(),
+              };
+            }
+            return u;
+          });
+          localStorage.setItem("smartsarabun_custom_users", JSON.stringify(updatedList));
+        }
+      } catch (err) {
+        console.error("Failed to update user in list:", err);
+      }
+    }
+
     setIsProfileSaved(true);
     setTimeout(() => setIsProfileSaved(false), 3500);
   };
