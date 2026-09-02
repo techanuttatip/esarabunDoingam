@@ -427,7 +427,7 @@ export function LoginClientForm() {
             <input
               type="text"
               required
-              placeholder="กรอกชื่อผู้ใช้งาน หรือ อีเมล (เช่น techanut0@gmail.com)"
+              placeholder="กรอกชื่อผู้ใช้งาน หรือ อีเมลราชการ"
               value={usernameInput}
               onChange={(e) => setUsernameInput(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
