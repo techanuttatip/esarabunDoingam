@@ -22,6 +22,7 @@ import {
   ShieldAlert,
   Info,
 } from "lucide-react";
+import { getSavedUserProfile } from "@/lib/user-store";
 
 export interface OfficialUserAccount {
   id: string;
@@ -37,9 +38,11 @@ export interface OfficialUserAccount {
     firstName: string;
     lastName: string;
     email: string;
+    phone?: string;
     position: string;
     department: string;
     roles: string[];
+    mustChangePassword?: boolean;
   };
   icon: any;
   badge: string;
@@ -237,8 +240,30 @@ export function LoginClientForm() {
   };
 
   const completeLogin = (acc: OfficialUserAccount) => {
+    let userObj = acc.user;
+    if (typeof window !== "undefined") {
+      const savedProfile =
+        getSavedUserProfile(acc.username) ||
+        getSavedUserProfile(acc.user.email) ||
+        getSavedUserProfile(acc.user.id) ||
+        getSavedUserProfile(acc.accountId);
+      if (savedProfile) {
+        userObj = {
+          ...acc.user,
+          ...savedProfile,
+          name: savedProfile.name || acc.user.name,
+          firstName: savedProfile.firstName || acc.user.firstName,
+          lastName: savedProfile.lastName || acc.user.lastName,
+          position: savedProfile.position || acc.user.position,
+          department: savedProfile.department || acc.user.department,
+          email: savedProfile.email || acc.user.email,
+          phone: savedProfile.phone || acc.user.phone,
+        };
+      }
+    }
+
     const sessionData = {
-      user: acc.user,
+      user: userObj,
       expires: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
     };
 
@@ -247,7 +272,7 @@ export function LoginClientForm() {
       sessionStorage.setItem("smartsarabun_session_login_time", Date.now().toString());
       // Session cookie without max-age / expires: dies automatically when browser or tab is closed
       document.cookie = "smart_sarabun_session=1; path=/; SameSite=Lax";
-      document.cookie = `smart_sarabun_role=${acc.user.roles[0]}; path=/; SameSite=Lax`;
+      document.cookie = `smart_sarabun_role=${userObj.roles[0]}; path=/; SameSite=Lax`;
       window.location.href = "/";
     }
   };

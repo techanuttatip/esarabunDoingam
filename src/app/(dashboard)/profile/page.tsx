@@ -25,8 +25,9 @@ import {
   Sparkles,
   Download,
 } from "lucide-react";
-import { useSession } from "@/components/providers/session-provider";
+import { useSession, SessionUser } from "@/components/providers/session-provider";
 import { getActiveDepartments, DepartmentOption } from "@/lib/departments";
+import { saveUserProfile, getSavedUserProfile } from "@/lib/user-store";
 
 export default function ProfileAndSignaturePage() {
   const { data: session, updateProfile } = useSession();
@@ -218,6 +219,18 @@ export default function ProfileAndSignaturePage() {
       } catch (err) {
         console.error("Failed to update user in list:", err);
       }
+    }
+
+    // Save to permanent profiles database
+    if (user) {
+      if (user.email) saveUserProfile(user.email, updatedFields);
+      if (user.id) saveUserProfile(user.id, updatedFields);
+      if (user.accountId) saveUserProfile(user.accountId, updatedFields);
+    }
+    if (user?.email === "techanut0@gmail.com" || user?.roles?.includes("SUPER_ADMIN")) {
+      saveUserProfile("techanut0@gmail.com", updatedFields);
+      saveUserProfile("usr-superadmin", updatedFields);
+      saveUserProfile("DG-008301", updatedFields);
     }
 
     setIsProfileSaved(true);

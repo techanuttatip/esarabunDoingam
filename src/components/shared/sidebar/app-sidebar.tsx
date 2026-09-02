@@ -8,7 +8,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { navigationConfig, NavItem } from "@/config/navigation";
-import { useSession } from "@/components/providers/session-provider";
+import { useSession, signOut } from "@/components/providers/session-provider";
 import { DoiNgamLogoEmblem } from "@/components/shared/doigam-logo-emblem";
 import { getTenantSaaSConfig, TenantSaaSConfig } from "@/config/tenant-config";
 
@@ -17,6 +17,10 @@ export function AppSidebar() {
   const { data: session } = useSession();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [tenantConfig, setTenantConfig] = useState<TenantSaaSConfig>(getTenantSaaSConfig());
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/login" });
+  };
 
   useEffect(() => {
     const update = () => setTenantConfig(getTenantSaaSConfig());
@@ -105,16 +109,7 @@ export function AppSidebar() {
     );
   };
 
-  const handleLogout = () => {
-    document.cookie = "smart_sarabun_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "smart_sarabun_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("smartsarabun_custom_session");
-      localStorage.removeItem("smartsarabun_user_profile");
-      localStorage.removeItem("smartsarabun_screen_locked");
-      window.location.href = "/login";
-    }
-  };
+
 
   return (
     <>

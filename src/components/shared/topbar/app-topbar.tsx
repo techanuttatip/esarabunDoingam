@@ -21,7 +21,7 @@ import {
   Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSession } from "@/components/providers/session-provider";
+import { useSession, signOut } from "@/components/providers/session-provider";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { TrialCountdownBadge } from "@/components/shared/saas/trial-countdown-badge";
 
@@ -33,14 +33,7 @@ export function AppTopbar() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    document.cookie = "smart_sarabun_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "smart_sarabun_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("smartsarabun_custom_session");
-      localStorage.removeItem("smartsarabun_user_profile");
-      localStorage.removeItem("smartsarabun_screen_locked");
-      window.location.href = "/login";
-    }
+    signOut({ callbackUrl: "/login" });
   };
 
   const notifications = [
