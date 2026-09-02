@@ -140,6 +140,71 @@ export default function UsersManagementPage() {
     });
   };
 
+  // Edit User State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<CivilServantUser | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    fullName: "",
+    username: "",
+    position: "",
+    department: "",
+    section: "",
+    role: "OFFICER",
+    scope: "OWN" as DataScope,
+    email: "",
+    phone: "",
+    status: "active" as "active" | "inactive",
+  });
+
+  const handleOpenEditModal = (user: CivilServantUser) => {
+    setSelectedUserForEdit(user);
+    setEditFormData({
+      fullName: user.fullName,
+      username: user.username,
+      position: user.position,
+      department: user.department,
+      section: user.section || "",
+      role: user.role,
+      scope: user.scope,
+      email: user.email,
+      phone: user.phone || "",
+      status: user.status,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditUserSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserForEdit) return;
+
+    const updatedList = users.map((u) => {
+      if (u.id === selectedUserForEdit.id) {
+        return {
+          ...u,
+          fullName: editFormData.fullName.trim(),
+          username: editFormData.username.trim().toLowerCase(),
+          position: editFormData.position.trim(),
+          department: editFormData.department,
+          section: editFormData.section.trim(),
+          role: editFormData.role,
+          scope: editFormData.scope,
+          email: editFormData.email.trim(),
+          phone: editFormData.phone.trim(),
+          status: editFormData.status,
+        };
+      }
+      return u;
+    });
+
+    setUsers(updatedList);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedList));
+    }
+
+    setShowEditModal(false);
+    setSelectedUserForEdit(null);
+  };
+
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.username || !formData.firstName || !formData.lastName) return;
@@ -155,8 +220,8 @@ export default function UsersManagementPage() {
       section: formData.section || `งานสังกัด${formData.department}`,
       role: formData.role,
       scope: formData.scope,
-      email: formData.email || `${formData.username}@doigam.go.th`,
-      phone: formData.phone || "053-958100",
+      email: formData.email.trim() || `${formData.username.trim()}@gmail.com`,
+      phone: formData.phone.trim() || "053-958100",
       status: "active",
       lastLogin: "ยังไม่เคยเข้าสู่ระบบ",
     };
@@ -174,8 +239,8 @@ export default function UsersManagementPage() {
       firstName: "",
       lastName: "",
       position: "",
-      department: "สำนักปลัด",
-      section: "งานบริหารทั่วไปและสารบรรณกลาง",
+      department: availableDepartments.length > 0 ? availableDepartments[0].name : "สำนักปลัด",
+      section: "",
       role: "OFFICER",
       scope: "OWN",
       initialPassword: "Doigam@2569",
@@ -338,6 +403,16 @@ export default function UsersManagementPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => handleOpenEditModal(user)}
+                          className="h-8 w-8 p-0 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50"
+                          title="แก้ไขข้อมูลผู้ใช้ (Edit User)"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => {
                             setSelectedUserForReset(user);
                             setShowResetModal(true);
@@ -373,8 +448,8 @@ export default function UsersManagementPage() {
       {/* Add User Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in zoom-in-95">
-            <div className="bg-navy-950 text-white p-5 flex items-center justify-between">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in zoom-in-95 max-h-[90vh] flex flex-col">
+            <div className="bg-navy-950 text-white p-5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <UserPlus className="w-5 h-5 text-amber-300" />
                 <h3 className="font-extrabold text-base">เพิ่มบุคลากรใหม่ (Create New User)</h3>
@@ -384,19 +459,21 @@ export default function UsersManagementPage() {
               </button>
             </div>
 
-            <form onSubmit={handleAddUser} className="p-6 space-y-4">
+            <form onSubmit={handleAddUser} className="p-6 overflow-y-auto space-y-4 flex-1">
+              {/* Name Fields */}
               <div className="grid grid-cols-12 gap-3">
                 <div className="col-span-3">
-                  <label className="font-bold text-slate-700 text-xs block mb-1">คำนำหน้า * :</label>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">คำนำหน้า :</label>
                   <select
                     value={formData.titlePrefix}
                     onChange={(e) => setFormData({ ...formData, titlePrefix: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-white"
                   >
                     <option value="นาย">นาย</option>
                     <option value="นาง">นาง</option>
-                    <option value="น.ส.">น.ส.</option>
+                    <option value="นางสาว">นางสาว</option>
                     <option value="ว่าที่ ร.ต.">ว่าที่ ร.ต.</option>
+                    <option value="ดร.">ดร.</option>
                   </select>
                 </div>
                 <div className="col-span-4">
@@ -425,14 +502,14 @@ export default function UsersManagementPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 text-xs block mb-1">ชื่อผู้ใช้ (Username) * :</label>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">ชื่อผู้ใช้สำหรับ Login (Username) * :</label>
                   <input
                     type="text"
                     required
-                    placeholder="เช่น somsaak.s"
+                    placeholder="เช่น somsak.s หรือ aoiaoi"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-mono"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-mono font-bold"
                   />
                 </div>
                 <div>
@@ -440,9 +517,36 @@ export default function UsersManagementPage() {
                   <input
                     type="text"
                     required
-                    placeholder="เช่น นายช่างโยธาปฏิบัติงาน"
+                    placeholder="เช่น เจ้าพนักงานธุรการ หรือ นายช่างโยธา"
                     value={formData.position}
                     onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Email & Phone Inputs */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">
+                    อีเมล (Email / อีเมลส่วนตัวหรืออีเมลราชการ) * :
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="เช่น aoiaoi.p@gmail.com หรือ aoiaoi@doigam.go.th"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-blue-300 bg-blue-50/40 text-xs sm:text-sm text-slate-900 font-medium focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">เบอร์โทรศัพท์ติดต่อ :</label>
+                  <input
+                    type="text"
+                    placeholder="เช่น 081-234-5678"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm"
                   />
                 </div>
@@ -532,6 +636,173 @@ export default function UsersManagementPage() {
                   className="bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs rounded-xl h-10 px-5 shadow-xs cursor-pointer"
                 >
                   บันทึกผู้ใช้งาน & ออกรหัสเริ่มต้น
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditModal && selectedUserForEdit && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in zoom-in-95 max-h-[90vh] flex flex-col">
+            <div className="bg-navy-950 text-white p-5 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <Edit className="w-5 h-5 text-amber-300" />
+                <div>
+                  <h3 className="font-extrabold text-base">แก้ไขข้อมูลบุคลากร (Edit User Profile)</h3>
+                  <p className="text-xs text-slate-300">{selectedUserForEdit.accountId} — @{selectedUserForEdit.username}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowEditModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditUserSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
+              <div>
+                <label className="font-bold text-slate-700 text-xs block mb-1">ชื่อ-นามสกุล เต็ม (พร้อมคำนำหน้า) * :</label>
+                <input
+                  type="text"
+                  required
+                  value={editFormData.fullName}
+                  onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">ชื่อผู้ใช้ (Username) * :</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.username}
+                    onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-mono font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">ตำแหน่งราชการ * :</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.position}
+                    onChange={(e) => setEditFormData({ ...editFormData, position: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Email & Phone Inputs */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">
+                    อีเมล (Email / อีเมลส่วนตัวหรืออีเมลราชการ) * :
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-blue-300 bg-blue-50/40 text-xs sm:text-sm text-slate-900 font-medium focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">เบอร์โทรศัพท์ติดต่อ :</label>
+                  <input
+                    type="text"
+                    value={editFormData.phone}
+                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">สำนัก/กอง :</label>
+                  {availableDepartments.length > 0 ? (
+                    <select
+                      value={editFormData.department}
+                      onChange={(e) => setEditFormData({ ...editFormData, department: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-white"
+                    >
+                      {availableDepartments.map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name} {d.code ? `(${d.code})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select
+                      value={editFormData.department}
+                      onChange={(e) => setEditFormData({ ...editFormData, department: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50 text-xs sm:text-sm font-bold text-slate-700"
+                    >
+                      <option value="">(ยังไม่ได้สร้างกองงานในระบบ)</option>
+                    </select>
+                  )}
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">บทบาทระบบ (Role) :</label>
+                  <select
+                    value={editFormData.role}
+                    onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-white"
+                  >
+                    <option value="OFFICER">OFFICER (เจ้าหน้าที่ปฏิบัติงาน)</option>
+                    <option value="DOCUMENT_OFFICER">DOCUMENT_OFFICER (สารบรรณ)</option>
+                    <option value="MANAGER">MANAGER (ผอ.กอง/ปลัด)</option>
+                    <option value="EXECUTIVE">EXECUTIVE (ผู้บริหาร)</option>
+                    <option value="ORGANIZATION_ADMIN">ORGANIZATION_ADMIN (แอดมิน อบต.)</option>
+                    <option value="VIEWER">VIEWER (ผู้ตรวจสอบ)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">ขอบเขตข้อมูล (Data Scope) :</label>
+                  <select
+                    value={editFormData.scope}
+                    onChange={(e) => setEditFormData({ ...editFormData, scope: e.target.value as DataScope })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-white"
+                  >
+                    <option value="OWN">OWN (เข้าถึงเฉพาะเอกสารที่ตนเองสร้าง/ได้รับมอบหมาย)</option>
+                    <option value="DEPT">DEPT (เข้าถึงเอกสารทั้งหมดภายในกอง)</option>
+                    <option value="ORG">ORG (เข้าถึงเอกสารทั่วทั้ง อบต.)</option>
+                    <option value="ALL">ALL (เข้าถึงทั้งระบบ)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">สถานะผู้ใช้งาน :</label>
+                  <select
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as "active" | "inactive" })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-white"
+                  >
+                    <option value="active">เปิดใช้งาน (Active)</option>
+                    <option value="inactive">ระงับชั่วคราว (Inactive)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowEditModal(false)}
+                  className="text-xs font-bold rounded-xl h-10 px-4 border-slate-300"
+                >
+                  ยกเลิก
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs rounded-xl h-10 px-5 shadow-xs cursor-pointer"
+                >
+                  บันทึกการแก้ไข
                 </Button>
               </div>
             </form>
