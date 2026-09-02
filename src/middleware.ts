@@ -1,20 +1,25 @@
-import NextAuth from 'next-auth';
-import authConfig from '@/lib/auth/auth.config';
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-const { auth } = NextAuth({
-  ...authConfig,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "smartsarabun_default_auth_secret_for_development",
-});
-
-export default auth((req) => {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAuthPage = pathname.startsWith('/login');
-  const isPublicPage = pathname.startsWith('/verify') || pathname.startsWith('/manifest') || pathname.startsWith('/icons') || pathname.startsWith('/platform-admin');
-  
-  // Check both NextAuth token and SmartSarabun session cookie
-  const hasSessionCookie = req.cookies.has('smart_sarabun_session') || req.cookies.has('smart_sarabun_role') || req.cookies.has('authjs.session-token') || req.cookies.has('next-auth.session-token') || req.cookies.has('__Secure-next-auth.session-token');
-  const isLoggedIn = !!req.auth || hasSessionCookie;
+  const isPublicPage =
+    pathname.startsWith('/verify') ||
+    pathname.startsWith('/manifest') ||
+    pathname.startsWith('/icons') ||
+    pathname.startsWith('/platform-admin');
+
+  // Check for active session cookies
+  const hasSessionCookie =
+    req.cookies.has('smart_sarabun_session') ||
+    req.cookies.has('smart_sarabun_role') ||
+    req.cookies.has('authjs.session-token') ||
+    req.cookies.has('next-auth.session-token') ||
+    req.cookies.has('__Secure-next-auth.session-token') ||
+    req.cookies.has('__Secure-authjs.session-token');
+
+  const isLoggedIn = hasSessionCookie;
 
   // Helper to attach hardened security headers
   const applySecurityHeaders = (res: NextResponse) => {
@@ -37,15 +42,15 @@ export default auth((req) => {
     return applySecurityHeaders(NextResponse.next());
   }
 
-  // Protect dashboard routes when unauthenticated
+  // Protect dashboard routes when unauthenticated -> redirect to /login
   if (!isLoggedIn) {
     const loginUrl = new URL('/login', req.url);
     return applySecurityHeaders(NextResponse.redirect(loginUrl));
   }
 
   return applySecurityHeaders(NextResponse.next());
-});
+}
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|images).*)'],
 };
