@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Printer,
   Download,
@@ -17,6 +17,7 @@ import {
   Building,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getAllDocuments, StoredDocument } from "@/lib/document-store";
 
 interface BookLedgerModalProps {
   isOpen: boolean;
@@ -38,13 +39,38 @@ interface LedgerRow {
   note: string;
 }
 
-const mockIncomingLedger: LedgerRow[] = [];
-
 export function BookLedgerModal({ isOpen, onClose, defaultBookType = "INCOMING" }: BookLedgerModalProps) {
+  const [allDocs, setAllDocs] = useState<StoredDocument[]>([]);
   const [bookType, setBookType] = useState<"INCOMING" | "OUTGOING">(defaultBookType);
   const [fiscalYear, setFiscalYear] = useState("๒๕๖๙");
   const [department, setDepartment] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    if (isOpen) {
+      setAllDocs(getAllDocuments());
+    }
+  }, [isOpen]);
+
+  const activeDocs = allDocs.filter((d) => {
+    if (department !== "ALL" && d.targetDept !== department && d.senderDept !== department) return false;
+    if (bookType === "INCOMING") return d.direction === "incoming" || (!d.direction && !!d.regNo);
+    return d.direction === "outgoing";
+  });
+
+  const ledgerRows: LedgerRow[] = activeDocs.map((doc) => ({
+    regNo: doc.regNo || (bookType === "OUTGOING" ? doc.docNo : "-"),
+    regDate: doc.regDate || doc.docDate,
+    regTime: doc.regTime || "๑๔.๓๐ น.",
+    fromOrg: doc.from || (doc as any).fromOrg || "ส่วนราชการ",
+    toOrg: doc.to || (doc as any).toOrg || "นายก อบต.ดอยงาม",
+    title: doc.title,
+    docNo: doc.docNo,
+    docDate: doc.docDate,
+    targetDept: doc.targetDept || doc.senderDept || "สำนักปลัด",
+    receiver: doc.senderName || "น.ส.ธัญวรรัตน์ ตาสาย",
+    note: doc.status || "ลงรับแล้ว",
+  }));
 
   if (!isOpen) return null;
 
@@ -187,8 +213,8 @@ export function BookLedgerModal({ isOpen, onClose, defaultBookType = "INCOMING" 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-300">
-                  {mockIncomingLedger.length > 0 ? (
-                    mockIncomingLedger.map((row, idx) => (
+                  {ledgerRows.length > 0 ? (
+                    ledgerRows.map((row, idx) => (
                       <tr key={idx} className="hover:bg-blue-50/40 transition-colors">
                         {/* Left Page Columns */}
                         <td className="py-2.5 px-2 border-r border-slate-400 text-center font-mono font-bold text-[#0052FF]">

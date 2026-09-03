@@ -59,6 +59,7 @@ import { useSession } from "@/components/providers/session-provider";
 import { AntiLeakWatermark } from "@/features/security/components/anti-leak-watermark";
 import { ThaiGaruda } from "@/components/shared/thai-garuda";
 import { DocVerificationSeal } from "@/components/shared/doc-verification-seal";
+import { updateDocument } from "@/lib/document-store";
 
 // Digital Signature Component (Renders actual signature image from profile or clean Thai signature font)
 function DigitalSignature({ name, signatureUrl, className = "h-8" }: { name: string; signatureUrl?: string; className?: string }) {
@@ -81,7 +82,10 @@ export interface DocumentData {
   regDate?: string;
   regTime?: string;
   deptRegNo?: string;
+  deptRegDate?: string;
+  deptRegTime?: string;
   docDate: string;
+  date?: string;
   from: string;
   to: string;
   title: string;
@@ -89,9 +93,14 @@ export interface DocumentData {
   speed: "ปกติ" | "ด่วน" | "ด่วนมาก" | "ด่วนที่สุด";
   secret: "ปกติ" | "ลับ" | "ลับมาก" | "ลับที่สุด";
   targetDept?: string;
+  targetSection?: string;
   assignedStaff?: string;
+  assignedStaffName?: string;
+  dispatchDate?: string;
   contentParagraphs: string[];
   pdfUrl?: string;
+  pdfBase64?: string;
+  pdfName?: string;
   signers?: {
     name: string;
     position: string;
@@ -122,9 +131,11 @@ export interface DocumentData {
 export function DocumentViewerWorkspace({
   document,
   onClose,
+  onSaveDoc,
 }: {
   document: DocumentData;
   onClose: () => void;
+  onSaveDoc?: (updated: DocumentData) => void;
 }) {
   const { data: session } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -182,11 +193,26 @@ export function DocumentViewerWorkspace({
     }
   }, []);
 
-  const handleDeptReceive = () => {
-    setIsDeptReceived(true);
-    setIsSuccessToast(true);
-    setTimeout(() => setIsSuccessToast(false), 3000);
-  };
+    const handleDeptReceive = () => {
+      setIsDeptReceived(true);
+      const updated: DocumentData = {
+        ...currentDoc,
+        deptRegNo,
+        deptRegDate,
+        deptRegTime,
+        targetDept: selectedDeptBox,
+      };
+      setCurrentDoc(updated);
+      updateDocument(currentDoc.id, {
+        deptRegNo,
+        deptRegDate,
+        deptRegTime,
+        targetDept: selectedDeptBox,
+      });
+      onSaveDoc?.(updated);
+      setIsSuccessToast(true);
+      setTimeout(() => setIsSuccessToast(false), 3000);
+    };
 
   // AI Thai Voice Dictation State
   const [isVoiceRecording, setIsVoiceRecording] = useState(false);
@@ -325,6 +351,19 @@ export function DocumentViewerWorkspace({
       const blobUrl = URL.createObjectURL(file);
       setUploadedPdfBlobUrl(blobUrl);
       setUploadedPdfName(file.name);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        setUploadedPdfBlobUrl(base64);
+        updateDocument(currentDoc.id, {
+          pdfUrl: base64,
+          pdfBase64: base64,
+          pdfName: file.name,
+        });
+        onSaveDoc?.({ ...currentDoc, pdfUrl: base64, pdfName: file.name });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -352,11 +391,18 @@ export function DocumentViewerWorkspace({
       date: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) + " " + new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.",
     };
 
-    setCurrentDoc((prev) => ({
-      ...prev,
+    const updatedDoc: DocumentData = {
+      ...currentDoc,
       targetDept: selectedDeptBox,
-      endorsements: [...(prev.endorsements || []), newEndorsement],
-    }));
+      endorsements: [...(currentDoc.endorsements || []), newEndorsement],
+    };
+
+    setCurrentDoc(updatedDoc);
+    updateDocument(currentDoc.id, {
+      targetDept: selectedDeptBox,
+      endorsements: updatedDoc.endorsements,
+    });
+    onSaveDoc?.(updatedDoc);
 
     setCustomEndorseNote("");
     setSelectedQuickAction([]);

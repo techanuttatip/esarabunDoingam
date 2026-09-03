@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,29 +21,29 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import Link from "next/link";
-
-interface IncomingItem {
-  id: string;
-  regNo: string;
-  docNo: string;
-  regDate: string;
-  docDate: string;
-  fromOrg: string;
-  title: string;
-  targetDept: string;
-  speed: "ปกติ" | "ด่วน" | "ด่วนมาก" | "ด่วนที่สุด";
-  status: "รอเกษียน" | "รอพิจารณา" | "กำลังดำเนินการ" | "เสร็จสิ้น";
-  hasAttachment: boolean;
-}
-
-const mockInboxDocs: IncomingItem[] = [];
+import { getIncomingDocuments, StoredDocument } from "@/lib/document-store";
+import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
 
 export default function InboxPage() {
+  const [inboxDocs, setInboxDocs] = useState<StoredDocument[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [selectedSpeed, setSelectedSpeed] = useState("ALL");
+  const [selectedDocForViewer, setSelectedDocForViewer] = useState<DocumentData | null>(null);
 
-  const filteredDocs = mockInboxDocs.filter((doc) => {
+  useEffect(() => {
+    const loadDocs = () => {
+      setInboxDocs(getIncomingDocuments());
+    };
+    loadDocs();
+
+    window.addEventListener("smartsarabun_documents_updated", loadDocs);
+    return () => {
+      window.removeEventListener("smartsarabun_documents_updated", loadDocs);
+    };
+  }, []);
+
+  const filteredDocs = inboxDocs.filter((doc) => {
     if (selectedDept !== "ALL" && doc.targetDept !== selectedDept) return false;
     if (selectedSpeed !== "ALL" && doc.speed !== selectedSpeed) return false;
     if (searchQuery.trim()) {
@@ -51,12 +51,14 @@ export default function InboxPage() {
       return (
         doc.title.toLowerCase().includes(q) ||
         doc.docNo.toLowerCase().includes(q) ||
-        doc.regNo.toLowerCase().includes(q) ||
-        doc.fromOrg.toLowerCase().includes(q)
+        (doc.regNo && doc.regNo.toLowerCase().includes(q)) ||
+        (doc.from && doc.from.toLowerCase().includes(q))
       );
     }
     return true;
   });
+
+
 
   return (
     <div className="space-y-6 pb-12">
@@ -185,7 +187,7 @@ export default function InboxPage() {
                           )}
                           <p className="font-bold text-slate-900 text-xs sm:text-sm">{doc.title}</p>
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-1">จาก: {doc.fromOrg}</p>
+                        <p className="text-[11px] text-slate-500 mt-1">จาก: {doc.from || (doc as any).fromOrg}</p>
                       </td>
 
                       <td className="p-3.5">
@@ -196,16 +198,19 @@ export default function InboxPage() {
 
                       <td className="p-3.5">
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900">
-                          {doc.status}
+                          {doc.status || "ลงรับแล้ว"}
                         </span>
                       </td>
 
                       <td className="p-3.5 text-center">
-                        <Button asChild size="sm" variant="outline" className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50">
-                          <Link href="/receive">
-                            <Eye className="w-3.5 h-3.5 mr-1" />
-                            เปิดดู
-                          </Link>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedDocForViewer(doc)}
+                          className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5 mr-1" />
+                          เปิดดู
                         </Button>
                       </td>
                     </tr>
@@ -224,6 +229,15 @@ export default function InboxPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Document Viewer Modal */}
+      {selectedDocForViewer && (
+        <DocumentViewerWorkspace
+          document={selectedDocForViewer}
+          onClose={() => setSelectedDocForViewer(null)}
+          onSaveDoc={() => setInboxDocs(getIncomingDocuments())}
+        />
+      )}
     </div>
   );
 }

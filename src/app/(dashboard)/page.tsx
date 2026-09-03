@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Inbox,
   Send,
@@ -18,21 +18,45 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/components/providers/session-provider";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
+import { getDocumentStats, getAllDocuments, StoredDocument } from "@/lib/document-store";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const [allDocs, setAllDocs] = useState<StoredDocument[]>([]);
+  const [stats, setStats] = useState({
+    totalDocs: 0,
+    incomingToday: 0,
+    outgoingToday: 0,
+    pendingCount: 0,
+    completedCount: 0,
+    overdueCount: 0,
+    slaRate: "100%",
+  });
   const [myWorkFilter, setMyWorkFilter] = useState<"all" | "today" | "near_due" | "overdue" | "completed">("all");
   const [selectedStudioDoc, setSelectedStudioDoc] = useState<DocumentData | null>(null);
 
   const userName = session?.user?.name || "ผู้ดูแลระบบสูงสุด (Super Admin)";
   const userDept = session?.user?.department || "สำนักปลัด (ผู้ดูแลระบบส่วนกลาง)";
 
-  // 4 Core High-Impact Glass KPI Metrics
+  useEffect(() => {
+    const updateStats = () => {
+      setStats(getDocumentStats());
+      setAllDocs(getAllDocuments());
+    };
+    updateStats();
+
+    window.addEventListener("smartsarabun_documents_updated", updateStats);
+    return () => {
+      window.removeEventListener("smartsarabun_documents_updated", updateStats);
+    };
+  }, []);
+
+  // 4 Core High-Impact Glass KPI Metrics (Calculated Live from Real Data)
   const kpis = [
     {
       title: "หนังสือรับวันนี้",
-      value: "0",
-      trend: "รอลงรับหนังสือใหม่",
+      value: stats.incomingToday.toString(),
+      trend: stats.incomingToday > 0 ? `ลงรับแล้ว ${stats.incomingToday} ฉบับ` : "รอลงรับหนังสือใหม่",
       icon: Inbox,
       gradient: "from-blue-600 to-indigo-600",
       accent: "text-blue-700",
@@ -42,8 +66,8 @@ export default function DashboardPage() {
     },
     {
       title: "หนังสือส่งวันนี้",
-      value: "0",
-      trend: "รอออกเลขส่งใหม่",
+      value: stats.outgoingToday.toString(),
+      trend: stats.outgoingToday > 0 ? `ออกเลขส่ง ${stats.outgoingToday} ฉบับ` : "รอออกเลขส่งใหม่",
       icon: Send,
       gradient: "from-emerald-600 to-teal-600",
       accent: "text-emerald-700",
@@ -53,8 +77,8 @@ export default function DashboardPage() {
     },
     {
       title: "งานรอดำเนินการ",
-      value: "0",
-      trend: "ไม่มีค้างดำเนินการ",
+      value: stats.pendingCount.toString(),
+      trend: stats.pendingCount > 0 ? `รอสั่งการ/เกษียน ${stats.pendingCount} เรื่อง` : "ไม่มีค้างดำเนินการ",
       icon: Clock,
       gradient: "from-amber-500 to-orange-600",
       accent: "text-amber-700",
@@ -64,7 +88,7 @@ export default function DashboardPage() {
     },
     {
       title: "เกินกำหนด SLA",
-      value: "0",
+      value: stats.overdueCount.toString(),
       trend: "ตรงเวลา 100%",
       icon: AlertTriangle,
       gradient: "from-rose-500 to-red-600",
@@ -75,8 +99,18 @@ export default function DashboardPage() {
     },
   ];
 
-  // Actionable Task Queue (My Work)
-  const myWorkTasks: any[] = [];
+  // Actionable Task Queue (My Work) - Real active documents
+  const myWorkTasks = allDocs.map((doc) => ({
+    ...doc,
+    regNo: doc.regNo || (doc.direction === "outgoing" ? "หนังสือส่ง" : "ลงรับแล้ว"),
+    from: doc.from || (doc as any).fromOrg || "ส่วนราชการ",
+    dept: doc.targetDept || doc.senderDept || "สำนักปลัด",
+    speed: doc.speed || "ปกติ",
+    priority: doc.speed === "ด่วนที่สุด" ? "CRITICAL" : doc.speed === "ด่วนมาก" ? "HIGH" : "NORMAL",
+    category: doc.status === "completed" || doc.status === "sent" ? "completed" : "today",
+    taskStatus: doc.direction === "outgoing" ? "หนังสือส่ง" : "รอดำเนินการ",
+    date: doc.docDate || doc.createdAt || "",
+  }));
 
   const filteredTasks = myWorkTasks.filter((task) => {
     if (myWorkFilter === "all") return true;
@@ -367,6 +401,10 @@ export default function DashboardPage() {
         <DocumentViewerWorkspace
           document={selectedStudioDoc}
           onClose={() => setSelectedStudioDoc(null)}
+          onSaveDoc={() => {
+            setStats(getDocumentStats());
+            setAllDocs(getAllDocuments());
+          }}
         />
       )}
     </div>

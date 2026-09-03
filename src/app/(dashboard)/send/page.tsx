@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 
 import { getActiveDepartments, DepartmentOption } from "@/lib/departments";
+import { getOutgoingDocuments, saveDocument, updateDocument } from "@/lib/document-store";
 import { useEffect } from "react";
 
 export type SpeedLevel = "ปกติ" | "ด่วน" | "ด่วนมาก" | "ด่วนที่สุด";
@@ -60,15 +61,32 @@ export interface OutgoingDocItem {
   timeline: { action: string; time: string; actor: string; note: string }[];
 }
 
-const initialOutgoingList: OutgoingDocItem[] = [];
-
 export default function SendPage() {
-  const [documents, setDocuments] = useState<OutgoingDocItem[]>(initialOutgoingList);
+  const [documents, setDocuments] = useState<OutgoingDocItem[]>([]);
   const [availableDepartments, setAvailableDepartments] = useState<DepartmentOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [selectedSpeed, setSelectedSpeed] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+
+  useEffect(() => {
+    const loadDocs = () => {
+      const stored = getOutgoingDocuments();
+      setDocuments(
+        stored.map((d: any) => ({
+          ...d,
+          fromDept: d.fromDept || d.from || d.targetDept || "สำนักปลัด",
+          toOrg: d.toOrg || d.to,
+        }))
+      );
+    };
+    loadDocs();
+
+    window.addEventListener("smartsarabun_documents_updated", loadDocs);
+    return () => {
+      window.removeEventListener("smartsarabun_documents_updated", loadDocs);
+    };
+  }, []);
 
   useEffect(() => {
     const depts = getActiveDepartments();
@@ -159,6 +177,13 @@ export default function SendPage() {
       ],
     };
 
+    saveDocument({
+      ...newDoc,
+      from: newDoc.fromDept,
+      to: newDoc.toOrg,
+      direction: "outgoing",
+    });
+
     setDocuments([newDoc, ...documents]);
     setShowCreateModal(false);
     setFormData({
@@ -197,6 +222,12 @@ export default function SendPage() {
       ],
     };
 
+    updateDocument(doc.id, {
+      docNo: reservedText,
+      status: "reserved",
+      timeline: updated.timeline,
+    });
+
     setDocuments((prev) => prev.map((d) => (d.id === doc.id ? updated : d)));
     setSelectedDoc(updated);
   };
@@ -221,6 +252,13 @@ export default function SendPage() {
         },
       ],
     };
+
+    updateDocument(doc.id, {
+      docNo: officialNo,
+      regNo: `${nextNum}/2569`,
+      status: "issued",
+      timeline: updated.timeline,
+    });
 
     setDocuments((prev) => prev.map((d) => (d.id === doc.id ? updated : d)));
     setSelectedDoc(updated);
@@ -247,6 +285,14 @@ export default function SendPage() {
       ],
     };
 
+    updateDocument(selectedDoc.id, {
+      status: "sent",
+      dispatchChannel,
+      trackingNo,
+      dispatchDate: "28 ส.ค. 2569",
+      timeline: updated.timeline,
+    });
+
     setDocuments((prev) => prev.map((d) => (d.id === selectedDoc.id ? updated : d)));
     setSelectedDoc(updated);
     setShowSendModal(false);
@@ -266,6 +312,11 @@ export default function SendPage() {
         },
       ],
     };
+
+    updateDocument(doc.id, {
+      status: "archived",
+      timeline: updated.timeline,
+    });
 
     setDocuments((prev) => prev.map((d) => (d.id === doc.id ? updated : d)));
     setSelectedDoc(updated);
@@ -288,6 +339,11 @@ export default function SendPage() {
         },
       ],
     };
+
+    updateDocument(selectedDoc.id, {
+      status: "cancelled",
+      timeline: updated.timeline,
+    });
 
     setDocuments((prev) => prev.map((d) => (d.id === selectedDoc.id ? updated : d)));
     setSelectedDoc(updated);

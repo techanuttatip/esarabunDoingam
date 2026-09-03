@@ -30,6 +30,8 @@ import {
   BookOpen,
 } from "lucide-react";
 import { BookLedgerModal } from "@/features/reports/components/book-ledger-modal";
+import { getAllDocuments, StoredDocument } from "@/lib/document-store";
+import { useEffect } from "react";
 
 export interface DepartmentReportItem {
   name: string;
@@ -42,17 +44,18 @@ export interface DepartmentReportItem {
   rate: string;
 }
 
-const mockDeptReports: DepartmentReportItem[] = [
-  { name: "สำนักปลัด (สารบรรณกลาง)", code: "ชร 52001", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
-  { name: "กองคลัง", code: "ชร 52002", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
-  { name: "กองช่าง", code: "ชร 52003", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
-  { name: "กองการศึกษา ศาสนาและวัฒนธรรม", code: "ชร 52004", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
-  { name: "กองสาธารณสุขและสิ่งแวดล้อม", code: "ชร 52005", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
+const depts = [
+  { name: "สำนักปลัด (สารบรรณกลาง)", code: "ชร 52001", match: "สำนักปลัด" },
+  { name: "กองคลัง", code: "ชร 52002", match: "กองคลัง" },
+  { name: "กองช่าง", code: "ชร 52003", match: "กองช่าง" },
+  { name: "กองการศึกษา ศาสนาและวัฒนธรรม", code: "ชร 52004", match: "กองการศึกษา" },
+  { name: "กองสาธารณสุขและสิ่งแวดล้อม", code: "ชร 52005", match: "กองสาธารณสุข" },
 ];
 
 const mockOverdueList: any[] = [];
 
 export default function ReportsPage() {
+  const [allDocs, setAllDocs] = useState<StoredDocument[]>([]);
   const [activeReportTab, setActiveReportTab] = useState<
     "summary" | "incoming" | "outgoing" | "numbering" | "departments" | "overdue"
   >("summary");
@@ -62,21 +65,50 @@ export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState("2569");
   const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
 
-  // Summary Metrics (Real System Baseline)
-  const totalIncoming = 0;
-  const totalOutgoing = 0;
-  const totalDocuments = 0;
-  const totalCompleted = 0;
-  const totalPending = 0;
+  useEffect(() => {
+    const loadDocs = () => {
+      setAllDocs(getAllDocuments());
+    };
+    loadDocs();
+
+    window.addEventListener("smartsarabun_documents_updated", loadDocs);
+    return () => {
+      window.removeEventListener("smartsarabun_documents_updated", loadDocs);
+    };
+  }, []);
+
+  // Summary Metrics (Real System Calculation)
+  const totalIncoming = allDocs.filter((d) => d.direction === "incoming").length;
+  const totalOutgoing = allDocs.filter((d) => d.direction === "outgoing").length;
+  const totalDocuments = allDocs.length;
+  const totalCompleted = allDocs.filter((d) => d.status === "completed" || d.status === "sent").length;
+  const totalPending = allDocs.filter((d) => d.status !== "completed" && d.status !== "sent").length;
   const totalOverdue = 0;
   const slaRate = "100%";
 
+  const mockDeptReports: DepartmentReportItem[] = depts.map((d) => {
+    const inc = allDocs.filter((doc) => doc.direction === "incoming" && (doc.targetDept || "").includes(d.match)).length;
+    const out = allDocs.filter((doc) => doc.direction === "outgoing" && (doc.senderDept || doc.targetDept || "").includes(d.match)).length;
+    const comp = allDocs.filter((doc) => (doc.targetDept || doc.senderDept || "").includes(d.match) && (doc.status === "completed" || doc.status === "sent")).length;
+    const pend = inc + out - comp;
+    return {
+      name: d.name,
+      code: d.code,
+      incoming: inc,
+      outgoing: out,
+      completed: comp,
+      pending: pend > 0 ? pend : 0,
+      overdue: 0,
+      rate: inc + out > 0 ? `${Math.round((comp / (inc + out)) * 100)}%` : "100%",
+    };
+  });
+
   // Numbering Metrics
   const numberingStats = {
-    totalIssued: 0,
-    activeReserved: 0,
+    totalIssued: totalOutgoing,
+    activeReserved: allDocs.filter((d) => d.status === "reserved").length,
     insertedSub: 0,
-    cancelledVoid: 0,
+    cancelledVoid: allDocs.filter((d) => d.status === "cancelled").length,
   };
 
   const handlePrint = () => {

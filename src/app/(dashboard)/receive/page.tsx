@@ -38,6 +38,7 @@ import { StampModal } from "@/features/stamps/components/stamp-modal";
 import { AiAssistantModal } from "@/features/ai/components/ai-assistant-modal";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
 import { getActiveDepartments, DepartmentOption } from "@/lib/departments";
+import { getIncomingDocuments, saveDocument, updateDocument } from "@/lib/document-store";
 import { useEffect } from "react";
 
 export type SpeedLevel = "ปกติ" | "ด่วน" | "ด่วนมาก" | "ด่วนที่สุด";
@@ -71,16 +72,33 @@ export interface IncomingDocItem {
   timeline: { action: string; time: string; actor: string; note: string }[];
 }
 
-const initialIncomingList: IncomingDocItem[] = [];
-
 export default function ReceivePage() {
-  const [documents, setDocuments] = useState<IncomingDocItem[]>(initialIncomingList);
+  const [documents, setDocuments] = useState<IncomingDocItem[]>([]);
   const [availableDepartments, setAvailableDepartments] = useState<DepartmentOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [selectedSpeed, setSelectedSpeed] = useState("ALL");
   const [selectedSecret, setSelectedSecret] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+
+  useEffect(() => {
+    const loadDocs = () => {
+      const stored = getIncomingDocuments();
+      setDocuments(
+        stored.map((d: any) => ({
+          ...d,
+          fromOrg: d.fromOrg || d.from,
+          toOrg: d.toOrg || d.to,
+        }))
+      );
+    };
+    loadDocs();
+
+    window.addEventListener("smartsarabun_documents_updated", loadDocs);
+    return () => {
+      window.removeEventListener("smartsarabun_documents_updated", loadDocs);
+    };
+  }, []);
 
   useEffect(() => {
     const depts = getActiveDepartments();
@@ -309,6 +327,13 @@ export default function ReceivePage() {
       ],
     };
 
+    saveDocument({
+      ...newDoc,
+      from: newDoc.fromOrg,
+      to: newDoc.toOrg,
+      direction: "incoming",
+    });
+
     setDocuments([newDoc, ...documents]);
     setShowCreateModal(false);
     setAiSuccessMsg("");
@@ -334,6 +359,12 @@ export default function ReceivePage() {
       ],
     };
 
+    updateDocument(selectedDoc.id, {
+      targetDept: forwardDept,
+      status: "forwarded",
+      timeline: updated.timeline,
+    });
+
     setDocuments((prev) => prev.map((d) => (d.id === selectedDoc.id ? updated : d)));
     setSelectedDoc(updated);
     setShowForwardModal(false);
@@ -358,6 +389,13 @@ export default function ReceivePage() {
         },
       ],
     };
+
+    updateDocument(selectedDoc.id, {
+      assignedStaffName: assignStaffName,
+      dueDate: assignDueDate,
+      status: "assigned",
+      timeline: updated.timeline,
+    });
 
     setDocuments((prev) => prev.map((d) => (d.id === selectedDoc.id ? updated : d)));
     setSelectedDoc(updated);
@@ -1191,6 +1229,11 @@ export default function ReceivePage() {
         <DocumentViewerWorkspace
           document={activeWorkspaceDoc}
           onClose={() => setActiveWorkspaceDoc(null)}
+          onSaveDoc={(updated) => {
+            setDocuments((prev) =>
+              prev.map((d) => (d.id === updated.id ? { ...d, ...updated, targetDept: updated.targetDept || d.targetDept } : d))
+            );
+          }}
         />
       )}
     </div>

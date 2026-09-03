@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import {
   Folder,
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
+import { getAllDocuments, StoredDocument } from "@/lib/document-store";
 
 interface CabinetFolder {
   id: string;
@@ -46,14 +47,25 @@ const initialFoldersList: CabinetFolder[] = [
   { id: "f-12", name: "ข้อบัญญัติ / หนังสือรับหน่วยตรวจสอบภายใน 2569", department: "หน่วยตรวจสอบภายใน", year: "2569", count: 8 },
 ];
 
-const mockDocuments: (DocumentData & { archivedDate: string; folderId: string; status: string })[] = [];
-
 export default function CabinetPage() {
+  const [allDocs, setAllDocs] = useState<StoredDocument[]>([]);
   const [folders, setFolders] = useState<CabinetFolder[]>(initialFoldersList);
   const [selectedFolderId, setSelectedFolderId] = useState<string>("f-1");
   const [folderSearch, setFolderSearch] = useState("");
   const [docSearch, setDocSearch] = useState("");
   const [selectedDocForViewer, setSelectedDocForViewer] = useState<DocumentData | null>(null);
+
+  useEffect(() => {
+    const loadDocs = () => {
+      setAllDocs(getAllDocuments());
+    };
+    loadDocs();
+
+    window.addEventListener("smartsarabun_documents_updated", loadDocs);
+    return () => {
+      window.removeEventListener("smartsarabun_documents_updated", loadDocs);
+    };
+  }, []);
 
   // New Folder Modal
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
@@ -72,14 +84,17 @@ export default function CabinetPage() {
 
   const selectedFolder = folders.find((f) => f.id === selectedFolderId) || folders[0];
 
-  const currentDocs = mockDocuments.filter((d) => {
-    if (d.folderId !== selectedFolderId && selectedFolderId !== "all") {
-      // allow filtering
-    }
+  const currentDocs = allDocs.map((d) => ({
+    ...d,
+    archivedDate: d.updatedAt ? new Date(d.updatedAt).toLocaleDateString("th-TH") : d.docDate,
+    folderId: selectedFolderId,
+    status: d.status || "จัดเก็บเรียบร้อย",
+  })).filter((d) => {
     const matchesSearch =
       d.title.toLowerCase().includes(docSearch.toLowerCase()) ||
       d.docNo.toLowerCase().includes(docSearch.toLowerCase()) ||
-      (d.regNo && d.regNo.toLowerCase().includes(docSearch.toLowerCase()));
+      (d.regNo && d.regNo.toLowerCase().includes(docSearch.toLowerCase())) ||
+      (d.from && d.from.toLowerCase().includes(docSearch.toLowerCase()));
     return matchesSearch;
   });
 
@@ -473,6 +488,7 @@ export default function CabinetPage() {
         <DocumentViewerWorkspace
           document={selectedDocForViewer}
           onClose={() => setSelectedDocForViewer(null)}
+          onSaveDoc={() => setAllDocs(getAllDocuments())}
         />
       )}
     </div>

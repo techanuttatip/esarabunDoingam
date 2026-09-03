@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,34 +17,37 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-
-interface OutgoingItem {
-  id: string;
-  docNo: string;
-  docDate: string;
-  toOrg: string;
-  title: string;
-  docType: "ภายใน" | "ภายนอก" | "คำสั่ง" | "ประกาศ";
-  senderDept: string;
-  senderName: string;
-  status: "อนุมัติแล้ว" | "กำลังส่ง" | "รออนุมัติ";
-}
-
-const mockOutboxDocs: OutgoingItem[] = [];
+import { getOutgoingDocuments, StoredDocument } from "@/lib/document-store";
+import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
 
 export default function OutboxPage() {
+  const [outboxDocs, setOutboxDocs] = useState<StoredDocument[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("ALL");
+  const [selectedDocForViewer, setSelectedDocForViewer] = useState<DocumentData | null>(null);
 
-  const filteredDocs = mockOutboxDocs.filter((doc) => {
+  useEffect(() => {
+    const loadDocs = () => {
+      setOutboxDocs(getOutgoingDocuments());
+    };
+    loadDocs();
+
+    window.addEventListener("smartsarabun_documents_updated", loadDocs);
+    return () => {
+      window.removeEventListener("smartsarabun_documents_updated", loadDocs);
+    };
+  }, []);
+
+  const filteredDocs = outboxDocs.filter((doc) => {
     if (selectedType !== "ALL" && doc.docType !== selectedType) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
         doc.title.toLowerCase().includes(q) ||
         doc.docNo.toLowerCase().includes(q) ||
-        doc.toOrg.toLowerCase().includes(q) ||
-        doc.senderDept.toLowerCase().includes(q)
+        (doc.to && doc.to.toLowerCase().includes(q)) ||
+        (doc.targetDept && doc.targetDept.toLowerCase().includes(q)) ||
+        (doc.senderDept && doc.senderDept.toLowerCase().includes(q))
       );
     }
     return true;
@@ -148,28 +151,31 @@ export default function OutboxPage() {
 
                       <td className="p-3.5">
                         <p className="font-bold text-slate-900 text-xs sm:text-sm">{doc.title}</p>
-                        <p className="text-[11px] text-slate-500 mt-1">ถึง: {doc.toOrg}</p>
+                        <p className="text-[11px] text-slate-500 mt-1">ถึง: {doc.to || (doc as any).toOrg}</p>
                       </td>
 
                       <td className="p-3.5">
                         <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200 block w-fit">
-                          {doc.senderDept}
+                          {doc.senderDept || doc.targetDept || "สำนักปลัด"}
                         </span>
-                        <span className="text-[10px] text-slate-400 mt-0.5 block">{doc.senderName}</span>
+                        <span className="text-[10px] text-slate-400 mt-0.5 block">{doc.senderName || "งานสารบรรณ"}</span>
                       </td>
 
                       <td className="p-3.5">
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          {doc.status}
+                          {doc.status || "อนุมัติแล้ว"}
                         </span>
                       </td>
 
                       <td className="p-3.5 text-center">
-                        <Button asChild size="sm" variant="outline" className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50">
-                          <Link href="/send">
-                            <Eye className="w-3.5 h-3.5 mr-1" />
-                            พรีวิว
-                          </Link>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedDocForViewer(doc)}
+                          className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5 mr-1" />
+                          พรีวิว
                         </Button>
                       </td>
                     </tr>
@@ -188,6 +194,15 @@ export default function OutboxPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Document Viewer Modal */}
+      {selectedDocForViewer && (
+        <DocumentViewerWorkspace
+          document={selectedDocForViewer}
+          onClose={() => setSelectedDocForViewer(null)}
+          onSaveDoc={() => setOutboxDocs(getOutgoingDocuments())}
+        />
+      )}
     </div>
   );
 }

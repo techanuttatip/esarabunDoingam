@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import {
   Filter,
 } from "lucide-react";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
+import { getAllDocuments, StoredDocument } from "@/lib/document-store";
 
 interface SearchResultItem {
   id: string;
@@ -49,14 +50,25 @@ interface SearchResultItem {
   semanticScore?: number;
 }
 
-const mockSearchData: SearchResultItem[] = [];
-
 export default function SearchPage() {
+  const [allDocs, setAllDocs] = useState<StoredDocument[]>([]);
   const [searchMode, setSearchMode] = useState<"semantic" | "filter">("semantic");
   const [query, setQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [selectedSpeed, setSelectedSpeed] = useState("ALL");
   const [selectedStudioDoc, setSelectedStudioDoc] = useState<DocumentData | null>(null);
+
+  useEffect(() => {
+    const loadDocs = () => {
+      setAllDocs(getAllDocuments());
+    };
+    loadDocs();
+
+    window.addEventListener("smartsarabun_documents_updated", loadDocs);
+    return () => {
+      window.removeEventListener("smartsarabun_documents_updated", loadDocs);
+    };
+  }, []);
 
   const quickPrompts = [
     "งบประมาณปี 2570 กระทรวงมหาดไทย",
@@ -66,7 +78,26 @@ export default function SearchPage() {
     "รายงานงบทดลองระบบ e-LAAS",
   ];
 
-  const filteredResults = mockSearchData.filter((item) => {
+  const searchResults: SearchResultItem[] = allDocs.map((d) => ({
+    id: d.id,
+    docNo: d.docNo,
+    regNo: d.regNo || (d.direction === "outgoing" ? "หนังสือส่ง" : "ลงรับแล้ว"),
+    title: d.title,
+    fromOrg: d.from || (d as any).fromOrg || "ส่วนราชการ",
+    toOrg: d.to || (d as any).toOrg || "นายก อบต.ดอยงาม",
+    dept: d.targetDept || d.senderDept || "สำนักปลัด",
+    section: (d as any).targetSection || "งานสารบรรณ",
+    staffName: d.senderName || "เจ้าหน้าที่สารบรรณ",
+    date: d.docDate,
+    type: d.direction === "outgoing" ? "หนังสือส่ง" : "หนังสือเข้า",
+    speed: (d.speed as any) || "ปกติ",
+    secret: (d.secret as any) || "ปกติ",
+    status: (d.status as any) || "อนุมัติแล้ว",
+    snippet: d.contentParagraphs ? d.contentParagraphs.join(" ") : "",
+    semanticScore: 96,
+  }));
+
+  const filteredResults = searchResults.filter((item) => {
     if (selectedDept !== "ALL" && item.dept !== selectedDept) return false;
     if (selectedSpeed !== "ALL" && item.speed !== selectedSpeed) return false;
     if (query.trim()) {
@@ -74,6 +105,7 @@ export default function SearchPage() {
       return (
         item.title.toLowerCase().includes(q) ||
         item.docNo.toLowerCase().includes(q) ||
+        item.regNo.toLowerCase().includes(q) ||
         item.fromOrg.toLowerCase().includes(q) ||
         item.dept.toLowerCase().includes(q) ||
         (item.snippet && item.snippet.toLowerCase().includes(q))

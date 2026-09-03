@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, CheckCircle2, Clock, ArrowRight, User, Calendar, FileText, Filter, BellRing, Eye, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
+import { getAllDocuments, StoredDocument } from "@/lib/document-store";
 
 interface TrackingStep {
   name: string;
@@ -23,15 +24,91 @@ interface TrackingDoc extends DocumentData {
   steps: TrackingStep[];
 }
 
-const mockTrackingList: TrackingDoc[] = [];
-
 export default function TrackingPage() {
+  const [allDocs, setAllDocs] = useState<StoredDocument[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDocId, setSelectedDocId] = useState<string>("");
   const [remindMsg, setRemindMsg] = useState<string | null>(null);
   const [selectedDocForViewer, setSelectedDocForViewer] = useState<DocumentData | null>(null);
 
-  const selectedDoc = (mockTrackingList.find((d) => d.id === selectedDocId) || mockTrackingList[0] || null) as TrackingDoc | null;
+  useEffect(() => {
+    const loadDocs = () => {
+      const stored = getAllDocuments();
+      setAllDocs(stored);
+      if (stored.length > 0 && !selectedDocId) {
+        setSelectedDocId(stored[0].id);
+      }
+    };
+    loadDocs();
+
+    window.addEventListener("smartsarabun_documents_updated", loadDocs);
+    return () => {
+      window.removeEventListener("smartsarabun_documents_updated", loadDocs);
+    };
+  }, []);
+
+  const trackingList: TrackingDoc[] = allDocs.map((doc) => {
+    const steps: TrackingStep[] = [];
+    if (doc.timeline && doc.timeline.length > 0) {
+      doc.timeline.forEach((item) => {
+        steps.push({
+          name: item.action,
+          actor: item.actor,
+          time: item.time,
+          done: true,
+        });
+      });
+    } else {
+      steps.push({
+        name: doc.direction === "outgoing" ? "สร้างและออกเลขส่ง" : "ลงรับหนังสือเข้า",
+        actor: doc.senderName || "งานสารบรรณ",
+        time: doc.docDate,
+        done: true,
+      });
+    }
+
+    if (doc.endorsements && doc.endorsements.length > 0) {
+      doc.endorsements.forEach((end) => {
+        steps.push({
+          name: `เกษียน: ${end.action || "บันทึกเกษียน"}`,
+          actor: `${end.actor} (${end.position})`,
+          time: end.date,
+          done: true,
+        });
+      });
+    }
+
+    const isCompleted = doc.status === "completed" || doc.status === "sent";
+    if (!isCompleted) {
+      steps.push({
+        name: `พิจารณาและลงนาม (${doc.targetDept || "สำนักปลัด"})`,
+        actor: "รอการลงนาม/เกษียนสั่งการ",
+        time: "รอดำเนินการ",
+        done: false,
+        current: true,
+      });
+    }
+
+    return {
+      ...doc,
+      sender: doc.from || doc.senderName || "งานสารบรรณ",
+      date: doc.docDate,
+      currentStep: isCompleted
+        ? "เสร็จสมบูรณ์ / จัดเก็บเข้าแฟ้มตู้"
+        : steps.find((s) => s.current)?.name || "กำลังดำเนินการ",
+      status: isCompleted ? "completed" : "in_progress",
+      steps,
+    };
+  });
+
+  const filteredList = trackingList.filter(
+    (doc) =>
+      doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.docNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (doc.sender && doc.sender.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const selectedDoc = (filteredList.find((d) => d.id === selectedDocId) || (filteredList.length > 0 ? filteredList[0] : null)) as TrackingDoc | null;
 
   const handleSendReminder = (actor: string) => {
     setRemindMsg(`ส่งข้อความแจ้งเตือนด่วนไปยัง "${actor}" ทางระบบเรียบร้อยแล้ว`);
@@ -67,8 +144,8 @@ export default function TrackingPage() {
           </div>
 
           <div className="space-y-2">
-            {mockTrackingList.length > 0 ? (
-              mockTrackingList.map((doc) => {
+            {filteredList.length > 0 ? (
+              filteredList.map((doc) => {
                 const isSelected = doc.id === selectedDocId;
                 return (
                   <div
@@ -220,6 +297,7 @@ export default function TrackingPage() {
         <DocumentViewerWorkspace
           document={selectedDocForViewer}
           onClose={() => setSelectedDocForViewer(null)}
+          onSaveDoc={() => setAllDocs(getAllDocuments())}
         />
       )}
     </div>
