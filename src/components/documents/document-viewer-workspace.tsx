@@ -97,6 +97,7 @@ export interface DocumentData {
   targetSection?: string;
   assignedStaff?: string;
   assignedStaffName?: string;
+  status?: string;
   dispatchDate?: string;
   contentParagraphs: string[];
   pdfUrl?: string;
@@ -409,6 +410,55 @@ export function DocumentViewerWorkspace({
     setSelectedQuickAction([]);
     setIsSuccessToast(true);
     setTimeout(() => setIsSuccessToast(false), 3000);
+  };
+
+  const handleOneClickAction = (actionType: "approve" | "noted" | "forward" | "propose") => {
+    let actionLabel = "";
+    let defaultNote = "";
+
+    if (actionType === "approve") {
+      actionLabel = "อนุมัติสั่งการ";
+      defaultNote = "อนุมัติสั่งการตามเสนอ ให้ดำเนินการตามระเบียบต่อไป";
+    } else if (actionType === "noted") {
+      actionLabel = "รับทราบถือปฏิบัติ";
+      defaultNote = "รับทราบ และแจ้งเวียนหน่วยงานในสังกัดเพื่อทราบถือปฏิบัติต่อไป";
+    } else if (actionType === "forward") {
+      actionLabel = "ส่งต่อดำเนินการ";
+      defaultNote = `ส่งต่อ ${selectedDeptBox} เพื่อตรวจสอบความถูกต้องและดำเนินการตามอำนาจหน้าที่ต่อไป`;
+    } else {
+      actionLabel = "เกษียนเสนอเรื่อง";
+      defaultNote = "ตรวจสอบแล้วถูกต้อง เห็นควรเสนอผู้บริหารเพื่อโปรดพิจารณาความเห็นชอบและสั่งการต่อไป";
+    }
+
+    const savedSignature = typeof window !== "undefined" ? localStorage.getItem("smartsarabun_user_signature") : null;
+
+    const newEndorsement = {
+      actor: activeSigner.name,
+      position: activeSigner.position,
+      tier: activeSigner.role.toLowerCase(),
+      action: actionLabel,
+      note: defaultNote,
+      signatureUrl: savedSignature || undefined,
+      date: new Date().toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) + " " + new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.",
+    };
+
+    const updatedDoc: DocumentData = {
+      ...currentDoc,
+      targetDept: selectedDeptBox,
+      status: actionType === "approve" ? "completed" : "forwarded",
+      endorsements: [...(currentDoc.endorsements || []), newEndorsement],
+    };
+
+    setCurrentDoc(updatedDoc);
+    updateDocument(currentDoc.id, {
+      targetDept: selectedDeptBox,
+      status: updatedDoc.status,
+      endorsements: updatedDoc.endorsements,
+    });
+    onSaveDoc?.(updatedDoc);
+
+    setIsSuccessToast(true);
+    setTimeout(() => setIsSuccessToast(false), 4000);
   };
 
   if (!mounted) return null;
@@ -887,52 +937,69 @@ export function DocumentViewerWorkspace({
           {/* TAB 1: ENDORSEMENT FORM */}
           {activeSideTab === "endorse" && (
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs font-sans">
-              {/* 1. QUICK ENDORSEMENT DOCK (2026 TACTILE 2X2 BUTTONS) */}
-              <div className="p-4 rounded-3xl bg-slate-50/90 border border-slate-200/90 space-y-2.5 shadow-2xs">
+              {/* 1. ⚡ ONE-CLICK FAST ACTIONS (คลิกเดียวจบ ไม่ต้องกรอกอะไรเพิ่ม) */}
+              <div className="p-4 rounded-3xl bg-slate-50/90 border border-slate-200/90 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400">Quick Endorsement</span>
-                  <span className="text-xs font-black text-slate-900">ดำเนินการด่วน</span>
+                  <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-amber-500" />
+                    เซ็นด่วนใน 1 คลิก (One-Click Actions)
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                    สะดวกที่สุด
+                  </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  {/* ปุ่มที่ ๑: อนุมัติสั่งการ */}
                   <button
                     type="button"
-                    onClick={() => {
-                      setCustomEndorseNote("เกษียนเสนอเพื่อโปรดพิจารณาความเห็นชอบและลงนามสั่งการต่อไป");
-                      setSelectedQuickAction(["+ เกษียนเสนอเรื่อง"]);
-                    }}
-                    className="p-3 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 text-slate-800 font-black text-xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    onClick={() => handleOneClickAction("approve")}
+                    className="p-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-left flex flex-col justify-between h-20"
                   >
-                    <span>เกษียน</span>
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-sm">อนุมัติสั่งการ ✓</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                    </div>
+                    <span className="text-[10px] text-emerald-100 font-medium">เซ็นชื่อ + สั่งการทันที</span>
                   </button>
+
+                  {/* ปุ่มที่ ๒: เกษียนเสนอเรื่อง */}
                   <button
                     type="button"
-                    onClick={() => {
-                      setCustomEndorseNote("อนุมัติสั่งการตามเสนอ มอบหมายส่วนราชการที่เกี่ยวข้องถือปฏิบัติตามระเบียบ");
-                      setSelectedQuickAction(["+ อนุมัติสั่งการ"]);
-                    }}
-                    className="p-3 rounded-2xl bg-blue-50 border border-blue-300 text-[#0052FF] font-black text-xs hover:bg-blue-100 hover:shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    onClick={() => handleOneClickAction("propose")}
+                    className="p-3.5 rounded-2xl bg-[#0052FF] hover:bg-blue-600 text-white font-black text-xs shadow-md shadow-blue-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-left flex flex-col justify-between h-20"
                   >
-                    <span>อนุมัติ ✓</span>
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-sm">เกษียนเสนอเรื่อง</span>
+                      <PenTool className="w-4 h-4 text-blue-200" />
+                    </div>
+                    <span className="text-[10px] text-blue-100 font-medium">เซ็นเสนอผู้บริหาร</span>
                   </button>
+
+                  {/* ปุ่มที่ ๓: รับทราบ */}
                   <button
                     type="button"
-                    onClick={() => {
-                      setCustomEndorseNote("รับทราบ และแจ้งเวียนหน่วยงานในสังกัดเพื่อทราบถือปฏิบัติต่อไป");
-                      setSelectedQuickAction(["+ รับทราบถือปฏิบัติ"]);
-                    }}
-                    className="p-3 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 text-slate-800 font-black text-xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    onClick={() => handleOneClickAction("noted")}
+                    className="p-3.5 rounded-2xl bg-white border-2 border-slate-200 hover:border-slate-400 text-slate-800 font-black text-xs hover:shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-left flex flex-col justify-between h-20"
                   >
-                    <span>รับทราบ</span>
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-sm">รับทราบถือปฏิบัติ</span>
+                      <Check className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-medium">ทราบและเวียนแจ้ง</span>
                   </button>
+
+                  {/* ปุ่มที่ ๔: ส่งต่อกองงาน */}
                   <button
                     type="button"
-                    onClick={() => {
-                      setCustomEndorseNote(`ส่งต่อ ${selectedDeptBox} เพื่อตรวจสอบความถูกต้องและดำเนินการตามอำนาจหน้าที่`);
-                      setSelectedQuickAction(["+ ส่งต่อกอง"]);
-                    }}
-                    className="p-3 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 text-slate-800 font-black text-xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    onClick={() => handleOneClickAction("forward")}
+                    className="p-3.5 rounded-2xl bg-white border-2 border-slate-200 hover:border-slate-400 text-slate-800 font-black text-xs hover:shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-left flex flex-col justify-between h-20"
                   >
-                    <span>ส่งต่อ ➜</span>
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-sm">ส่งต่อกองงาน ➜</span>
+                      <Send className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-medium">ส่งต่อ {selectedDeptBox}</span>
                   </button>
                 </div>
               </div>

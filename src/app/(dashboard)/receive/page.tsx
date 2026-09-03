@@ -1231,7 +1231,7 @@ export default function ReceivePage() {
           onClose={() => setActiveWorkspaceDoc(null)}
           onSaveDoc={(updated) => {
             setDocuments((prev) =>
-              prev.map((d) => (d.id === updated.id ? { ...d, ...updated, targetDept: updated.targetDept || d.targetDept } : d))
+              prev.map((d) => (d.id === updated.id ? ({ ...d, ...updated, status: (updated.status as any) || d.status, targetDept: updated.targetDept || d.targetDept } as IncomingDocItem) : d))
             );
           }}
         />

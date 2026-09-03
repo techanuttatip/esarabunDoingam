@@ -1,20 +1,14 @@
-import {
+﻿import {
   LayoutDashboard,
   Inbox,
   Send,
-  FilePlus,
-  Hash,
   ClipboardList,
-  FileText,
   Search,
+  FolderOpen,
   BarChart3,
   Users,
-  Shield,
-  Building2,
   Settings,
-  Server,
   PenTool,
-  LayoutTemplate,
 } from "lucide-react";
 
 export interface NavItem {
@@ -25,110 +19,80 @@ export interface NavItem {
   badgeVariant?: "default" | "blue" | "amber" | "emerald";
   roles?: string[];
   permissions?: string[];
-  section: "workplace" | "my_work" | "admin";
+  section: "core" | "archive" | "admin";
 }
 
 export const navigationConfig: {
-  workplace: NavItem[];
-  my_work: NavItem[];
+  core: NavItem[];
+  archive: NavItem[];
   admin: NavItem[];
 } = {
-  // ๑. งานสารบรรณ (Core Correspondence)
-  workplace: [
+  // ๑. งานหลักประจำวัน (Daily Core Workflow)
+  core: [
     {
-      title: "ภาพรวม",
+      title: "หน้าแรก (แดชบอร์ด)",
       href: "/",
       icon: LayoutDashboard,
-      section: "workplace",
+      section: "core",
     },
     {
-      title: "หนังสือรับ",
+      title: "หนังสือรับ (งานเข้า)",
       href: "/receive",
       icon: Inbox,
-      section: "workplace",
+      section: "core",
     },
     {
-      title: "หนังสือส่ง",
+      title: "หนังสือส่ง (ออกเลข)",
       href: "/send",
       icon: Send,
-      section: "workplace",
+      section: "core",
     },
     {
-      title: "สร้างร่างหนังสือ",
-      href: "/create",
-      icon: FilePlus,
-      section: "workplace",
-    },
-    {
-      title: "แม่แบบเอกสาร",
-      href: "/templates",
-      icon: LayoutTemplate,
-      section: "workplace",
-    },
-    {
-      title: "ทะเบียนเลข",
-      href: "/numbers",
-      icon: Hash,
-      section: "workplace",
+      title: "รอเกษียน / ลงนาม",
+      href: "/approvals",
+      icon: ClipboardList,
+      badge: "รอเซ็น",
+      badgeVariant: "amber",
+      section: "core",
     },
   ],
 
-  // ๒. งานของฉัน (My Workspace & Tools)
-  my_work: [
+  // ๒. คลัง & เครื่องมือ (Archive & Search)
+  archive: [
     {
-      title: "งานของฉัน",
-      href: "/tasks",
-      icon: ClipboardList,
-      section: "my_work",
-    },
-    {
-      title: "เอกสาร",
-      href: "/documents",
-      icon: FileText,
-      section: "my_work",
-    },
-    {
-      title: "ค้นหา",
+      title: "สืบค้นหนังสือ",
       href: "/search",
       icon: Search,
-      section: "my_work",
+      section: "archive",
     },
     {
-      title: "รายงาน",
+      title: "ตู้จัดเก็บเอกสาร",
+      href: "/cabinet",
+      icon: FolderOpen,
+      section: "archive",
+    },
+    {
+      title: "รายงาน & สมุดทะเบียน",
       href: "/reports",
       icon: BarChart3,
-      section: "my_work",
+      section: "archive",
     },
     {
-      title: "โปรไฟล์ & ลายเซ็น",
+      title: "ลายเซ็นต์ & ข้อมูลส่วนตัว",
       href: "/profile",
       icon: PenTool,
       badge: "e-Sign",
       badgeVariant: "emerald",
-      section: "my_work",
+      section: "archive",
     },
   ],
 
-  // ๓. ผู้ดูแลระบบ (Administration & Platform)
+  // ๓. จัดการระบบ (Admin Only)
   admin: [
     {
-      title: "ผู้ใช้งาน",
+      title: "จัดการผู้ใช้งาน",
       href: "/users",
       icon: Users,
-      roles: ["SUPER_ADMIN", "ADMIN", "ORGANIZATION_ADMIN", "MANAGER"],
-      section: "admin",
-    },
-    {
-      title: "บทบาทและสิทธิ์",
-      href: "/roles",
-      icon: Shield,
-      roles: ["SUPER_ADMIN", "ADMIN"],
-      section: "admin",
-    },
-    {
-      title: "โครงสร้างหน่วยงาน",
-      href: "/organization",
-      icon: Building2,
       roles: ["SUPER_ADMIN", "ADMIN", "ORGANIZATION_ADMIN"],
       section: "admin",
     },
@@ -143,7 +107,7 @@ export const navigationConfig: {
 };
 
 export const navigation: NavItem[] = [
-  ...navigationConfig.workplace,
-  ...navigationConfig.my_work,
+  ...navigationConfig.core,
+  ...navigationConfig.archive,
   ...navigationConfig.admin,
 ];

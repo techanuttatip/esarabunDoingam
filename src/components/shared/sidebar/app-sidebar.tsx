@@ -154,9 +154,9 @@ export function AppSidebar() {
 
           {/* Navigation Items (3 Groups) */}
           <div className="p-3 space-y-4 overflow-y-auto max-h-[calc(100vh-170px)] select-none">
-            {renderNavSection("งานสารบรรณ", navigationConfig.workplace)}
-            {renderNavSection("งานของฉัน", navigationConfig.my_work)}
-            {renderNavSection("ผู้ดูแลระบบ", navigationConfig.admin)}
+            {renderNavSection("งานประจำวัน", navigationConfig.core)}
+            {renderNavSection("คลัง & รายงาน", navigationConfig.archive)}
+            {renderNavSection("จัดการระบบ", navigationConfig.admin)}
           </div>
         </div>
 
