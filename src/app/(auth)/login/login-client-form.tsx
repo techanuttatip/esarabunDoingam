@@ -419,7 +419,7 @@ export function LoginClientForm() {
             <input
               type="text"
               required
-              placeholder="เช่น techanut0@gmail.com หรือชื่อผู้ใช้"
+              placeholder="กรอกชื่อผู้ใช้งาน หรือ อีเมลราชการ"
               value={usernameInput}
               onChange={(e) => setUsernameInput(e.target.value)}
               className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF] focus:outline-none transition-all shadow-2xs"
