@@ -8,79 +8,22 @@ import {
   CheckCircle2,
   PenTool,
   Search,
-  Bell,
-  ChevronDown,
   Calendar,
   Building2,
-  Sparkles,
-  ShieldCheck,
-  Eye,
-  Download,
-  Check,
-  ArrowRight,
-  ExternalLink,
-  SlidersHorizontal,
-  LayoutDashboard,
-  Users,
+  FolderOpen,
   FileText,
-  Settings,
+  Eye,
+  PlusCircle,
+  Filter,
+  ArrowUpRight,
+  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/components/providers/session-provider";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
 import { getDocumentStats, getAllDocuments, StoredDocument } from "@/lib/document-store";
-import { ThaiGaruda } from "@/components/shared/thai-garuda";
-import { DocVerificationSeal } from "@/components/shared/doc-verification-seal";
-
-// Circular Glowing Progress Ring Component (2026 Spatial Style)
-function GlowingRing({
-  value,
-  color = "#0052FF",
-  size = 76,
-  stroke = 7,
-}: {
-  value: number;
-  color?: string;
-  size?: number;
-  stroke?: number;
-}) {
-  const radius = (size - stroke) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (Math.min(value, 100) / 100) * circumference;
-
-  return (
-    <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform -rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="rgba(226, 232, 240, 0.7)"
-          strokeWidth={stroke}
-          fill="transparent"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={stroke}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          className="transition-all duration-1000 ease-out"
-          fill="transparent"
-        />
-      </svg>
-      {/* Subtle Specular Glow behind circle */}
-      <div
-        className="absolute inset-1.5 rounded-full opacity-35 blur-md pointer-events-none"
-        style={{ backgroundColor: color }}
-      />
-    </div>
-  );
-}
+import { formatThaiDate } from "@/lib/formatters/thai-date";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -94,477 +37,411 @@ export default function DashboardPage() {
     overdueCount: 0,
     slaRate: "100%",
   });
-  const [selectedStudioDoc, setSelectedStudioDoc] = useState<DocumentData | null>(null);
-  const [selectedPreviewDoc, setSelectedPreviewDoc] = useState<StoredDocument | null>(null);
-  const [activeDockTab, setActiveDockTab] = useState<"dashboard" | "receive" | "approvals" | "tracking" | "reports" | "settings">("dashboard");
+  const [selectedDoc, setSelectedDoc] = useState<DocumentData | null>(null);
+  const [activeTab, setActiveTab] = useState<"all" | "incoming" | "outgoing" | "pending">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDept, setSelectedDept] = useState("ALL");
 
-  const userName = session?.user?.name || "สมชาย สมภักดี";
-  const userPosition = session?.user?.position || "ผู้ดูแลระบบ (Admin)";
-  const userDept = session?.user?.department || "สำนักปลัด • อบต.ดอยงาม";
+  const userName = session?.user?.name || "ผู้ใช้งานสารบรรณ";
+  const userPosition = session?.user?.position || "เจ้าหน้าที่สารบรรณ";
+  const userDept = session?.user?.department || "สำนักปลัด";
+  const todayThai = formatThaiDate(new Date());
 
   useEffect(() => {
-    const updateData = () => {
-      const currentDocs = getAllDocuments();
-      setAllDocs(currentDocs);
+    const refreshData = () => {
+      setAllDocs(getAllDocuments());
       setStats(getDocumentStats());
-      if (currentDocs.length > 0 && !selectedPreviewDoc) {
-        setSelectedPreviewDoc(currentDocs[0]);
-      }
     };
-    updateData();
+    refreshData();
 
-    window.addEventListener("smartsarabun_documents_updated", updateData);
+    window.addEventListener("smartsarabun_documents_updated", refreshData);
     return () => {
-      window.removeEventListener("smartsarabun_documents_updated", updateData);
+      window.removeEventListener("smartsarabun_documents_updated", refreshData);
     };
-  }, [selectedPreviewDoc]);
+  }, []);
 
-  // Fallback demo row for preview when empty
-  const activePreview = selectedPreviewDoc || (allDocs.length > 0 ? allDocs[0] : null);
+  // Filter documents by tab, search, and department
+  const filteredDocs = allDocs.filter((doc) => {
+    // 1. Tab filter
+    if (activeTab === "incoming" && doc.direction === "outgoing") return false;
+    if (activeTab === "outgoing" && doc.direction !== "outgoing") return false;
+    if (activeTab === "pending" && (doc.status === "completed" || doc.status === "sent")) return false;
+
+    // 2. Department filter
+    if (selectedDept !== "ALL") {
+      const matchDept = doc.targetDept === selectedDept || doc.senderDept === selectedDept;
+      if (!matchDept) return false;
+    }
+
+    // 3. Search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchTitle = doc.title?.toLowerCase().includes(query);
+      const matchDocNo = doc.docNo?.toLowerCase().includes(query);
+      const matchRegNo = doc.regNo?.toLowerCase().includes(query);
+      const matchFrom = doc.from?.toLowerCase().includes(query);
+      if (!matchTitle && !matchDocNo && !matchRegNo && !matchFrom) return false;
+    }
+
+    return true;
+  });
+
+  const incomingCount = allDocs.filter((d) => d.direction !== "outgoing").length;
+  const outgoingCount = allDocs.filter((d) => d.direction === "outgoing").length;
+  const pendingCount = allDocs.filter((d) => d.status !== "completed" && d.status !== "sent").length;
 
   return (
-    <div className="space-y-6 pb-16 font-sans">
+    <div className="space-y-5 pb-16 font-sans">
       {/* ========================================================================= */}
-      {/* 1. FLOATING GLASS COMMAND DOCK (2026 Spatial Island Navigation)            */}
+      {/* 1. EMPLOYEE HEADER BAR (เน้นความชัดเจนและปุ่มทางลัดที่ใช้ทุกวัน)             */}
       {/* ========================================================================= */}
-      <div className="flex justify-center pt-1 pb-2">
-        <nav className="glass-dock px-3 py-1.5 rounded-full border border-white/80 shadow-[0_12px_30px_rgba(0,0,0,0.06)] flex items-center gap-1.5 sm:gap-2 text-xs font-bold shrink-0">
-          <button
-            onClick={() => setActiveDockTab("dashboard")}
-            className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeDockTab === "dashboard"
-                ? "bg-[#0b132b] text-white shadow-xs font-black"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-            }`}
-          >
-            <LayoutDashboard className="w-3.5 h-3.5 text-blue-400" />
-            <span>Dashboard</span>
-          </button>
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-black text-slate-900 font-sans tracking-tight">
+              ระบบงานสารบรรณ อบต.ดอยงาม
+            </h1>
+            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-[#0052FF] border border-blue-200">
+              งานประจำวัน
+            </span>
+          </div>
+          <p className="text-xs text-slate-600">
+            ผู้ใช้งาน: <strong className="text-slate-800">{userName}</strong> ({userPosition}) • {userDept} | ประจำวันที่ <strong>{todayThai}</strong>
+          </p>
+        </div>
 
-          <Link
-            href="/receive"
-            className="px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Inbox className="w-3.5 h-3.5 text-blue-600" />
-            <span>รับ-ส่ง</span>
+        {/* Action Buttons ที่พนักงานกดใช้จริง */}
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          <Link href="/receive" className="flex-1 sm:flex-initial">
+            <Button
+              size="sm"
+              className="w-full h-9 px-3.5 bg-[#0052FF] hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 cursor-pointer"
+            >
+              <Inbox className="w-4 h-4" />
+              <span>ลงรับหนังสือเข้า</span>
+            </Button>
           </Link>
 
-          <Link
-            href="/approvals"
-            className="px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>อนุมัติ</span>
+          <Link href="/send" className="flex-1 sm:flex-initial">
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full h-9 px-3.5 border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl gap-1.5 cursor-pointer"
+            >
+              <Send className="w-4 h-4 text-slate-600" />
+              <span>ออกเลขหนังสือส่ง</span>
+            </Button>
           </Link>
 
-          <Link
-            href="/tracking"
-            className="px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span>ติดตาม</span>
+          <Link href="/cabinet" className="hidden md:inline-flex">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 px-3 border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl gap-1.5 cursor-pointer"
+            >
+              <FolderOpen className="w-4 h-4 text-amber-600" />
+              <span>ตู้เอกสาร</span>
+            </Button>
           </Link>
-
-          <Link
-            href="/reports"
-            className="px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <FileText className="w-3.5 h-3.5 text-indigo-600" />
-            <span>รายงาน</span>
-          </Link>
-
-          <Link
-            href="/settings"
-            className="px-3.5 py-1.5 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Settings className="w-3.5 h-3.5 text-slate-500" />
-            <span>ตั้งค่า</span>
-          </Link>
-        </nav>
+        </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. TOP HEADER: Organization & User Profile Bar                             */}
+      {/* 2. 4 CORE METRIC CARDS (ตัวเลขงานจริง ไม่มีข้อมูล Mock หรือการ์ดตกแต่ง)     */}
       {/* ========================================================================= */}
-      <div className="glass-card rounded-3xl p-5 sm:p-6 bg-white/85 backdrop-blur-2xl border border-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row items-center justify-between gap-4">
-        {/* Organization Brand */}
-        <div className="flex items-center gap-3.5 text-center sm:text-left">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0052FF] to-cyan-400 text-white flex items-center justify-center font-black text-base shadow-md ring-4 ring-blue-50 shrink-0">
-            สบ
-          </div>
-          <div>
-            <div className="flex items-center gap-2 justify-center sm:justify-start">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-sans">
-                อบต.ดอยงาม
-              </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-100 text-[#0052FF] border border-blue-200">
-                DOIGAM-SAO
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        {/* หนังสือเข้าวันนี้ */}
+        <Link href="/inbox" className="group">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-blue-400 hover:shadow-sm transition-all">
+            <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-2">
+              <span className="flex items-center gap-1.5">
+                <Inbox className="w-4 h-4 text-blue-600" />
+                หนังสือเข้าวันนี้
               </span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
             </div>
-            <p className="text-xs text-slate-500 font-medium">
-              ระบบสารบรรณอิเล็กทรอนิกส์ อบต.ดอยงาม • อำเภอพาน จังหวัดเชียงราย
-            </p>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
+                {stats.incomingToday}
+              </span>
+              <span className="text-xs font-bold text-slate-500">ฉบับ</span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">ลงรับแล้วในสมุดทะเบียนรับ</p>
           </div>
-        </div>
+        </Link>
 
-        {/* Center Subtitle: Sarabun Standard */}
-        <div className="hidden lg:block text-center space-y-0.5 px-4 py-1.5 rounded-2xl bg-slate-100/60 border border-slate-200/60">
-          <span className="text-sm font-black text-slate-800 tracking-wide block">SmartSarabun 2026</span>
-          <span className="text-[11px] text-slate-400 font-mono font-medium">TH Sarabun New, Modern GovTech</span>
-        </div>
-
-        {/* User Identity & Action Pill */}
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <p className="text-xs font-black text-slate-900">{userName}</p>
-            <p className="text-[11px] font-bold text-slate-400">{userPosition}</p>
+        {/* หนังสือส่งวันนี้ */}
+        <Link href="/outbox" className="group">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-blue-400 hover:shadow-sm transition-all">
+            <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-2">
+              <span className="flex items-center gap-1.5">
+                <Send className="w-4 h-4 text-emerald-600" />
+                หนังสือส่งวันนี้
+              </span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
+                {stats.outgoingToday}
+              </span>
+              <span className="text-xs font-bold text-slate-500">ฉบับ</span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">ออกเลขและส่งออกแล้ว</p>
           </div>
+        </Link>
 
-          <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-sm shadow-sm ring-2 ring-slate-200">
-            {userName.charAt(0)}
+        {/* งานรอดำเนินการ / เกษียน */}
+        <Link href="/approvals" className="group">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-amber-400 hover:shadow-sm transition-all">
+            <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-2">
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-amber-600" />
+                รอดำเนินการ / เกษียน
+              </span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600 transition-colors" />
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black text-amber-600 font-sans">
+                {stats.pendingCount}
+              </span>
+              <span className="text-xs font-bold text-slate-500">ฉบับ</span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">รอการเกษียนหรือพิจารณา</p>
           </div>
+        </Link>
 
-          <Link href="/search">
-            <button className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer border border-slate-200" title="ค้นหาด่วน (Ctrl+K)">
-              <Search className="w-4 h-4" />
+        {/* หนังสือทั้งหมดในระบบ */}
+        <Link href="/documents" className="group">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-blue-400 hover:shadow-sm transition-all">
+            <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-2">
+              <span className="flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-slate-600" />
+                เอกสารทั้งหมด
+              </span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
+                {allDocs.length}
+              </span>
+              <span className="text-xs font-bold text-slate-500">ฉบับ</span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">บันทึกอยู่ในฐานข้อมูลจริง</p>
+          </div>
+        </Link>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 3. MAIN WORK QUEUE: รายการหนังสือราชการ (ตารางที่ใช้งานจริงเต็มจอ)          */}
+      {/* ========================================================================= */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden space-y-3">
+        {/* Controls: Tabs & Search Filter */}
+        <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Tabs */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold shrink-0">
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                activeTab === "all" ? "bg-white text-slate-900 shadow-xs font-black" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              ทั้งหมด ({allDocs.length})
             </button>
-          </Link>
-
-          <button className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer border border-slate-200 relative" title="การแจ้งเตือน">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
-          </button>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 3. BENTO GRID 2.0 KPI CARDS (With Glowing Specular Progress Rings)         */}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-        {/* Card 1: เอกสารรับวันนี้ */}
-        <div className="glass-card rounded-3xl p-6 bg-white/85 backdrop-blur-2xl border border-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.03)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex items-center justify-between">
-          <div className="space-y-2">
-            <span className="text-xs font-bold text-slate-500 block">เอกสารรับวันนี้</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-black text-slate-900 font-sans tracking-tight">
-                {stats.incomingToday > 0 ? stats.incomingToday : (allDocs.length > 0 ? stats.incomingToday : "48")}
-              </span>
-              <span className="text-xs font-bold text-slate-600">เอกสาร</span>
-              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
-                +5%
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 font-medium">TH Sarabun New • รับกลาง</p>
-          </div>
-          <GlowingRing value={75} color="#10b981" />
-        </div>
-
-        {/* Card 2: เอกสารรอลงนาม */}
-        <div className="glass-card rounded-3xl p-6 bg-white/85 backdrop-blur-2xl border border-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.03)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex items-center justify-between">
-          <div className="space-y-2">
-            <span className="text-xs font-bold text-slate-500 block">เอกสารรอลงนาม</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-black text-slate-900 font-sans tracking-tight">
-                {stats.pendingCount > 0 ? stats.pendingCount : (allDocs.length > 0 ? stats.pendingCount : "15")}
-              </span>
-              <span className="text-xs font-bold text-slate-600">ฉบับ</span>
-            </div>
-            <p className="text-[11px] text-slate-400 font-medium">TH Sarabun New • รอพิจารณา</p>
-          </div>
-          <GlowingRing value={50} color="#f59e0b" />
-        </div>
-
-        {/* Card 3: เรื่องเสร็จสมบูรณ์ */}
-        <div className="glass-card rounded-3xl p-6 bg-white/85 backdrop-blur-2xl border border-white/90 shadow-[0_10px_30px_rgba(0,0,0,0.03)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex items-center justify-between">
-          <div className="space-y-2">
-            <span className="text-xs font-bold text-slate-500 block">เรื่องเสร็จสมบูรณ์</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-black text-slate-900 font-sans tracking-tight">
-                {stats.completedCount > 0 ? stats.completedCount : (allDocs.length > 0 ? stats.completedCount : "1,245")}
-              </span>
-              <span className="text-[10px] font-extrabold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200">
-                +12%
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 font-medium">TH Sarabun New • จัดเก็บเข้าแฟ้ม</p>
-          </div>
-          <GlowingRing value={88} color="#0052FF" />
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 4. SPLIT GRID: (Left 7 Cols: Live Feed Table | Right 5 Cols: Paper Preview)*/}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* LEFT 7 COLS: รายการเอกสารล่าสุด (Live Document Feed) */}
-        <div className="lg:col-span-7 glass-card rounded-3xl p-5 sm:p-6 bg-white/85 backdrop-blur-2xl border border-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <h2 className="text-base sm:text-lg font-black text-slate-900">
-              รายการเอกสารล่าสุด
-            </h2>
-
-            <div className="flex items-center gap-2">
-              <Link href="/receive">
-                <Button size="sm" variant="outline" className="h-8 text-xs font-bold rounded-xl border-slate-300">
-                  + ลงรับใหม่
-                </Button>
-              </Link>
-            </div>
+            <button
+              onClick={() => setActiveTab("incoming")}
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                activeTab === "incoming" ? "bg-white text-[#0052FF] shadow-xs font-black" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              หนังสือเข้า ({incomingCount})
+            </button>
+            <button
+              onClick={() => setActiveTab("outgoing")}
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                activeTab === "outgoing" ? "bg-white text-emerald-700 shadow-xs font-black" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              หนังสือส่ง ({outgoingCount})
+            </button>
+            <button
+              onClick={() => setActiveTab("pending")}
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                activeTab === "pending" ? "bg-white text-amber-700 shadow-xs font-black" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              รอดำเนินการ ({pendingCount})
+            </button>
           </div>
 
-          {/* Clean Modern Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="text-slate-400 font-bold border-b border-slate-200 pb-2">
-                  <th className="py-2.5 px-2 w-8">
-                    <input type="checkbox" className="rounded border-slate-300 text-[#0052FF]" />
-                  </th>
-                  <th className="py-2.5 px-2 font-medium">เอกสาร ID</th>
-                  <th className="py-2.5 px-3 font-medium">บทความ / เรื่อง</th>
-                  <th className="py-2.5 px-2 font-medium whitespace-nowrap">วันที่ ↑</th>
-                  <th className="py-2.5 px-2 font-medium whitespace-nowrap">สำนัก/กอง</th>
-                  <th className="py-2.5 px-2 font-medium text-center">Status</th>
-                  <th className="py-2.5 px-2 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {allDocs.length > 0 ? (
-                  allDocs.map((doc, idx) => {
-                    const isSelected = activePreview?.id === doc.id;
-                    const statusPill =
-                      doc.status === "completed" || doc.status === "sent" ? (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          ลงนามแล้ว
-                        </span>
-                      ) : doc.status === "forwarded" || doc.status === "assigned" ? (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">
-                          กำลังดำเนินการ
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                          รออนุมัติ
-                        </span>
-                      );
+          {/* Search & Dept Selector */}
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="ค้นหาเลขที่, ชื่อเรื่อง, หน่วยงาน..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]"
+              />
+            </div>
 
-                    return (
-                      <tr
-                        key={doc.id}
-                        onClick={() => setSelectedPreviewDoc(doc)}
-                        className={`transition-colors cursor-pointer group ${
-                          isSelected ? "bg-blue-50/70" : "hover:bg-slate-50/80"
-                        }`}
-                      >
-                        <td className="py-3 px-2">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => setSelectedPreviewDoc(doc)}
-                            className="rounded border-slate-300 text-[#0052FF]"
-                          />
-                        </td>
-                        <td className="py-3 px-2 font-mono font-bold text-slate-800 whitespace-nowrap">
-                          {doc.docNo}
-                        </td>
-                        <td className="py-3 px-3">
-                          <p className="font-bold text-slate-900 group-hover:text-[#0052FF] transition-colors truncate max-w-[200px] sm:max-w-xs">
-                            {doc.title}
-                          </p>
-                          <span className="text-[10px] text-slate-400 block truncate">
-                            จาก: {doc.from || (doc as any).fromOrg || "ส่วนราชการ"}
-                          </span>
-                        </td>
-                        <td className="py-3 px-2 text-slate-500 whitespace-nowrap font-medium">
-                          {doc.docDate || "15 มี.ค."}
-                        </td>
-                        <td className="py-3 px-2 whitespace-nowrap text-slate-600 font-semibold">
-                          {doc.targetDept || doc.senderDept || "สำนักปลัด"}
-                        </td>
-                        <td className="py-3 px-2 text-center whitespace-nowrap">
-                          {statusPill}
-                        </td>
-                        <td className="py-3 px-2 text-right whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedStudioDoc(doc);
-                            }}
-                            className="text-xs font-bold text-slate-600 hover:text-[#0052FF] flex items-center gap-0.5 ml-auto cursor-pointer"
-                          >
-                            <span>Action</span>
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
+            <select
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value)}
+              className="py-1.5 px-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 focus:outline-none"
+            >
+              <option value="ALL">ทุกกอง/สำนัก</option>
+              <option value="สำนักปลัด">สำนักปลัด</option>
+              <option value="กองคลัง">กองคลัง</option>
+              <option value="กองช่าง">กองช่าง</option>
+              <option value="กองการศึกษาฯ">กองการศึกษาฯ</option>
+              <option value="กองสาธารณสุข">กองสาธารณสุข</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Real Document Data Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/80 text-slate-700 font-bold border-b border-slate-200">
+                <th className="py-2.5 px-3 whitespace-nowrap">เลขที่หนังสือ / เลขรับ</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">วันที่</th>
+                <th className="py-2.5 px-3 min-w-[240px]">ชื่อเรื่อง</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">จากหน่วยงาน</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">กองผู้รับผิดชอบ</th>
+                <th className="py-2.5 px-3 text-center whitespace-nowrap">ความเร่งด่วน</th>
+                <th className="py-2.5 px-3 text-center whitespace-nowrap">สถานะ</th>
+                <th className="py-2.5 px-3 text-center whitespace-nowrap">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredDocs.length > 0 ? (
+                filteredDocs.map((doc, idx) => {
+                  const speedBadge =
+                    doc.speed === "ด่วนที่สุด" ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                        ด่วนที่สุด
+                      </span>
+                    ) : doc.speed === "ด่วนมาก" ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">
+                        ด่วนมาก
+                      </span>
+                    ) : doc.speed === "ด่วน" ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                        ด่วน
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                        ปกติ
+                      </span>
                     );
-                  })
-                ) : (
-                  // Default High-Fidelity Demo Rows matching 2026 Mockup
-                  [
-                    { id: "สบ003/2569", title: "รายงานการประชุมประจำเดือน", date: "15 มี.ค.", dept: "สำนักปลัด", status: "ลงนามแล้ว", color: "emerald" },
-                    { id: "ศร56/012", title: "ขออนุมัติโครงการปรับปรุง", date: "15 มี.ค.", dept: "งานการเงิน", status: "รออนุมัติ", color: "amber" },
-                    { id: "ชร0023/45", title: "รายงานผลสำรวจพื้นที่อุทกภัย", date: "14 มี.ค.", dept: "กองช่าง", status: "กำลังดำเนินการ", color: "sky" },
-                    { id: "สบ004/2569", title: "คำสั่งแต่งตั้งคณะกรรมการตรวจรับ", date: "12 มี.ค.", dept: "สำนักปลัด", status: "ลงนามแล้ว", color: "emerald" },
-                    { id: "กค98/2569", title: "รายงานงบทดลองประจำสัปดาห์", date: "11 มี.ค.", dept: "กองคลัง", status: "รออนุมัติ", color: "amber" },
-                  ].map((row, idx) => (
+
+                  const statusBadge =
+                    doc.status === "completed" || doc.status === "sent" ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        {doc.direction === "outgoing" ? "ส่งแล้ว" : "เสร็จสิ้น"}
+                      </span>
+                    ) : doc.status === "forwarded" ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                        ส่งต่อกองแล้ว
+                      </span>
+                    ) : doc.status === "assigned" ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
+                        มอบหมายแล้ว
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        รอดำเนินการ
+                      </span>
+                    );
+
+                  return (
                     <tr
-                      key={idx}
-                      className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
+                      key={doc.id}
+                      className={`hover:bg-blue-50/40 transition-colors ${
+                        idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
+                      }`}
                     >
-                      <td className="py-3 px-2">
-                        <input type="checkbox" className="rounded border-slate-300 text-[#0052FF]" />
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        <div className="font-mono font-bold text-blue-900">{doc.docNo}</div>
+                        {doc.regNo && (
+                          <div className="text-[10px] text-slate-400 font-mono">
+                            เลขรับ: {doc.regNo}
+                          </div>
+                        )}
                       </td>
-                      <td className="py-3 px-2 font-mono font-bold text-slate-800 whitespace-nowrap">
-                        {row.id}
+                      <td className="py-3 px-3 whitespace-nowrap text-slate-600">
+                        {doc.docDate || "-"}
                       </td>
                       <td className="py-3 px-3">
-                        <p className="font-bold text-slate-900 group-hover:text-[#0052FF] transition-colors">
-                          {row.title}
-                        </p>
-                      </td>
-                      <td className="py-3 px-2 text-slate-500 whitespace-nowrap font-medium">
-                        {row.date}
-                      </td>
-                      <td className="py-3 px-2 whitespace-nowrap text-slate-600 font-semibold">
-                        {row.dept}
-                      </td>
-                      <td className="py-3 px-2 text-center whitespace-nowrap">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                            row.color === "emerald"
-                              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                              : row.color === "amber"
-                              ? "bg-amber-100 text-amber-800 border border-amber-200"
-                              : "bg-sky-100 text-sky-800 border border-sky-200"
-                          }`}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDoc(doc)}
+                          className="font-bold text-slate-900 hover:text-[#0052FF] text-left leading-snug cursor-pointer transition-colors block"
                         >
-                          {row.status}
+                          {doc.title}
+                        </button>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                          {doc.direction === "outgoing" ? "หนังสือส่งออก" : "หนังสือรับเข้า"}
                         </span>
                       </td>
-                      <td className="py-3 px-2 text-right whitespace-nowrap">
-                        <span className="text-xs font-bold text-slate-500 hover:text-slate-900 flex items-center gap-0.5 ml-auto">
-                          Action <ChevronDown className="w-3.5 h-3.5" />
-                        </span>
+                      <td className="py-3 px-3 whitespace-nowrap text-slate-700">
+                        {doc.from || (doc as any).fromOrg || "ส่วนราชการ"}
+                      </td>
+                      <td className="py-3 px-3 whitespace-nowrap font-semibold text-slate-700">
+                        {doc.targetDept || doc.senderDept || "สำนักปลัด"}
+                      </td>
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        {speedBadge}
+                      </td>
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        {statusBadge}
+                      </td>
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        <Button
+                          size="sm"
+                          onClick={() => setSelectedDoc(doc)}
+                          className="h-7 px-3 bg-[#0052FF] hover:bg-blue-700 text-white font-bold text-[11px] rounded-lg gap-1 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>เปิดดู / เกษียน</span>
+                        </Button>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* RIGHT 5 COLS: พรีวิวแผ่นกระดาษหนังสือราชการจริง (Live Paper Preview Card) */}
-        <div className="lg:col-span-5 glass-card rounded-3xl p-6 bg-white/95 backdrop-blur-2xl border border-white/90 shadow-[0_12px_36px_rgba(0,0,0,0.04)] space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-              พรีวิวเอกสารฉบับทางการ (Live Paper Sheet)
-            </span>
-            <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-              A4 Gov Standard
-            </span>
-          </div>
-
-          {/* Pure White A4 Simulated Paper */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-4 relative overflow-hidden font-sans">
-            {/* Red Rubber Stamp at top right */}
-            <div className="absolute top-4 right-4 rotate-[-6deg] border-2 border-rose-600 text-rose-700 font-bold px-2 py-1 rounded text-[9px] leading-tight select-none bg-rose-50/60 shadow-2xs">
-              <div>อบต.ดอยงาม</div>
-              <div>รับที่ {activePreview?.regNo || "๒๗๘๕/๒๕๖๙"}</div>
-              <div>๑๕ มี.ค. ๒๕๖๙</div>
-            </div>
-
-            {/* Official Thai Garuda Emblem */}
-            <div className="flex flex-col items-center justify-center space-y-1 pt-1">
-              <ThaiGaruda className="w-14 h-14 drop-shadow-xs" />
-              <p className="text-[11px] font-bold text-slate-700">อบต.ดอยงาม</p>
-              <h3 className="text-sm font-black text-slate-900 text-center leading-snug">
-                {activePreview?.title || "รายงานการประชุมประจำเดือน อบต.ดอยงาม"}
-              </h3>
-              <p className="text-[10px] text-slate-500 font-mono">
-                {activePreview?.docDate || "วันที่ ๑๕ มี.ค. ๒๕๖๙"}
-              </p>
-            </div>
-
-            {/* Simulated Thai Sarabun Paragraphs */}
-            <div className="space-y-2 text-[10.5px] leading-relaxed text-slate-600 text-justify pt-2 border-t border-slate-100">
-              <p className="indent-6">
-                ตามที่องค์การบริหารส่วนตำบลดอยงาม ได้กำหนดให้มีการจัดทำระบบสารบรรณอิเล็กทรอนิกส์และบริการประชาชนตามมาตรฐานของกรมส่งเสริมการปกครองท้องถิ่น ประจำปีงบประมาณ พ.ศ. ๒๕๖๙ นั้น
-              </p>
-              <p className="indent-6">
-                การดำเนินงานดังกล่าวได้บรรลุวัตถุประสงค์ทุกประการ จึงเรียนมาเพื่อโปรดทราบและพิจารณาลงนามสั่งการต่อไป
-              </p>
-            </div>
-
-            {/* Official Signature & Blue Seal Block */}
-            <div className="pt-4 flex flex-col items-end text-right border-t border-slate-100 space-y-1">
-              <div className="font-serif italic font-black text-base text-[#003399] tracking-wider select-none pr-3">
-                สมชาย สมภักดี
-              </div>
-              <div className="flex items-center gap-1.5 justify-end">
-                <span className="text-[10px] font-bold text-slate-800">
-                  ลงนาม: นายสมชาย สมภักดี
-                </span>
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[8px] font-bold shadow-xs">
-                  ✓
-                </span>
-              </div>
-              <span className="text-[9px] text-slate-400 font-mono">
-                วันที่ ๑๕ มี.ค. ๒๕๖๙ • ปลัด อบต.ดอยงาม
-              </span>
-            </div>
-          </div>
-
-          {/* Full Studio Workspace Button */}
-          <Button
-            size="lg"
-            variant="signature"
-            onClick={() => {
-              if (activePreview) {
-                setSelectedStudioDoc(activePreview);
-              } else {
-                setSelectedStudioDoc({
-                  id: "demo-doc-01",
-                  docNo: "สบ ๐๐๓/๒๕๖๙",
-                  regNo: "๒๗๘๕/๒๕๖๙",
-                  regDate: "15 มี.ค. 2569",
-                  regTime: "14:30 น.",
-                  docDate: "15 มี.ค. 2569",
-                  from: "สำนักปลัด องค์การบริหารส่วนตำบลดอยงาม",
-                  to: "นายกองค์การบริหารส่วนตำบลดอยงาม",
-                  title: "รายงานการประชุมประจำเดือน และผลการดำเนินงานสารบรรณ",
-                  docType: "หนังสือภายใน",
-                  speed: "ปกติ",
-                  secret: "ปกติ",
-                  targetDept: "สำนักปลัด",
-                  contentParagraphs: [
-                    "ตามที่องค์การบริหารส่วนตำบลดอยงาม ได้กำหนดให้มีการจัดทำระบบสารบรรณอิเล็กทรอนิกส์และบริการประชาชนตามมาตรฐานของกรมส่งเสริมการปกครองท้องถิ่น ประจำปีงบประมาณ พ.ศ. ๒๕๖๙ นั้น",
-                    "การดำเนินงานดังกล่าวได้บรรลุวัตถุประสงค์ทุกประการ จึงเรียนมาเพื่อโปรดทราบและพิจารณาลงนามสั่งการต่อไป",
-                  ],
-                  endorsements: [],
-                });
-              }
-            }}
-            className="w-full h-11 rounded-2xl gap-2 font-bold text-xs shadow-md shadow-blue-500/25 cursor-pointer"
-          >
-            <PenTool className="w-4 h-4 text-amber-300" />
-            <span>เปิดตรวจเกษียน & ประทับตรายางฉบับเต็ม (Full Studio)</span>
-          </Button>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="py-16 text-center text-slate-400">
+                    <FileText className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                    <p className="font-bold text-sm text-slate-600">
+                      {searchQuery ? "ไม่พบเอกสารที่ค้นหา" : "ยังไม่มีรายการหนังสือในระบบ"}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {searchQuery
+                        ? "ลองตรวจสอบคำค้นหาหรือตัวกรองกองงานอีกครั้ง"
+                        : "สามารถกดปุ่ม 'ลงรับหนังสือเข้า' หรือ 'ออกเลขหนังสือส่ง' ด้านบนเพื่อเริ่มต้น"}
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 5. FULL-SCREEN IMMERSION ENDORSEMENT STUDIO WORKSPACE MODAL               */}
+      {/* 4. WORKSPACE MODAL (เปิดอ่าน, ประทับตรายาง, และเกษียนหนังสือฉบับจริง)         */}
       {/* ========================================================================= */}
-      {selectedStudioDoc && (
+      {selectedDoc && (
         <DocumentViewerWorkspace
-          document={selectedStudioDoc}
-          onClose={() => setSelectedStudioDoc(null)}
+          document={selectedDoc}
+          onClose={() => setSelectedDoc(null)}
           onSaveDoc={() => {
-            setStats(getDocumentStats());
             setAllDocs(getAllDocuments());
+            setStats(getDocumentStats());
           }}
         />
       )}
