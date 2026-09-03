@@ -468,22 +468,6 @@ export function LoginClientForm() {
             </>
           )}
         </button>
-
-        {/* Discreet testing credential hint */}
-        <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500">
-          <span>ทดสอบระบบ:</span>
-          <button
-            type="button"
-            onClick={() => {
-              setUsernameInput("techanut0@gmail.com");
-              setPasswordInput("00830125");
-            }}
-            className="font-bold text-[#0052FF] hover:underline cursor-pointer flex items-center gap-1"
-          >
-            <Sparkles className="w-3 h-3 text-amber-500" />
-            <span>กรอกบัญชีแอดมินอัตโนมัติ</span>
-          </button>
-        </div>
       </form>
     </div>
   );
