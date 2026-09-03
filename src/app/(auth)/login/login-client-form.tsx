@@ -400,18 +400,10 @@ export function LoginClientForm() {
   // SCREEN 1: Standard Official Login Screen
   // ---------------------------------------------------------------------------
   return (
-    <div className="space-y-5">
-      {/* Official Admin Note */}
-      <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200 text-[11px] text-blue-900 leading-snug flex items-start gap-2">
-        <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-        <span>
-          <strong>ประกาศระบบ :</strong> ผู้ดูแลระบบ (Admin) เป็นผู้เพิ่มรายชื่อและกำหนดรหัสผ่านเริ่มต้นให้ หากเข้าสู่ระบบครั้งแรก ระบบจะบังคับให้ท่านเปลี่ยนรหัสผ่านใหม่ทันที
-        </span>
-      </div>
-
+    <div className="space-y-4">
       {errorMsg && (
-        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
           <span>{errorMsg}</span>
         </div>
       )}
@@ -420,24 +412,24 @@ export function LoginClientForm() {
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="text-xs font-bold text-slate-700 block mb-1.5">
-            ชื่อผู้ใช้งาน หรือ อีเมล (Username / Email) :
+            ชื่อผู้ใช้งาน หรือ อีเมล (Username / Email)
           </label>
           <div className="relative">
             <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               required
-              placeholder="กรอกชื่อผู้ใช้งาน หรือ อีเมลราชการ"
+              placeholder="เช่น techanut0@gmail.com หรือชื่อผู้ใช้"
               value={usernameInput}
               onChange={(e) => setUsernameInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
+              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF] focus:outline-none transition-all shadow-2xs"
             />
           </div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-bold text-slate-700">รหัสผ่าน (Password) :</label>
+            <label className="text-xs font-bold text-slate-700">รหัสผ่าน (Password)</label>
           </div>
           <div className="relative">
             <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -447,12 +439,12 @@ export function LoginClientForm() {
               placeholder="กรอกรหัสผ่านของท่าน"
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
+              className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs font-mono font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF] focus:outline-none transition-all shadow-2xs"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -462,7 +454,7 @@ export function LoginClientForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#0052FF] via-[#0284c7] to-[#2563eb] hover:opacity-95 text-white font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+          className="w-full py-3.5 px-4 rounded-2xl bg-[#0052FF] hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
         >
           {isLoading ? (
             <>
@@ -476,6 +468,22 @@ export function LoginClientForm() {
             </>
           )}
         </button>
+
+        {/* Discreet testing credential hint */}
+        <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500">
+          <span>ทดสอบระบบ:</span>
+          <button
+            type="button"
+            onClick={() => {
+              setUsernameInput("techanut0@gmail.com");
+              setPasswordInput("00830125");
+            }}
+            className="font-bold text-[#0052FF] hover:underline cursor-pointer flex items-center gap-1"
+          >
+            <Sparkles className="w-3 h-3 text-amber-500" />
+            <span>กรอกบัญชีแอดมินอัตโนมัติ</span>
+          </button>
+        </div>
       </form>
     </div>
   );
