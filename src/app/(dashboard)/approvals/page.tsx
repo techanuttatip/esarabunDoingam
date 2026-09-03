@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
 import { useSession } from "@/components/providers/session-provider";
+import { getAllDocuments, updateDocument, StoredDocument } from "@/lib/document-store";
 
 interface ApprovalDoc extends DocumentData {
   senderDept: string;
@@ -31,14 +32,33 @@ interface ApprovalDoc extends DocumentData {
   slaRemaining: string;
 }
 
-const mockApprovalDocs: ApprovalDoc[] = [];
-
 export default function ApprovalsPage() {
   const { data: session } = useSession();
-  const [approvalList, setApprovalList] = useState<ApprovalDoc[]>(mockApprovalDocs);
+  const [approvalList, setApprovalList] = useState<ApprovalDoc[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedDocForViewer, setSelectedDocForViewer] = useState<ApprovalDoc | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
+
+  const loadPendingDocs = () => {
+    const all = getAllDocuments();
+    const pending = all.filter((d) => d.status !== "completed" && d.status !== "sent");
+    setApprovalList(
+      pending.map((d) => ({
+        ...d,
+        senderDept: d.senderDept || d.targetDept || "สำนักปลัด",
+        senderStaff: d.senderName || d.assignedStaff || "เจ้าหน้าที่",
+        waitingFor: "รอพิจารณาเกษียนสั่งการ",
+        urgency: (d.speed as any) || "ปกติ",
+        slaRemaining: "ภายใน ๒๔ ชม.",
+      }))
+    );
+  };
+
+  useEffect(() => {
+    loadPendingDocs();
+    window.addEventListener("smartsarabun_documents_updated", loadPendingDocs);
+    return () => window.removeEventListener("smartsarabun_documents_updated", loadPendingDocs);
+  }, []);
 
   const handleSelectAll = () => {
     if (selectedIds.length === approvalList.length) {
@@ -58,14 +78,45 @@ export default function ApprovalsPage() {
 
   const handleBatchApprove = () => {
     if (selectedIds.length === 0) return;
-    setApprovalList(approvalList.filter((d) => !selectedIds.includes(d.id)));
+    const savedSignature = typeof window !== "undefined" ? localStorage.getItem("smartsarabun_user_signature") : null;
+    selectedIds.forEach((id) => {
+      const doc = approvalList.find((d) => d.id === id);
+      if (doc) {
+        const newEndorsement = {
+          actor: session?.user?.name || "ผู้บริหาร",
+          position: session?.user?.position || "ปลัด/นายก อบต.",
+          tier: "executive",
+          action: "อนุมัติสั่งการ",
+          note: "อนุมัติสั่งการตามเสนอ ให้ดำเนินการตามระเบียบต่อไป",
+          signatureUrl: savedSignature || undefined,
+          date: new Date().toLocaleDateString("th-TH") + " " + new Date().toLocaleTimeString("th-TH") + " น.",
+        };
+        updateDocument(id, {
+          status: "completed",
+          endorsements: [...(doc.endorsements || []), newEndorsement],
+        });
+      }
+    });
     setSelectedIds([]);
     setActionSuccessMsg(`อนุมัติและลงนามเกษียนรวดเดียว ${selectedIds.length} ฉบับเรียบร้อยแล้ว`);
     setTimeout(() => setActionSuccessMsg(null), 4000);
   };
 
   const handleQuickSingleApprove = (doc: ApprovalDoc) => {
-    setApprovalList(approvalList.filter((d) => d.id !== doc.id));
+    const savedSignature = typeof window !== "undefined" ? localStorage.getItem("smartsarabun_user_signature") : null;
+    const newEndorsement = {
+      actor: session?.user?.name || "ผู้บริหาร",
+      position: session?.user?.position || "ปลัด/นายก อบต.",
+      tier: "executive",
+      action: "อนุมัติสั่งการ",
+      note: "อนุมัติสั่งการตามเสนอ ให้ดำเนินการตามระเบียบต่อไป",
+      signatureUrl: savedSignature || undefined,
+      date: new Date().toLocaleDateString("th-TH") + " " + new Date().toLocaleTimeString("th-TH") + " น.",
+    };
+    updateDocument(doc.id, {
+      status: "completed",
+      endorsements: [...(doc.endorsements || []), newEndorsement],
+    });
     setActionSuccessMsg(`อนุมัติและลงนามหนังสือเลขที่ "${doc.docNo}" เรียบร้อยแล้ว`);
     setTimeout(() => setActionSuccessMsg(null), 4000);
   };
@@ -277,6 +328,7 @@ export default function ApprovalsPage() {
         <DocumentViewerWorkspace
           document={selectedDocForViewer}
           onClose={() => setSelectedDocForViewer(null)}
+          onSaveDoc={() => loadPendingDocs()}
         />
       )}
     </div>
