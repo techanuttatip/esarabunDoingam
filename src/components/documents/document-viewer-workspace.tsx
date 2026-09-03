@@ -60,6 +60,7 @@ import { AntiLeakWatermark } from "@/features/security/components/anti-leak-wate
 import { ThaiGaruda } from "@/components/shared/thai-garuda";
 import { DocVerificationSeal } from "@/components/shared/doc-verification-seal";
 import { updateDocument } from "@/lib/document-store";
+import Link from "next/link";
 
 // Digital Signature Component (Renders actual signature image from profile or clean Thai signature font)
 function DigitalSignature({ name, signatureUrl, className = "h-8" }: { name: string; signatureUrl?: string; className?: string }) {
@@ -886,6 +887,108 @@ export function DocumentViewerWorkspace({
           {/* TAB 1: ENDORSEMENT FORM */}
           {activeSideTab === "endorse" && (
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs font-sans">
+              {/* 1. QUICK ENDORSEMENT DOCK (2026 TACTILE 2X2 BUTTONS) */}
+              <div className="p-4 rounded-3xl bg-slate-50/90 border border-slate-200/90 space-y-2.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-400">Quick Endorsement</span>
+                  <span className="text-xs font-black text-slate-900">ดำเนินการด่วน</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomEndorseNote("เกษียนเสนอเพื่อโปรดพิจารณาความเห็นชอบและลงนามสั่งการต่อไป");
+                      setSelectedQuickAction(["+ เกษียนเสนอเรื่อง"]);
+                    }}
+                    className="p-3 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 text-slate-800 font-black text-xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <span>เกษียน</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomEndorseNote("อนุมัติสั่งการตามเสนอ มอบหมายส่วนราชการที่เกี่ยวข้องถือปฏิบัติตามระเบียบ");
+                      setSelectedQuickAction(["+ อนุมัติสั่งการ"]);
+                    }}
+                    className="p-3 rounded-2xl bg-blue-50 border border-blue-300 text-[#0052FF] font-black text-xs hover:bg-blue-100 hover:shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <span>อนุมัติ ✓</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomEndorseNote("รับทราบ และแจ้งเวียนหน่วยงานในสังกัดเพื่อทราบถือปฏิบัติต่อไป");
+                      setSelectedQuickAction(["+ รับทราบถือปฏิบัติ"]);
+                    }}
+                    className="p-3 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 text-slate-800 font-black text-xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <span>รับทราบ</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomEndorseNote(`ส่งต่อ ${selectedDeptBox} เพื่อตรวจสอบความถูกต้องและดำเนินการตามอำนาจหน้าที่`);
+                      setSelectedQuickAction(["+ ส่งต่อกอง"]);
+                    }}
+                    className="p-3 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 text-slate-800 font-black text-xs hover:shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <span>ส่งต่อ ➜</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. DIGITAL SIGNATURE CARD (VIBRANT ROYAL SAPPHIRE) */}
+              <div className="p-4 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white space-y-2.5 shadow-md shadow-blue-500/20">
+                <div className="flex items-center justify-between text-xs font-bold text-blue-100">
+                  <span className="flex items-center gap-1.5">
+                    <PenTool className="w-3.5 h-3.5 text-amber-300" />
+                    ลายมือชื่อดิจิทัล (Digital Signature)
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30 font-bold">
+                    Verified
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-between">
+                  <div className="font-serif italic font-black text-lg text-white select-none tracking-wider">
+                    {activeSigner.name}
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-white text-[#0052FF] flex items-center justify-center font-bold shadow-xs">
+                    <PenTool className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-blue-100 font-medium">
+                  <span>{activeSigner.position}</span>
+                  <Link href="/profile" className="hover:underline text-amber-200 font-bold">
+                    ตั้งค่าลายมือชื่อ ↗
+                  </Link>
+                </div>
+              </div>
+
+              {/* 3. AI GEMINI SUMMARY CARD */}
+              <div className="p-4 rounded-3xl bg-purple-50/80 border border-purple-200/90 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-purple-950 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                    AI Gemini Summary
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+                    Gemini 2.5
+                  </span>
+                </div>
+                <ul className="space-y-1.5 text-[11px] text-purple-950 leading-relaxed font-sans">
+                  <li>
+                    <strong className="font-bold text-purple-900">• Subject:</strong> {currentDoc.title}
+                  </li>
+                  <li>
+                    <strong className="font-bold text-purple-900">• Action items:</strong> ประทับตราและส่งต่อ {selectedDeptBox} ดำเนินการตามระเบียบ
+                  </li>
+                  <li>
+                    <strong className="font-bold text-purple-900">• Relevant date:</strong> ดำเนินการภายใน {currentDoc.docDate || "๓ วันทำการ"}
+                  </li>
+                </ul>
+              </div>
+
               {/* ๑. กองงานลงรับหนังสือ (Department Receipt Action) */}
               {!isDeptReceived ? (
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 space-y-2.5 shadow-xs animate-in fade-in">
