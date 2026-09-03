@@ -16,26 +16,7 @@ interface DeletedDoc {
   dept: string;
 }
 
-const mockDeletedDocs: DeletedDoc[] = [
-  {
-    id: "DEL-001",
-    docNo: "ชร 52001/ว 0120 (ยกเลิกเลข)",
-    title: "ขอเชิญประชุมคณะกรรมการพัฒนาท้องถิ่น (พิมพ์ชื่อเรื่องซ้ำซ้อน)",
-    deletedBy: "นางสาวนภา วงศ์ใหญ่ (สารบรรณกลาง)",
-    deletedDate: "27 ส.ค. 2569 16:30 น.",
-    reason: "ร่างซ้ำซ้อนกับฉบับก่อนหน้า จึงทำการยกเลิกเลขสารบรรณ",
-    dept: "สำนักปลัด",
-  },
-  {
-    id: "DEL-002",
-    docNo: "ช่าง-ร่าง-005",
-    title: "แบบประมาณราคาค่าก่อสร้างรางระบายน้ำ (ฉบับร่างทดสอบ)",
-    deletedBy: "นายวิศวกร ช่างมั่น (นายช่างโยธา)",
-    deletedDate: "25 ส.ค. 2569 11:00 น.",
-    reason: "ร่างทดสอบการใช้งานระบบ",
-    dept: "กองช่าง",
-  },
-];
+const mockDeletedDocs: DeletedDoc[] = [];
 
 export default function TrashPage() {
   const [trashList, setTrashList] = useState<DeletedDoc[]>(mockDeletedDocs);

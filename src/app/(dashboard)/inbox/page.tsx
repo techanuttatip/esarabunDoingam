@@ -36,73 +36,7 @@ interface IncomingItem {
   hasAttachment: boolean;
 }
 
-const mockInboxDocs: IncomingItem[] = [
-  {
-    id: "in-001",
-    regNo: "2784/2569",
-    docNo: "ชร 0023.1/ว 4589",
-    regDate: "28 ส.ค. 2569",
-    docDate: "27 ส.ค. 2569",
-    fromOrg: "ที่ว่าการอำเภอพาน จังหวัดเชียงราย",
-    title: "โครงการตรวจสอบและเตรียมความพร้อมรับมืออุทกภัยและดินโคลนถล่ม ประจำปี 2569",
-    targetDept: "กองช่าง",
-    speed: "ด่วนที่สุด",
-    status: "รอเกษียน",
-    hasAttachment: true,
-  },
-  {
-    id: "in-002",
-    regNo: "2783/2569",
-    docNo: "มท 0808.2/ว 5232",
-    regDate: "28 ส.ค. 2569",
-    docDate: "26 ส.ค. 2569",
-    fromOrg: "กรมส่งเสริมการปกครองท้องถิ่น กระทรวงมหาดไทย",
-    title: "แนวทางการจัดสรรงบประมาณเงินอุดหนุนเฉพาะกิจและการจัดทำข้อบัญญัติงบประมาณรายจ่าย ประจำปี 2569",
-    targetDept: "กองคลัง",
-    speed: "ด่วนที่สุด",
-    status: "รอพิจารณา",
-    hasAttachment: true,
-  },
-  {
-    id: "in-003",
-    regNo: "2782/2569",
-    docNo: "ศธ 04001/ว 1120",
-    regDate: "27 ส.ค. 2569",
-    docDate: "25 ส.ค. 2569",
-    fromOrg: "สำนักงานเขตพื้นที่การศึกษาประถมศึกษาเชียงราย เขต 2",
-    title: "แนวทางการจัดการเรียนการสอนและสนับสนุนอาหารกลางวันศูนย์พัฒนาเด็กเล็ก ประจำภาคเรียนที่ 1/2569",
-    targetDept: "กองการศึกษาฯ",
-    speed: "ปกติ",
-    status: "เสร็จสิ้น",
-    hasAttachment: true,
-  },
-  {
-    id: "in-004",
-    regNo: "2781/2569",
-    docNo: "สธ 0201/ว 884",
-    regDate: "27 ส.ค. 2569",
-    docDate: "26 ส.ค. 2569",
-    fromOrg: "สำนักงานสาธารณสุขอำเภอพาน",
-    title: "มาตรการเฝ้าระวังและป้องกันควบคุมโรคติดต่อตามฤดูกาลในพื้นที่ตำบลดอยงาม",
-    targetDept: "กองสาธารณสุข",
-    speed: "ด่วน",
-    status: "เสร็จสิ้น",
-    hasAttachment: true,
-  },
-  {
-    id: "in-005",
-    regNo: "2780/1/2569",
-    docNo: "ชร 0023.2/ว 901",
-    regDate: "26 ส.ค. 2569",
-    docDate: "24 ส.ค. 2569",
-    fromOrg: "จังหวัดเชียงราย",
-    title: "ขอเชิญประชุมสัมมนาการจัดทำแผนพัฒนาท้องถิ่นดิจิทัล",
-    targetDept: "สำนักปลัด",
-    speed: "ด่วน",
-    status: "เสร็จสิ้น",
-    hasAttachment: true,
-  },
-];
+const mockInboxDocs: IncomingItem[] = [];
 
 export default function InboxPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -217,64 +151,74 @@ export default function InboxPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {filteredDocs.map((doc, idx) => (
-                  <tr
-                    key={doc.id}
-                    className={`hover:bg-blue-50/60 transition-colors ${
-                      idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                    }`}
-                  >
-                    <td className="p-3.5 font-extrabold text-slate-900 text-sm">
-                      {doc.regNo}
-                      <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
-                        รับเมื่อ: {doc.regDate}
-                      </span>
-                    </td>
+                {filteredDocs.length > 0 ? (
+                  filteredDocs.map((doc, idx) => (
+                    <tr
+                      key={doc.id}
+                      className={`hover:bg-blue-50/60 transition-colors ${
+                        idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
+                      }`}
+                    >
+                      <td className="p-3.5 font-extrabold text-slate-900 text-sm">
+                        {doc.regNo}
+                        <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
+                          รับเมื่อ: {doc.regDate}
+                        </span>
+                      </td>
 
-                    <td className="p-3.5">
-                      <span className="font-mono font-bold text-blue-900 block">{doc.docNo}</span>
-                      <span className="text-[11px] text-slate-500">{doc.docDate}</span>
-                    </td>
+                      <td className="p-3.5">
+                        <span className="font-mono font-bold text-blue-900 block">{doc.docNo}</span>
+                        <span className="text-[11px] text-slate-500">{doc.docDate}</span>
+                      </td>
 
-                    <td className="p-3.5">
-                      <div className="flex items-center gap-2">
-                        {doc.speed === "ด่วนที่สุด" && (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-red-100 text-red-800 border border-red-200 shrink-0">
-                            ด่วนที่สุด
-                          </span>
-                        )}
-                        {doc.speed === "ด่วน" && (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
-                            ด่วน
-                          </span>
-                        )}
-                        <p className="font-bold text-slate-900 text-xs sm:text-sm">{doc.title}</p>
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-1">จาก: {doc.fromOrg}</p>
-                    </td>
+                      <td className="p-3.5">
+                        <div className="flex items-center gap-2">
+                          {doc.speed === "ด่วนที่สุด" && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-red-100 text-red-800 border border-red-200 shrink-0">
+                              ด่วนที่สุด
+                            </span>
+                          )}
+                          {doc.speed === "ด่วน" && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                              ด่วน
+                            </span>
+                          )}
+                          <p className="font-bold text-slate-900 text-xs sm:text-sm">{doc.title}</p>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-1">จาก: {doc.fromOrg}</p>
+                      </td>
 
-                    <td className="p-3.5">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
-                        {doc.targetDept}
-                      </span>
-                    </td>
+                      <td className="p-3.5">
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                          {doc.targetDept}
+                        </span>
+                      </td>
 
-                    <td className="p-3.5">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900">
-                        {doc.status}
-                      </span>
-                    </td>
+                      <td className="p-3.5">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900">
+                          {doc.status}
+                        </span>
+                      </td>
 
-                    <td className="p-3.5 text-center">
-                      <Button asChild size="sm" variant="outline" className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50">
-                        <Link href="/receive">
-                          <Eye className="w-3.5 h-3.5 mr-1" />
-                          เปิดดู
-                        </Link>
-                      </Button>
+                      <td className="p-3.5 text-center">
+                        <Button asChild size="sm" variant="outline" className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50">
+                          <Link href="/receive">
+                            <Eye className="w-3.5 h-3.5 mr-1" />
+                            เปิดดู
+                          </Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="p-12 text-center text-slate-400">
+                      <Inbox className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                      <p className="font-bold text-slate-700 text-sm">ยังไม่มีหนังสือเข้าในกล่องหนังสือรับ</p>
+                      <p className="text-xs text-slate-400 mt-0.5">เมื่อมีการลงรับหนังสือจากภายนอก รายการหนังสือจะแสดงที่นี่</p>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

@@ -38,60 +38,7 @@ interface LedgerRow {
   note: string;
 }
 
-const mockIncomingLedger: LedgerRow[] = [
-  {
-    regNo: "๒๗๘๔/๒๕๖๙",
-    regDate: "๒๘ ส.ค. ๖๙",
-    regTime: "๐๙.๑๕ น.",
-    fromOrg: "อำเภอพาน จ.เชียงราย",
-    toOrg: "นายก อบต.ดอยงาม",
-    title: "โครงการตรวจสอบและเตรียมความพร้อมรับมืออุทกภัยและดินโคลนถล่ม ประจำปี ๒๕๖๙",
-    docNo: "ชร ๐๐๒๓.๑/ว ๔๕๘๙",
-    docDate: "๒๗ ส.ค. ๖๙",
-    targetDept: "กองช่าง",
-    receiver: "นายวิศวกร ช่างมั่น",
-    note: "ด่วนที่สุด - ปฏิบัติการทันที",
-  },
-  {
-    regNo: "๒๗๘๓/๒๕๖๙",
-    regDate: "๒๘ ส.ค. ๖๙",
-    regTime: "๑๐.๓๐ น.",
-    fromOrg: "กรมส่งเสริมการปกครองท้องถิ่น",
-    toOrg: "นายก อบต.ดอยงาม",
-    title: "แนวทางการจัดสรรงบประมาณเงินอุดหนุนเฉพาะกิจและการจัดทำข้อบัญญัติงบประมาณรายจ่าย ประจำปี ๒๕๖๙",
-    docNo: "มท ๐๘๐๘.๒/ว ๕๒๓๒",
-    docDate: "๒๕ ส.ค. ๖๙",
-    targetDept: "กองคลัง",
-    receiver: "นางวรรณา นามเงิน",
-    note: "ด่วนที่สุด - เสนอผู้บริหาร",
-  },
-  {
-    regNo: "๒๗๘๒/๒๕๖๙",
-    regDate: "๒๗ ส.ค. ๖๙",
-    regTime: "๑๔.๒๐ น.",
-    fromOrg: "สพป. เชียงราย เขต ๒",
-    toOrg: "นายก อบต.ดอยงาม",
-    title: "โครงการสนับสนุนค่าใช้จ่ายการจัดการศึกษาและอาหารกลางวันโรงเรียนบ้านดอยงาม",
-    docNo: "ศธ ๐๔๐๐๑/ว ๑๑๒๐",
-    docDate: "๒๖ ส.ค. ๖๙",
-    targetDept: "กองการศึกษาฯ",
-    receiver: "นางสาวสมหญิง นามครู",
-    note: "ด่วน - มอบหมายดำเนินการ",
-  },
-  {
-    regNo: "๒๗๘๑/๒๕๖๙",
-    regDate: "๒๗ ส.ค. ๖๙",
-    regTime: "๑๖.๐๐ น.",
-    fromOrg: "สำนักงานเกษตรอำเภอพาน",
-    toOrg: "นายก อบต.ดอยงาม",
-    title: "ขอความอนุเคราะห์ประชาสัมพันธ์มาตรการช่วยเหลือเกษตรกรผู้ปลูกข้าวนาปี ๒๕๖๙",
-    docNo: "กษ ๑๒๐๕/ว ๐๔๑๒",
-    docDate: "๒๗ ส.ค. ๖๙",
-    targetDept: "สำนักปลัด",
-    receiver: "นายสมศักดิ์ สุขใจ",
-    note: "ปกติ - แจ้งผู้ใหญ่บ้านทุกหมู่",
-  },
-];
+const mockIncomingLedger: LedgerRow[] = [];
 
 export function BookLedgerModal({ isOpen, onClose, defaultBookType = "INCOMING" }: BookLedgerModalProps) {
   const [bookType, setBookType] = useState<"INCOMING" | "OUTGOING">(defaultBookType);
@@ -240,42 +187,50 @@ export function BookLedgerModal({ isOpen, onClose, defaultBookType = "INCOMING" 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-300">
-                  {mockIncomingLedger.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-blue-50/40 transition-colors">
-                      {/* Left Page Columns */}
-                      <td className="py-2.5 px-2 border-r border-slate-400 text-center font-mono font-bold text-[#0052FF]">
-                        {row.regNo}
-                      </td>
-                      <td className="py-2.5 px-2 border-r border-slate-400 text-center text-[11px]">
-                        <div>{row.regDate}</div>
-                        <div className="text-[10px] text-slate-500 font-mono">{row.regTime}</div>
-                      </td>
-                      <td className="py-2.5 px-2 border-r border-slate-400 text-slate-800 font-medium">
-                        {row.fromOrg}
-                      </td>
-                      <td className="py-2.5 px-2 border-r border-slate-400 text-slate-800">
-                        {row.toOrg}
-                      </td>
-                      <td className="py-2.5 px-3 border-r-2 border-slate-900 text-slate-900 font-bold leading-snug">
-                        {row.title}
-                      </td>
+                  {mockIncomingLedger.length > 0 ? (
+                    mockIncomingLedger.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-blue-50/40 transition-colors">
+                        {/* Left Page Columns */}
+                        <td className="py-2.5 px-2 border-r border-slate-400 text-center font-mono font-bold text-[#0052FF]">
+                          {row.regNo}
+                        </td>
+                        <td className="py-2.5 px-2 border-r border-slate-400 text-center text-[11px]">
+                          <div>{row.regDate}</div>
+                          <div className="text-[10px] text-slate-500 font-mono">{row.regTime}</div>
+                        </td>
+                        <td className="py-2.5 px-2 border-r border-slate-400 text-slate-800 font-medium">
+                          {row.fromOrg}
+                        </td>
+                        <td className="py-2.5 px-2 border-r border-slate-400 text-slate-800">
+                          {row.toOrg}
+                        </td>
+                        <td className="py-2.5 px-3 border-r-2 border-slate-900 text-slate-900 font-bold leading-snug">
+                          {row.title}
+                        </td>
 
-                      {/* Right Page Columns */}
-                      <td className="py-2.5 px-2 border-r border-slate-400 text-center text-[11px]">
-                        <div className="font-mono font-bold text-slate-800">{row.docNo}</div>
-                        <div className="text-[10px] text-slate-500 font-mono">{row.docDate}</div>
-                      </td>
-                      <td className="py-2.5 px-2 border-r border-slate-400 text-center font-bold text-slate-700">
-                        {row.targetDept}
-                      </td>
-                      <td className="py-2.5 px-2 border-r border-slate-400 text-center text-slate-800">
-                        {row.receiver}
-                      </td>
-                      <td className="py-2.5 px-2 text-slate-600 text-[11px]">
-                        {row.note}
+                        {/* Right Page Columns */}
+                        <td className="py-2.5 px-2 border-r border-slate-400 text-center text-[11px]">
+                          <div className="font-mono font-bold text-slate-800">{row.docNo}</div>
+                          <div className="text-[10px] text-slate-500 font-mono">{row.docDate}</div>
+                        </td>
+                        <td className="py-2.5 px-2 border-r border-slate-400 text-center font-bold text-slate-700">
+                          {row.targetDept}
+                        </td>
+                        <td className="py-2.5 px-2 border-r border-slate-400 text-center text-slate-800">
+                          {row.receiver}
+                        </td>
+                        <td className="py-2.5 px-2 text-slate-600 text-[11px]">
+                          {row.note}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={9} className="py-16 text-center text-slate-400 font-medium">
+                        ยังไม่มีรายการลงรับในสมุดทะเบียน (จะแสดงอัตโนมัติเมื่อมีการลงรับหนังสือ)
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>

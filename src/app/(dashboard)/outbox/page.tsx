@@ -30,52 +30,7 @@ interface OutgoingItem {
   status: "อนุมัติแล้ว" | "กำลังส่ง" | "รออนุมัติ";
 }
 
-const mockOutboxDocs: OutgoingItem[] = [
-  {
-    id: "out-001",
-    docNo: "ชร 52003/ว 0145",
-    docDate: "28 ส.ค. 2569",
-    toOrg: "สมาชิกสภาและหัวหน้าส่วนราชการทุกกอง",
-    title: "ขอเชิญประชุมสภาองค์การบริหารส่วนตำบลดอยงาม สมัยวิสามัญ ประจำปี 2569",
-    docType: "ภายใน",
-    senderDept: "กองช่าง",
-    senderName: "นายวิศวกร ช่างมั่น",
-    status: "อนุมัติแล้ว",
-  },
-  {
-    id: "out-002",
-    docNo: "ชร 52000/ว 0450",
-    docDate: "28 ส.ค. 2569",
-    toOrg: "นายอำเภอพาน",
-    title: "รายงานผลการดำเนินโครงการซ่อมแซมถนนเพื่อการเกษตร บ้านดอยงาม หมู่ที่ 3",
-    docType: "ภายนอก",
-    senderDept: "สำนักปลัด",
-    senderName: "นายสมศักดิ์ สุขใจ",
-    status: "อนุมัติแล้ว",
-  },
-  {
-    id: "out-003",
-    docNo: "คำสั่ง อบต.ดอยงาม ที่ 142/2569",
-    docDate: "27 ส.ค. 2569",
-    toOrg: "พนักงานส่วนตำบลและลูกจ้าง อบต.ดอยงาม",
-    title: "แต่งตั้งคณะกรรมการตรวจรับพัสดุโครงการก่อสร้างระบบประปาหมู่บ้าน",
-    docType: "คำสั่ง",
-    senderDept: "กองคลัง",
-    senderName: "นายประสิทธิ์ มั่นคง",
-    status: "อนุมัติแล้ว",
-  },
-  {
-    id: "out-004",
-    docNo: "ประกาศ อบต.ดอยงาม",
-    docDate: "27 ส.ค. 2569",
-    toOrg: "ประชาชนในเขตตำบลดอยงาม",
-    title: "ประกาศเจตนารมณ์นโยบาย No Gift Policy จากการปฏิบัติหน้าที่ ประจำปีงบประมาณ 2569",
-    docType: "ประกาศ",
-    senderDept: "สำนักปลัด",
-    senderName: "นายประสิทธิ์ มั่นคง",
-    status: "อนุมัติแล้ว",
-  },
-];
+const mockOutboxDocs: OutgoingItem[] = [];
 
 export default function OutboxPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -170,54 +125,64 @@ export default function OutboxPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {filteredDocs.map((doc, idx) => (
-                  <tr
-                    key={doc.id}
-                    className={`hover:bg-blue-50/60 transition-colors ${
-                      idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                    }`}
-                  >
-                    <td className="p-3.5">
-                      <span className="font-mono font-black text-slate-900 text-xs sm:text-sm block">
-                        {doc.docNo}
-                      </span>
-                      <span className="text-[11px] text-slate-500">{doc.docDate}</span>
-                    </td>
+                {filteredDocs.length > 0 ? (
+                  filteredDocs.map((doc, idx) => (
+                    <tr
+                      key={doc.id}
+                      className={`hover:bg-blue-50/60 transition-colors ${
+                        idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
+                      }`}
+                    >
+                      <td className="p-3.5">
+                        <span className="font-mono font-black text-slate-900 text-xs sm:text-sm block">
+                          {doc.docNo}
+                        </span>
+                        <span className="text-[11px] text-slate-500">{doc.docDate}</span>
+                      </td>
 
-                    <td className="p-3.5">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-navy-50 text-navy-900 border border-navy-200">
-                        {doc.docType}
-                      </span>
-                    </td>
+                      <td className="p-3.5">
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-navy-50 text-navy-900 border border-navy-200">
+                          {doc.docType}
+                        </span>
+                      </td>
 
-                    <td className="p-3.5">
-                      <p className="font-bold text-slate-900 text-xs sm:text-sm">{doc.title}</p>
-                      <p className="text-[11px] text-slate-500 mt-1">ถึง: {doc.toOrg}</p>
-                    </td>
+                      <td className="p-3.5">
+                        <p className="font-bold text-slate-900 text-xs sm:text-sm">{doc.title}</p>
+                        <p className="text-[11px] text-slate-500 mt-1">ถึง: {doc.toOrg}</p>
+                      </td>
 
-                    <td className="p-3.5">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200 block w-fit">
-                        {doc.senderDept}
-                      </span>
-                      <span className="text-[10px] text-slate-400 mt-0.5 block">{doc.senderName}</span>
-                    </td>
+                      <td className="p-3.5">
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200 block w-fit">
+                          {doc.senderDept}
+                        </span>
+                        <span className="text-[10px] text-slate-400 mt-0.5 block">{doc.senderName}</span>
+                      </td>
 
-                    <td className="p-3.5">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                        {doc.status}
-                      </span>
-                    </td>
+                      <td className="p-3.5">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          {doc.status}
+                        </span>
+                      </td>
 
-                    <td className="p-3.5 text-center">
-                      <Button asChild size="sm" variant="outline" className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50">
-                        <Link href="/send">
-                          <Eye className="w-3.5 h-3.5 mr-1" />
-                          พรีวิว
-                        </Link>
-                      </Button>
+                      <td className="p-3.5 text-center">
+                        <Button asChild size="sm" variant="outline" className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50">
+                          <Link href="/send">
+                            <Eye className="w-3.5 h-3.5 mr-1" />
+                            พรีวิว
+                          </Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="p-12 text-center text-slate-400">
+                      <Send className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                      <p className="font-bold text-slate-700 text-sm">ยังไม่มีหนังสือส่งในกล่องหนังสือส่ง</p>
+                      <p className="text-xs text-slate-400 mt-0.5">เมื่อมีการออกเลขส่งหรือจัดส่งหนังสือ รายการหนังสือจะแสดงที่นี่</p>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

@@ -43,26 +43,14 @@ export interface DepartmentReportItem {
 }
 
 const mockDeptReports: DepartmentReportItem[] = [
-  { name: "สำนักปลัด (สารบรรณกลาง)", code: "ชร 52001", incoming: 120, outgoing: 85, completed: 195, pending: 10, overdue: 0, rate: "95%" },
-  { name: "กองคลัง", code: "ชร 52002", incoming: 95, outgoing: 64, completed: 145, pending: 14, overdue: 1, rate: "91%" },
-  { name: "กองช่าง", code: "ชร 52003", incoming: 142, outgoing: 110, completed: 230, pending: 22, overdue: 0, rate: "91%" },
-  { name: "กองการศึกษา ศาสนาและวัฒนธรรม", code: "ชร 52004", incoming: 65, outgoing: 40, completed: 100, pending: 5, overdue: 0, rate: "95%" },
-  { name: "กองสาธารณสุขและสิ่งแวดล้อม", code: "ชร 52005", incoming: 48, outgoing: 32, completed: 75, pending: 5, overdue: 0, rate: "94%" },
+  { name: "สำนักปลัด (สารบรรณกลาง)", code: "ชร 52001", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
+  { name: "กองคลัง", code: "ชร 52002", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
+  { name: "กองช่าง", code: "ชร 52003", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
+  { name: "กองการศึกษา ศาสนาและวัฒนธรรม", code: "ชร 52004", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
+  { name: "กองสาธารณสุขและสิ่งแวดล้อม", code: "ชร 52005", incoming: 0, outgoing: 0, completed: 0, pending: 0, overdue: 0, rate: "100%" },
 ];
 
-const mockOverdueList = [
-  {
-    id: "ov-1",
-    docNo: "มท 0808.2/ว 5232",
-    regNo: "2783/2569",
-    title: "แนวทางการจัดสรรงบประมาณเงินอุดหนุนเฉพาะกิจและการจัดทำข้อบัญญัติงบประมาณรายจ่าย ประจำปี 2569",
-    dept: "กองคลัง",
-    staff: "นางวรรณา นามเงิน",
-    dueDate: "25 ส.ค. 2569",
-    daysOverdue: 6,
-    speed: "ด่วนที่สุด",
-  },
-];
+const mockOverdueList: any[] = [];
 
 export default function ReportsPage() {
   const [activeReportTab, setActiveReportTab] = useState<
@@ -74,21 +62,21 @@ export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState("2569");
   const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
 
-  // Summary Metrics
-  const totalIncoming = 470;
-  const totalOutgoing = 331;
-  const totalDocuments = totalIncoming + totalOutgoing;
-  const totalCompleted = 745;
-  const totalPending = 56;
-  const totalOverdue = 1;
-  const slaRate = "93.0%";
+  // Summary Metrics (Real System Baseline)
+  const totalIncoming = 0;
+  const totalOutgoing = 0;
+  const totalDocuments = 0;
+  const totalCompleted = 0;
+  const totalPending = 0;
+  const totalOverdue = 0;
+  const slaRate = "100%";
 
   // Numbering Metrics
   const numberingStats = {
-    totalIssued: 801,
-    activeReserved: 4,
-    insertedSub: 1,
-    cancelledVoid: 1,
+    totalIssued: 0,
+    activeReserved: 0,
+    insertedSub: 0,
+    cancelledVoid: 0,
   };
 
   const handlePrint = () => {
@@ -400,51 +388,59 @@ export default function ReportsPage() {
               <AlertTriangle className="w-4 h-4 text-red-600" />
               รายการหนังสือที่เกินกำหนดเวลาปฏิบัติราชการ (SLA Overdue Tracking)
             </CardTitle>
-            <span className="text-xs font-bold text-red-800 bg-white px-2.5 py-0.5 rounded-full border border-red-200">
-              เกินกำหนด 1 เรื่อง
+            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              {mockOverdueList.length > 0 ? `เกินกำหนด ${mockOverdueList.length} เรื่อง` : "✓ ตรงเวลา 100% (ไม่มีค้างเกินกำหนด)"}
             </span>
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="w-full overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[800px] text-xs">
-                <thead>
-                  <tr className="bg-slate-50 text-slate-800 font-bold border-b border-slate-200">
-                    <th className="p-3.5">เลขรับ / ที่หนังสือ</th>
-                    <th className="p-3.5">เรื่อง</th>
-                    <th className="p-3.5">กองผู้รับผิดชอบ</th>
-                    <th className="p-3.5">เจ้าหน้าที่</th>
-                    <th className="p-3.5">กำหนดส่ง</th>
-                    <th className="p-3.5 text-center">เกินกำหนด</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {mockOverdueList.map((item) => (
-                    <tr key={item.id} className="bg-red-50/30 hover:bg-red-50/60">
-                      <td className="p-3.5">
-                        <span className="font-mono font-bold text-slate-900 block">{item.regNo}</span>
-                        <span className="text-[10px] text-slate-400">{item.docNo}</span>
-                      </td>
-                      <td className="p-3.5">
-                        <span className="font-bold text-slate-900 block">{item.title}</span>
-                      </td>
-                      <td className="p-3.5">
-                        <span className="px-2 py-0.5 rounded-md font-bold bg-slate-100 text-slate-800 border border-slate-200">
-                          {item.dept}
-                        </span>
-                      </td>
-                      <td className="p-3.5 text-slate-700">{item.staff}</td>
-                      <td className="p-3.5 font-bold text-slate-900">{item.dueDate}</td>
-                      <td className="p-3.5 text-center">
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-red-100 text-red-800 border border-red-200">
-                          เกิน {item.daysOverdue} วัน
-                        </span>
-                      </td>
+            {mockOverdueList.length > 0 ? (
+              <div className="w-full overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[800px] text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-800 font-bold border-b border-slate-200">
+                      <th className="p-3.5">เลขรับ / ที่หนังสือ</th>
+                      <th className="p-3.5">เรื่อง</th>
+                      <th className="p-3.5">กองผู้รับผิดชอบ</th>
+                      <th className="p-3.5">เจ้าหน้าที่</th>
+                      <th className="p-3.5">กำหนดส่ง</th>
+                      <th className="p-3.5 text-center">เกินกำหนด</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {mockOverdueList.map((item) => (
+                      <tr key={item.id} className="bg-red-50/30 hover:bg-red-50/60">
+                        <td className="p-3.5">
+                          <span className="font-mono font-bold text-slate-900 block">{item.regNo}</span>
+                          <span className="text-[10px] text-slate-400">{item.docNo}</span>
+                        </td>
+                        <td className="p-3.5">
+                          <span className="font-bold text-slate-900 block">{item.title}</span>
+                        </td>
+                        <td className="p-3.5">
+                          <span className="px-2 py-0.5 rounded-md font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                            {item.dept}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-slate-700">{item.staff}</td>
+                        <td className="p-3.5 font-bold text-slate-900">{item.dueDate}</td>
+                        <td className="p-3.5 text-center">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-red-100 text-red-800 border border-red-200">
+                            เกิน {item.daysOverdue} วัน
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-slate-400">
+                <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500 mb-2" />
+                <h4 className="font-bold text-slate-700 text-sm">ไม่มีหนังสือที่เกินกำหนดเวลาปฏิบัติราชการ</h4>
+                <p className="text-xs text-slate-500 mt-0.5">การดำเนินงานสารบรรณทั้งหมดเป็นไปตามมาตรฐาน SLA</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

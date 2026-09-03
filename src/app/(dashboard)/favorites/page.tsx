@@ -7,42 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Star, FileText, Eye, Download, Search, Trash2 } from "lucide-react";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
 
-const mockFavorites: DocumentData[] = [
-  {
-    id: "FAV-001",
-    docNo: "ชร 52001/ว 0142",
-    regNo: "0142/2569",
-    regDate: "28 ส.ค. 2569",
-    regTime: "09:30 น.",
-    docDate: "26 ส.ค. 2569",
-    from: "ที่ว่าการอำเภอพาน",
-    to: "นายกองค์การบริหารส่วนตำบลดอยงาม",
-    title: "โครงการตรวจสอบและเตรียมความพร้อมรับมืออุทกภัยและดินโคลนถล่ม ประจำปี 2569",
-    docType: "หนังสือภายนอก",
-    speed: "ด่วนที่สุด",
-    secret: "ปกติ",
-    contentParagraphs: [
-      "ด้วยกองอำนวยการป้องกันและบรรเทาสาธารณภัยจังหวัดเชียงราย ได้แจ้งเตือนสถานการณ์สภาพอากาศแปรปรวน อาจเกิดฝนตกหนักถึงหนักมากในพื้นที่อำเภอพาน",
-      "จึงขอให้อบต.ดอยงาม สั่งการเจ้าหน้าที่ผู้รับผิดชอบสำรวจตรวจสอบสิ่งกีดขวางทางน้ำ และเตรียมความพร้อมเครื่องจักรกล",
-    ],
-    endorsements: [],
-  },
-  {
-    id: "FAV-002",
-    docNo: "ชร 52002/109",
-    regNo: "0010/2569",
-    docDate: "20 ส.ค. 2569",
-    from: "กองคลัง อบต.ดอยงาม",
-    to: "นายกองค์การบริหารส่วนตำบลดอยงาม",
-    title: "รายงานสถานะการเงินและการใช้จ่ายงบประมาณรายไตรมาสที่ 3 ประจำปีงบประมาณ 2569",
-    docType: "หนังสือภายใน",
-    speed: "ด่วน",
-    secret: "ปกติ",
-    contentParagraphs: [
-      "กองคลังได้จัดทำรายงานสถานะการเงินและการใช้จ่ายงบประมาณ ประจำไตรมาสที่ 3 เสร็จเรียบร้อยแล้ว จึงเรียนมาเพื่อโปรดทราบ",
-    ],
-  },
-];
+const mockFavorites: DocumentData[] = [];
 
 export default function FavoritesPage() {
   const [favoritesList, setFavoritesList] = useState<DocumentData[]>(mockFavorites);
