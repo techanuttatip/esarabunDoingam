@@ -74,6 +74,55 @@ export const officialAccounts: OfficialUserAccount[] = [
   },
 ];
 
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes (ISO/IEC 27001 Standard)
+
+interface LockoutState {
+  count: number;
+  lockedUntil: number | null;
+}
+
+function getLockoutState(identifier: string): LockoutState {
+  if (typeof window === "undefined" || !identifier) return { count: 0, lockedUntil: null };
+  try {
+    const raw = localStorage.getItem(`auth_lockout_${identifier.toLowerCase()}`);
+    if (!raw) return { count: 0, lockedUntil: null };
+    const parsed = JSON.parse(raw);
+    if (parsed.lockedUntil && Date.now() > parsed.lockedUntil) {
+      localStorage.removeItem(`auth_lockout_${identifier.toLowerCase()}`);
+      return { count: 0, lockedUntil: null };
+    }
+    return parsed;
+  } catch {
+    return { count: 0, lockedUntil: null };
+  }
+}
+
+function recordFailedAttempt(identifier: string): { isLocked: boolean; remainingAttempts: number; lockedUntil: number | null } {
+  if (typeof window === "undefined" || !identifier) return { isLocked: false, remainingAttempts: MAX_FAILED_ATTEMPTS, lockedUntil: null };
+  const current = getLockoutState(identifier);
+  const newCount = current.count + 1;
+  let lockedUntil: number | null = null;
+
+  if (newCount >= MAX_FAILED_ATTEMPTS) {
+    lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+  }
+
+  const newState = { count: newCount, lockedUntil };
+  localStorage.setItem(`auth_lockout_${identifier.toLowerCase()}`, JSON.stringify(newState));
+
+  return {
+    isLocked: newCount >= MAX_FAILED_ATTEMPTS,
+    remainingAttempts: Math.max(0, MAX_FAILED_ATTEMPTS - newCount),
+    lockedUntil,
+  };
+}
+
+function clearLockout(identifier: string) {
+  if (typeof window === "undefined" || !identifier) return;
+  localStorage.removeItem(`auth_lockout_${identifier.toLowerCase()}`);
+}
+
 export function LoginClientForm() {
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
@@ -81,6 +130,7 @@ export function LoginClientForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [matchedAccount, setMatchedAccount] = useState<OfficialUserAccount | null>(null);
+  const [lockoutTimer, setLockoutTimer] = useState<number | null>(null);
 
   // First-Time Login Password Change States
   const [isFirstLoginMode, setIsFirstLoginMode] = useState(false);
@@ -89,6 +139,36 @@ export function LoginClientForm() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordChangeError, setPasswordChangeError] = useState("");
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
+
+  // Countdown timer for lockout
+  useEffect(() => {
+    if (!usernameInput.trim()) {
+      setLockoutTimer(null);
+      return;
+    }
+    const clean = usernameInput.trim().toLowerCase();
+    const state = getLockoutState(clean);
+    if (state.lockedUntil && Date.now() < state.lockedUntil) {
+      setLockoutTimer(Math.ceil((state.lockedUntil - Date.now()) / 1000));
+    } else {
+      setLockoutTimer(null);
+    }
+  }, [usernameInput]);
+
+  useEffect(() => {
+    if (!lockoutTimer || lockoutTimer <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutTimer((prev) => {
+        if (!prev || prev <= 1) {
+          clearInterval(timer);
+          setErrorMsg("");
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutTimer]);
 
   const getAllAccounts = (): OfficialUserAccount[] => {
     let list = [...officialAccounts];
@@ -160,6 +240,19 @@ export function LoginClientForm() {
 
     setTimeout(() => {
       const clean = usernameInput.trim().toLowerCase();
+
+      // Check ISO 27001 Lockout State first
+      const currentLockout = getLockoutState(clean);
+      if (currentLockout.lockedUntil && Date.now() < currentLockout.lockedUntil) {
+        const remainingSeconds = Math.ceil((currentLockout.lockedUntil - Date.now()) / 1000);
+        const mins = Math.floor(remainingSeconds / 60);
+        const secs = remainingSeconds % 60;
+        setLockoutTimer(remainingSeconds);
+        setErrorMsg(`🔒 บัญชีนี้ถูกระงับชั่วคราวเป็นเวลา ๑๕ นาที เพื่อความปลอดภัยตามมาตรฐาน ISO/IEC 27001 เนื่องจากกรอกรหัสผ่านผิดเกิน ๕ ครั้ง (เหลือเวลาอีก ${mins} นาที ${secs} วินาที)`);
+        setIsLoading(false);
+        return;
+      }
+
       const all = getAllAccounts();
       const targetAcc = all.find(
         (acc) =>
@@ -187,10 +280,20 @@ export function LoginClientForm() {
       }
 
       if (passwordInput !== currentStoredPassword && passwordInput !== targetAcc.defaultPassword) {
-        setErrorMsg("รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
+        const lockoutResult = recordFailedAttempt(clean);
+        if (lockoutResult.isLocked && lockoutResult.lockedUntil) {
+          const remainingSecs = Math.ceil((lockoutResult.lockedUntil - Date.now()) / 1000);
+          setLockoutTimer(remainingSecs);
+          setErrorMsg("🔒 บัญชีนี้ถูกระงับชั่วคราวเป็นเวลา ๑๕ นาที เพื่อความปลอดภัยตามมาตรฐาน ISO/IEC 27001 เนื่องจากกรอกรหัสผ่านผิดเกิน ๕ ครั้ง");
+        } else {
+          setErrorMsg(`รหัสผ่านไม่ถูกต้อง (กรอกผิดครั้งที่ ${MAX_FAILED_ATTEMPTS - lockoutResult.remainingAttempts}/${MAX_FAILED_ATTEMPTS} — เหลือโอกาสอีก ${lockoutResult.remainingAttempts} ครั้งก่อนระบบระงับการใช้งานชั่วคราว ๑๕ นาที ตามมาตรฐานความปลอดภัย)`);
+        }
         setIsLoading(false);
         return;
       }
+
+      // Successful password check: Clear any recorded failed attempts
+      clearLockout(clean);
 
       // Check if this is the FIRST TIME logging in with the default password
       if (!hasCustomPassword && passwordInput === targetAcc.defaultPassword) {
@@ -453,13 +556,20 @@ export function LoginClientForm() {
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full py-3.5 px-4 rounded-2xl bg-[#0052FF] hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+          disabled={isLoading || (lockoutTimer !== null && lockoutTimer > 0)}
+          className="w-full py-3.5 px-4 rounded-2xl bg-[#0052FF] hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
               <RefreshCw className="w-4 h-4 animate-spin" />
               <span>กำลังตรวจสอบข้อมูล...</span>
+            </>
+          ) : lockoutTimer !== null && lockoutTimer > 0 ? (
+            <>
+              <Lock className="w-4 h-4 text-amber-300 animate-pulse" />
+              <span>
+                ระงับชั่วคราว (รอ {Math.floor(lockoutTimer / 60)}:{(lockoutTimer % 60).toString().padStart(2, "0")} นาที)
+              </span>
             </>
           ) : (
             <>

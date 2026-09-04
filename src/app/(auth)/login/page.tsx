@@ -1,6 +1,7 @@
-﻿import { Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { LoginClientForm } from "./login-client-form";
 import { DoiNgamLogoEmblem } from "@/components/shared/doigam-logo-emblem";
+import { IsoStandardsBadge } from "@/components/shared/iso-standards-badge";
 
 export default function LoginPage() {
   return (
@@ -28,14 +29,8 @@ export default function LoginPage() {
       {/* Client Interactive Login Form */}
       <LoginClientForm />
 
-      {/* Security Footer Seal */}
-      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
-        <span className="flex items-center gap-1 text-emerald-700 font-bold">
-          <Shield className="w-3 h-3 text-emerald-600" />
-          ระบบความปลอดภัยภาครัฐ SSL/TLS
-        </span>
-        <span className="font-mono">v2026.1</span>
-      </div>
+      {/* ISO Standards & Security Footer Seal */}
+      <IsoStandardsBadge />
     </div>
   );
 }
