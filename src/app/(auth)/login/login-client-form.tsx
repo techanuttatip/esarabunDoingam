@@ -279,7 +279,11 @@ export function LoginClientForm() {
         }
       }
 
-      if (passwordInput !== currentStoredPassword && passwordInput !== targetAcc.defaultPassword) {
+      // Security Fix: If user has a custom password, ONLY accept the custom password.
+      // Default password should ONLY work for the first-time login flow (to trigger forced change).
+      const passwordToCheck = hasCustomPassword ? currentStoredPassword : targetAcc.defaultPassword;
+
+      if (passwordInput !== passwordToCheck) {
         const lockoutResult = recordFailedAttempt(clean);
         if (lockoutResult.isLocked && lockoutResult.lockedUntil) {
           const remainingSecs = Math.ceil((lockoutResult.lockedUntil - Date.now()) / 1000);
@@ -373,9 +377,11 @@ export function LoginClientForm() {
     if (typeof window !== "undefined") {
       sessionStorage.setItem("smartsarabun_active_session", JSON.stringify(sessionData));
       sessionStorage.setItem("smartsarabun_session_login_time", Date.now().toString());
-      // Session cookie without max-age / expires: dies automatically when browser or tab is closed
-      document.cookie = "smart_sarabun_session=1; path=/; SameSite=Lax";
-      document.cookie = `smart_sarabun_role=${userObj.roles[0]}; path=/; SameSite=Lax`;
+      // Security Fix: Add Secure flag (HTTPS-only in production) and SameSite=Strict
+      const isSecure = window.location.protocol === "https:";
+      const secureFlag = isSecure ? "; Secure" : "";
+      document.cookie = `smart_sarabun_session=1; path=/; SameSite=Strict${secureFlag}`;
+      document.cookie = `smart_sarabun_role=${userObj.roles[0]}; path=/; SameSite=Strict${secureFlag}`;
       window.location.href = "/";
     }
   };

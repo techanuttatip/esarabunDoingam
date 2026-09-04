@@ -8,7 +8,8 @@ export const {
   signOut,
 } = NextAuth({
   ...authConfig,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "smartsarabun_default_auth_secret_for_development",
+  // Security Fix: Remove hardcoded fallback secret. AUTH_SECRET must be set in environment.
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
@@ -17,7 +18,8 @@ export const {
     async jwt({ token, user, account }: any) {
       if (user) {
         token.id = user.id;
-        token.roles = (user as any).roles || ["SUPER_ADMIN", "ADMIN"];
+        // Security Fix: Default to least-privilege role (OFFICER) instead of SUPER_ADMIN
+        token.roles = (user as any).roles || ["OFFICER"];
         token.position = (user as any).position || "เจ้าหน้าที่";
       }
       if (account) {
@@ -28,7 +30,8 @@ export const {
     async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.id;
-        session.user.roles = token.roles || ["SUPER_ADMIN", "ADMIN"];
+        // Security Fix: Default to least-privilege role (OFFICER) instead of SUPER_ADMIN
+        session.user.roles = token.roles || ["OFFICER"];
         session.user.position = token.position;
       }
       session.accessToken = token.accessToken;
@@ -36,3 +39,4 @@ export const {
     },
   },
 });
+
