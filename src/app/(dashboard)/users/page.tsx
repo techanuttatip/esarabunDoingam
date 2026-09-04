@@ -22,11 +22,22 @@ import {
   FileSpreadsheet,
   Layers,
   Sparkles,
+  Clock,
+  Check,
+  Ban,
+  Mail,
+  Phone,
+  Briefcase,
 } from "lucide-react";
 import { SYSTEM_ROLES, DataScope } from "@/config/permissions";
 import { getActiveDepartments, DepartmentOption } from "@/lib/departments";
 import Link from "next/link";
 import { useEffect } from "react";
+import {
+  getPendingRegistrations,
+  updateRegistrationStatus,
+  type PendingRegistration,
+} from "@/app/(auth)/login/register-form";
 
 interface CivilServantUser {
   id: string;
@@ -85,6 +96,7 @@ export default function UsersManagementPage() {
   const [selectedUserForReset, setSelectedUserForReset] = useState<CivilServantUser | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [availableDepartments, setAvailableDepartments] = useState<DepartmentOption[]>([]);
+  const [pendingRegs, setPendingRegs] = useState<PendingRegistration[]>([]);
 
   useEffect(() => {
     const depts = getActiveDepartments();
@@ -92,6 +104,8 @@ export default function UsersManagementPage() {
     if (depts.length > 0) {
       setFormData((prev) => ({ ...prev, department: depts[0].name }));
     }
+    // Load pending registrations
+    setPendingRegs(getPendingRegistrations().filter((r) => r.status === "pending"));
   }, []);
 
   // New User Form State
@@ -257,6 +271,23 @@ export default function UsersManagementPage() {
     }, 2000);
   };
 
+  const handleApproveRegistration = (regId: string) => {
+    updateRegistrationStatus(regId, "approved", "Admin");
+    setPendingRegs((prev) => prev.filter((r) => r.id !== regId));
+    // Reload the users list to show newly approved user
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(USERS_STORAGE_KEY);
+        if (saved) setUsers(JSON.parse(saved));
+      } catch {}
+    }
+  };
+
+  const handleRejectRegistration = (regId: string) => {
+    updateRegistrationStatus(regId, "rejected", "Admin");
+    setPendingRegs((prev) => prev.filter((r) => r.id !== regId));
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
@@ -276,6 +307,74 @@ export default function UsersManagementPage() {
           </Button>
         </div>
       </div>
+
+      {/* Pending Registrations Approval Section */}
+      {pendingRegs.length > 0 && (
+        <Card className="shadow-xs border-amber-300 bg-amber-50/50 overflow-hidden rounded-2xl">
+          <CardHeader className="bg-amber-100/60 px-6 py-3 border-b border-amber-200 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-extrabold text-amber-900 flex items-center gap-2">
+              <Clock className="w-4.5 h-4.5 text-amber-600" />
+              คำขอสมัครสมาชิกรอการอนุมัติ ({pendingRegs.length} รายการ)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              {pendingRegs.map((reg) => (
+                <div
+                  key={reg.id}
+                  className="bg-white rounded-xl border border-amber-200 p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+                >
+                  {/* Info */}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-sm font-extrabold text-slate-900">
+                      {reg.firstName} {reg.lastName}
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <Mail className="w-3 h-3" /> {reg.email}
+                      </span>
+                      {reg.phone && (
+                        <span className="flex items-center gap-1">
+                          <Phone className="w-3 h-3" /> {reg.phone}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Briefcase className="w-3 h-3" /> {reg.position}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Building className="w-3 h-3" /> {reg.department}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">
+                      สมัครเมื่อ {new Date(reg.requestedAt).toLocaleString("th-TH")}
+                    </p>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      onClick={() => handleApproveRegistration(reg.id)}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg gap-1.5 cursor-pointer h-8 px-3"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      อนุมัติ
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleRejectRegistration(reg.id)}
+                      className="border-rose-300 text-rose-600 hover:bg-rose-50 font-bold text-xs rounded-lg gap-1.5 cursor-pointer h-8 px-3"
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                      ปฏิเสธ
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
