@@ -154,11 +154,11 @@ export default function PlatformAdminDashboardPage() {
 
   const handleDevUnlock = (e: React.FormEvent) => {
     e.preventDefault();
-    if (masterKeyInput === "00830125" || masterKeyInput === "techanut0@gmail.com") {
+    if (masterKeyInput === "Doigam@2569" || masterKeyInput === "admin@doigam.go.th") {
       setIsDevAuthenticated(true);
       setAuthError("");
     } else {
-      setAuthError("รหัส Master Key ไม่ถูกต้อง — หน้านี้สงวนเฉพาะทีมวิศวกรผู้พัฒนาระบบเท่านั้น กรุณาติดต่อเจ้าหน้าที่");
+      setAuthError("รหัส Master Key ไม่ถูกต้อง — หน้านี้สงวนเฉพาะทีมผู้ดูแลระบบเท่านั้น กรุณากรอกรหัสผ่านของระบบ");
     }
   };
 
@@ -374,7 +374,7 @@ export default function PlatformAdminDashboardPage() {
 
                 <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
                   <span>ผู้ดูแลระบบ:</span>
-                  <span className="font-mono text-blue-400">techanut0@gmail.com</span>
+                  <span className="font-mono text-blue-400">admin@doigam.go.th</span>
                 </div>
               </Card>
 
@@ -712,7 +712,7 @@ export default function PlatformAdminDashboardPage() {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                   <div className="text-xs text-slate-500">
                     <span>ผู้ประสานงาน/อีเมล: </span>
-                    <strong className="text-blue-700 font-mono">{saasConfig.contactEmail || "techanut0@gmail.com"}</strong>
+                    <strong className="text-blue-700 font-mono">{saasConfig.contactEmail || "admin@doigam.go.th"}</strong>
                   </div>
                   <Button
                     size="sm"

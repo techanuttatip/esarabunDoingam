@@ -227,10 +227,10 @@ export default function ProfileAndSignaturePage() {
       if (user.id) saveUserProfile(user.id, updatedFields);
       if (user.accountId) saveUserProfile(user.accountId, updatedFields);
     }
-    if (user?.email === "techanut0@gmail.com" || user?.roles?.includes("SUPER_ADMIN")) {
-      saveUserProfile("techanut0@gmail.com", updatedFields);
-      saveUserProfile("usr-superadmin", updatedFields);
-      saveUserProfile("DG-008301", updatedFields);
+    if (user?.email === "admin@doigam.go.th" || user?.roles?.includes("SUPER_ADMIN")) {
+      saveUserProfile("admin@doigam.go.th", updatedFields);
+      saveUserProfile("usr-admin", updatedFields);
+      saveUserProfile("DG-001001", updatedFields);
     }
 
     setIsProfileSaved(true);

@@ -23,7 +23,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSession, signOut } from "@/components/providers/session-provider";
 import { CommandPalette } from "@/components/shared/command-palette";
-import { TrialCountdownBadge } from "@/components/shared/saas/trial-countdown-badge";
 
 export function AppTopbar() {
   const { data: session } = useSession();
@@ -65,20 +64,20 @@ export function AppTopbar() {
 
   return (
     <>
-      <header className="h-16 px-4 sm:px-6 bg-white/70 backdrop-blur-2xl border-b border-white/80 flex items-center justify-between gap-4 z-20 shrink-0 shadow-xs">
+      <header className="h-16 px-4 sm:px-6 bg-white border-b border-slate-200/80 flex items-center justify-between gap-4 z-20 shrink-0 shadow-xs">
         {/* Left: Global Spotlight Search Trigger (Ctrl + K) */}
         <div className="flex-1 max-w-md">
           <button
             onClick={() => setIsCommandOpen(true)}
-            className="w-full h-10 px-3.5 rounded-2xl bg-white/80 hover:bg-white border border-slate-200/80 hover:border-blue-300 text-slate-400 hover:text-slate-700 flex items-center justify-between text-xs transition-all shadow-2xs cursor-pointer group"
+            className="w-full h-10 px-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-between text-xs transition-all cursor-pointer group"
           >
             <div className="flex items-center gap-2.5">
-              <Search className="w-4 h-4 text-slate-400 group-hover:text-[#0052FF] transition-colors" />
-              <span className="font-bold text-slate-500 group-hover:text-slate-800">
+              <Search className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
+              <span className="font-semibold text-slate-500 group-hover:text-slate-800">
                 ค้นหาด่วน (เอกสาร, เลขรับ, คำสั่ง)...
               </span>
             </div>
-            <div className="hidden sm:flex items-center gap-1 font-mono text-[10px] bg-slate-100 px-2 py-0.5 rounded-md text-slate-500 font-bold border border-slate-200">
+            <div className="hidden sm:flex items-center gap-1 font-mono text-[10px] bg-white px-2 py-0.5 rounded-md text-slate-500 font-bold border border-slate-200 shadow-2xs">
               <span>Ctrl</span>
               <span>K</span>
             </div>
@@ -87,16 +86,12 @@ export function AppTopbar() {
 
         {/* Right: Quick Actions & Notifications & Profile */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* SaaS 30-Day Trial Countdown Badge */}
-          <TrialCountdownBadge />
-
           {/* Quick Create Dropdown */}
           <div className="relative">
             <Button
               size="sm"
-              variant="signature"
               onClick={() => setIsQuickCreateOpen(!isQuickCreateOpen)}
-              className="h-9 px-3 text-xs rounded-xl gap-1.5 shadow-accent hover:shadow-accent-lg cursor-pointer font-bold"
+              className="h-9 px-3.5 text-xs rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">สร้างงานด่วน</span>
