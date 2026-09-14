@@ -61,6 +61,9 @@ export function DocVerificationSeal({ docId, docNo, className = "" }: Verificati
         <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-800">
           <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
           <span>ตรวจสอบเอกสารจริง (Verify)</span>
+          <span className="text-[8px] bg-emerald-200/80 text-emerald-900 px-1 py-0.2 rounded font-mono font-bold">
+            ThaID
+          </span>
         </div>
         <div className="text-[9px] text-slate-500 font-mono mt-0.5">
           ID: {docId}

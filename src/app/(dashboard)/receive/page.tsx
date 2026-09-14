@@ -1217,6 +1217,7 @@ export default function ReceivePage() {
               toOrg: aiData.toOrg || prev.toOrg,
               title: aiData.title || prev.title,
               content: aiData.summary || prev.content,
+              docType: aiData.docType || prev.docType,
               targetDept: aiData.suggestedDept || prev.targetDept,
             }));
             setShowCreateModal(true);

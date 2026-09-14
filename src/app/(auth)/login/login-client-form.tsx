@@ -21,6 +21,11 @@ import {
   Check,
   ShieldAlert,
   Info,
+  QrCode,
+  Smartphone,
+  X,
+  Fingerprint,
+  ExternalLink,
 } from "lucide-react";
 import { getSavedUserProfile } from "@/lib/user-store";
 import { createSignedSessionToken } from "@/lib/auth/session-token";
@@ -228,6 +233,21 @@ export function LoginClientForm() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordChangeError, setPasswordChangeError] = useState("");
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
+
+  // ThaID Digital Identity Modal State
+  const [showThaIdModal, setShowThaIdModal] = useState(false);
+  const [thaIdStep, setThaIdStep] = useState<"qr" | "authenticating" | "success">("qr");
+  const [thaIdTimer, setThaIdTimer] = useState(120);
+  const [thaIdUser, setThaIdUser] = useState<OfficialUserAccount | null>(null);
+
+  // ThaID QR countdown timer
+  useEffect(() => {
+    if (!showThaIdModal || thaIdStep !== "qr") return;
+    const interval = setInterval(() => {
+      setThaIdTimer((prev) => (prev > 0 ? prev - 1 : 120));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showThaIdModal, thaIdStep]);
 
   // Countdown timer for lockout
   useEffect(() => {
@@ -488,6 +508,24 @@ export function LoginClientForm() {
     }
   };
 
+  const handleSimulateThaIdLogin = (accountKey: string) => {
+    const all = getAllAccounts();
+    const acc = all.find((a) => a.id === accountKey) || all[1];
+    setThaIdUser(acc);
+    setThaIdStep("authenticating");
+
+    setTimeout(() => {
+      setThaIdStep("success");
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("smartsarabun_auth_method", "THAID_DOPA");
+          sessionStorage.setItem("smartsarabun_thaid_verified", "true");
+        }
+        completeLogin(acc);
+      }, 900);
+    }, 1100);
+  };
+
   // ---------------------------------------------------------------------------
   // SCREEN 2: Force Password Change for First-Time Users
   // ---------------------------------------------------------------------------
@@ -687,6 +725,242 @@ export function LoginClientForm() {
           )}
         </button>
       </form>
+
+      {/* Divider */}
+      <div className="relative my-3">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-200" />
+        </div>
+        <div className="relative flex justify-center text-[10px] font-bold uppercase">
+          <span className="bg-white px-2.5 text-slate-400">หรือยืนยันตัวตนดิจิทัลภาครัฐ</span>
+        </div>
+      </div>
+
+      {/* ThaID DOPA Button */}
+      <button
+        type="button"
+        onClick={() => {
+          setThaIdStep("qr");
+          setThaIdTimer(120);
+          setShowThaIdModal(true);
+        }}
+        className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#0b192c] via-[#1e3e62] to-[#0052FF] hover:from-[#001f3f] hover:to-[#0041c2] text-white font-bold text-xs shadow-md shadow-blue-900/20 border border-blue-400/30 flex items-center justify-between group transition-all cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-cyan-400/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 group-hover:scale-105 transition-transform">
+            <Fingerprint className="w-5 h-5" />
+          </div>
+          <div className="text-left leading-tight">
+            <div className="text-xs font-black text-white flex items-center gap-1.5">
+              <span>เข้าสู่ระบบด้วย ThaID</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-emerald-300 border border-emerald-400/40">
+                DOPA Verified
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-300 font-normal">
+              บัตรประชาชนดิจิทัล (กรมการปกครอง)
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 text-cyan-300 text-[11px] font-bold">
+          <QrCode className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+          <span className="hidden sm:inline">สแกน QR ↗</span>
+        </div>
+      </button>
+
+      {/* ThaID Authentication Modal */}
+      {showThaIdModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 flex flex-col">
+            {/* ThaID Header */}
+            <div className="bg-gradient-to-r from-navy-950 via-slate-900 to-indigo-950 text-white p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300">
+                  <Fingerprint className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-extrabold text-sm">เข้าสู่ระบบด้วย ThaID</h3>
+                    <span className="text-[9.5px] font-mono px-1.5 py-0.2 rounded bg-blue-500/30 text-blue-300 border border-blue-400/30">
+                      DOPA Digital ID
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-300">
+                    กรมการปกครอง กระทรวงมหาดไทย (พ.ร.บ.ปฏิบัติราชการฯ ๒๕๖๕)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowThaIdModal(false)}
+                className="w-7 h-7 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* ThaID Body */}
+            <div className="p-6 space-y-5 text-center">
+              {thaIdStep === "qr" && (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <h4 className="font-black text-sm text-slate-900">
+                      เปิดแอป ThaID บนมือถือ เพื่อสแกน QR Code
+                    </h4>
+                    <p className="text-xs text-slate-500">
+                      ระบบจะตรวจสอบความถูกต้องของบัตรประชาชนดิจิทัล และเข้าสู่ระบบสารบรรณโดยอัตโนมัติ
+                    </p>
+                  </div>
+
+                  {/* Visual QR Code with Scan Radar Animation */}
+                  <div className="relative w-52 h-52 mx-auto bg-white p-3 rounded-2xl border-2 border-slate-200 shadow-md flex items-center justify-center overflow-hidden">
+                    {/* Animated Scanning Bar */}
+                    <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-lg shadow-cyan-400/50 animate-pulse top-1/2 -translate-y-1/2" />
+
+                    <svg viewBox="0 0 100 100" className="w-full h-full text-slate-900" fill="currentColor">
+                      <rect x="0" y="0" width="30" height="30" rx="3" />
+                      <rect x="5" y="5" width="20" height="20" fill="white" />
+                      <rect x="10" y="10" width="10" height="10" />
+
+                      <rect x="70" y="0" width="30" height="30" rx="3" />
+                      <rect x="75" y="5" width="20" height="20" fill="white" />
+                      <rect x="80" y="10" width="10" height="10" />
+
+                      <rect x="0" y="70" width="30" height="30" rx="3" />
+                      <rect x="5" y="75" width="20" height="20" fill="white" />
+                      <rect x="10" y="80" width="10" height="10" />
+
+                      <rect x="40" y="10" width="8" height="8" />
+                      <rect x="52" y="10" width="8" height="8" />
+                      <rect x="40" y="25" width="8" height="8" />
+                      <rect x="52" y="25" width="8" height="8" />
+                      <rect x="40" y="40" width="20" height="20" rx="2" fill="#0052FF" />
+                      <rect x="10" y="45" width="8" height="8" />
+                      <rect x="25" y="45" width="8" height="8" />
+                      <rect x="75" y="45" width="8" height="8" />
+                      <rect x="88" y="45" width="8" height="8" />
+                      <rect x="70" y="70" width="10" height="10" />
+                      <rect x="85" y="70" width="10" height="10" />
+                      <rect x="70" y="85" width="10" height="10" />
+                      <rect x="85" y="85" width="10" height="10" />
+                    </svg>
+
+                    {/* ThaID Center Emblem */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-10 h-10 rounded-xl bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-blue-900 font-black text-xs">
+                        ThaID
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Countdown Timer */}
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 font-mono">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                    <span>
+                      QR Code หมดอายุใน {Math.floor(thaIdTimer / 60)}:{(thaIdTimer % 60).toString().padStart(2, "0")} นาที
+                    </span>
+                  </div>
+
+                  {/* 1-Click Simulation / Testing Panel */}
+                  <div className="pt-2 border-t border-slate-200 space-y-2 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        จำลองการสแกนด้วยแอป ThaID (1-Click Test):
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleSimulateThaIdLogin("executive")}
+                        className="w-full p-2.5 rounded-xl border border-amber-200 bg-amber-50/70 hover:bg-amber-100/70 text-amber-950 text-xs font-bold flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <UserCheck className="w-4 h-4 text-amber-600" />
+                          <span>นายก อบต.ดอยงาม (นายสำอางค์ ธรรมโก)</span>
+                        </div>
+                        <span className="text-[10px] text-amber-700 bg-amber-200/80 px-2 py-0.5 rounded-full font-mono">
+                          ผู้บริหาร
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSimulateThaIdLogin("palad")}
+                        className="w-full p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100/70 text-indigo-950 text-xs font-bold flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="w-4 h-4 text-indigo-600" />
+                          <span>ปลัด อบต.ดอยงาม (จ่าเอก สมเกียรติ พินิจอักษร)</span>
+                        </div>
+                        <span className="text-[10px] text-indigo-700 bg-indigo-200/80 px-2 py-0.5 rounded-full font-mono">
+                          ปลัด
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSimulateThaIdLogin("sarabun")}
+                        className="w-full p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/70 text-emerald-950 text-xs font-bold flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-emerald-600" />
+                          <span>เจ้าหน้าที่สารบรรณกลาง (นางสาวธัญวรรัตน์ ตาสาย)</span>
+                        </div>
+                        <span className="text-[10px] text-emerald-700 bg-emerald-200/80 px-2 py-0.5 rounded-full font-mono">
+                          สารบรรณ
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {thaIdStep === "authenticating" && (
+                <div className="py-12 space-y-4 animate-in fade-in">
+                  <div className="w-16 h-16 mx-auto rounded-3xl bg-blue-100 text-blue-600 flex items-center justify-center animate-spin">
+                    <RefreshCw className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-base font-black text-slate-900">
+                      กำลังเชื่อมต่อกับระบบ DOPA OpenID Connect...
+                    </h4>
+                    <p className="text-xs text-slate-500">
+                      กำลังตรวจสอบความถูกต้องของกุญแจดิจิทัลและหนังสือรับรองอัตลักษณ์
+                    </p>
+                  </div>
+                  <div className="text-[11px] font-mono text-cyan-600 font-bold">
+                    PID HASH: SHA-256: 8a4c1f... VALID
+                  </div>
+                </div>
+              )}
+
+              {thaIdStep === "success" && (
+                <div className="py-10 space-y-4 animate-in zoom-in-95">
+                  <div className="w-16 h-16 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-base font-black text-slate-900">
+                      ยืนยันตัวตนด้วย ThaID สำเร็จแล้ว!
+                    </h4>
+                    <p className="text-xs text-slate-600">
+                      ยินดีต้อนรับ <strong>{thaIdUser?.thaiName || "ผู้ใช้งาน"}</strong>
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      ตำแหน่ง: {thaIdUser?.user?.position} ({thaIdUser?.user?.department})
+                    </p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+                    ✓ ออกเซสชันที่มีการรับรองอัตลักษณ์ดิจิทัลภาครัฐเรียบร้อยแล้ว
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
