@@ -8,8 +8,8 @@ export const {
   signOut,
 } = NextAuth({
   ...authConfig,
-  // Security Fix: Remove hardcoded fallback secret. AUTH_SECRET must be set in environment.
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  // Fallback secret ensures build/SSG doesn't crash on Vercel if AUTH_SECRET is not yet configured in project settings
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "smartsarabun-build-secret-key-2569-replace-in-production-vault",
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",

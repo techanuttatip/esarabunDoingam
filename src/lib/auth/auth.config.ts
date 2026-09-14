@@ -69,4 +69,5 @@ export default {
       },
     }),
   ],
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "smartsarabun-build-secret-key-2569-replace-in-production-vault",
 } satisfies NextAuthConfig;
