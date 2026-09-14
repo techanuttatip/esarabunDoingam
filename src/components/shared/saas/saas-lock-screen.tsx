@@ -78,13 +78,13 @@ export function SaaSLockScreen() {
           {/* Contact Developer Box */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <a
-              href={`mailto:${config.contactEmail || "admin@doigam.go.th"}?subject=แจ้งต่ออายุสัญญาการใช้งานระบบสารบรรณ - ${config.name}`}
+              href={`mailto:${config.contactEmail || "saraban.doigam@gmail.com"}?subject=แจ้งต่ออายุสัญญาการใช้งานระบบสารบรรณ - ${config.name}`}
               className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-800/70 border border-slate-700 hover:border-blue-500 hover:bg-slate-800 transition-colors"
             >
               <Mail className="w-5 h-5 text-blue-400 shrink-0" />
               <div>
                 <p className="text-slate-400 text-[10px]">ส่งอีเมลติดต่อเจ้าหน้าที่</p>
-                <p className="font-medium text-slate-200 truncate">{config.contactEmail || "admin@doigam.go.th"}</p>
+                <p className="font-medium text-slate-200 truncate">{config.contactEmail || "saraban.doigam@gmail.com"}</p>
               </div>
             </a>
 

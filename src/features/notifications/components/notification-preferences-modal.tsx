@@ -120,7 +120,7 @@ export function NotificationPreferencesModal({
                     className="w-4 h-4 accent-navy-900 cursor-pointer"
                   />
                 </div>
-                <p className="text-[10px] text-slate-500">ส่งเข้าอีเมลราชการ @doigam.go.th</p>
+                <p className="text-[10px] text-slate-500">ส่งเข้าอีเมลติดต่อ (Gmail / Hotmail / Outlook)</p>
               </div>
 
               {/* LINE OA */}

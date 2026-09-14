@@ -154,7 +154,7 @@ export default function PlatformAdminDashboardPage() {
 
   const handleDevUnlock = (e: React.FormEvent) => {
     e.preventDefault();
-    if (masterKeyInput === "Doigam@2569" || masterKeyInput === "admin@doigam.go.th") {
+    if (masterKeyInput === "Doigam@2569" || masterKeyInput === "admin.doigam@gmail.com" || masterKeyInput === "admin@doigam.go.th") {
       setIsDevAuthenticated(true);
       setAuthError("");
     } else {
@@ -374,7 +374,7 @@ export default function PlatformAdminDashboardPage() {
 
                 <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
                   <span>ผู้ดูแลระบบ:</span>
-                  <span className="font-mono text-blue-400">admin@doigam.go.th</span>
+                  <span className="font-mono text-blue-400">admin.doigam@gmail.com</span>
                 </div>
               </Card>
 
@@ -712,7 +712,7 @@ export default function PlatformAdminDashboardPage() {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                   <div className="text-xs text-slate-500">
                     <span>ผู้ประสานงาน/อีเมล: </span>
-                    <strong className="text-blue-700 font-mono">{saasConfig.contactEmail || "admin@doigam.go.th"}</strong>
+                    <strong className="text-blue-700 font-mono">{saasConfig.contactEmail || "admin.doigam@gmail.com"}</strong>
                   </div>
                   <Button
                     size="sm"

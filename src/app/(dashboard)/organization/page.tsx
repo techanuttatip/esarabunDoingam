@@ -133,7 +133,7 @@ export default function OrganizationPage() {
       headPosition: newDeptHeadPos || "ผู้อำนวยการกอง",
       staffCount: 1,
       phone: newDeptPhone || "053-958100",
-      email: newDeptEmail || "sarabun@doigam.go.th",
+      email: newDeptEmail || "sarabun.doigam@gmail.com",
       docPrefix: newDeptPrefix || `${newDeptCode}/ว`,
       description: "ส่วนราชการภายใน องค์การบริหารส่วนตำบลดอยงาม",
       isActive: true,
@@ -569,10 +569,10 @@ export default function OrganizationPage() {
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 text-xs block mb-1">อีเมลทางการ :</label>
+                  <label className="font-bold text-slate-700 text-xs block mb-1">อีเมลติดต่อ (Gmail / Hotmail ฯลฯ) :</label>
                   <input
                     type="email"
-                    placeholder="เช่น welfare@doigam.go.th"
+                    placeholder="เช่น welfare.doigam@gmail.com"
                     value={newDeptEmail}
                     onChange={(e) => setNewDeptEmail(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm"

@@ -111,7 +111,7 @@ VALUES (
     'DOIGAM-SAO',
     'ตำบลดอยงาม อำเภอพาน จังหวัดเชียงราย ๕๗๑๒๐',
     '053-958100',
-    'saraban@doigam.go.th'
+    'saraban.doigam@gmail.com'
 ) ON CONFLICT (code) DO NOTHING;
 
 -- Initial Departments
@@ -125,9 +125,9 @@ ON CONFLICT DO NOTHING;
 
 -- Initial Profiles (5 Core Roles)
 INSERT INTO profiles (username, email, full_name, position, department, roles) VALUES
-('admin', 'admin@doigam.go.th', 'ผู้ดูแลระบบสารบรรณกลาง', 'นักวิชาการคอมพิวเตอร์ / ผู้ดูแลระบบ', 'สำนักปลัด', ARRAY['SUPER_ADMIN', 'ADMIN']),
-('nayok', 'nayok@doigam.go.th', 'นายกองค์การบริหารส่วนตำบลดอยงาม', 'นายก อบต.ดอยงาม', 'สำนักนายก / ผู้บริหาร', ARRAY['EXECUTIVE']),
-('palad', 'palad@doigam.go.th', 'ปลัดองค์การบริหารส่วนตำบลดอยงาม', 'ปลัด อบต.ดอยงาม', 'สำนักปลัด', ARRAY['PALAD', 'MANAGER', 'EXECUTIVE']),
-('engineer', 'director.tech@doigam.go.th', 'ผู้อำนวยการกองช่าง', 'ผู้อำนวยการกองช่าง', 'กองช่าง', ARRAY['MANAGER', 'OFFICER']),
-('sarabun', 'sarabun@doigam.go.th', 'เจ้าหน้าที่สารบรรณกลาง', 'เจ้าพนักงานธุรการชำนาญงาน', 'สำนักปลัด', ARRAY['DOCUMENT_OFFICER', 'OFFICER'])
+('admin', 'admin.doigam@gmail.com', 'ผู้ดูแลระบบสารบรรณกลาง', 'นักวิชาการคอมพิวเตอร์ / ผู้ดูแลระบบ', 'สำนักปลัด', ARRAY['SUPER_ADMIN', 'ADMIN']),
+('nayok', 'nayok.doigam@gmail.com', 'นายกองค์การบริหารส่วนตำบลดอยงาม', 'นายก อบต.ดอยงาม', 'สำนักนายก / ผู้บริหาร', ARRAY['EXECUTIVE']),
+('palad', 'palad.doigam@gmail.com', 'ปลัดองค์การบริหารส่วนตำบลดอยงาม', 'ปลัด อบต.ดอยงาม', 'สำนักปลัด', ARRAY['PALAD', 'MANAGER', 'EXECUTIVE']),
+('engineer', 'engineer.doigam@gmail.com', 'ผู้อำนวยการกองช่าง', 'ผู้อำนวยการกองช่าง', 'กองช่าง', ARRAY['MANAGER', 'OFFICER']),
+('sarabun', 'sarabun.doigam@gmail.com', 'เจ้าหน้าที่สารบรรณกลาง', 'เจ้าพนักงานธุรการชำนาญงาน', 'สำนักปลัด', ARRAY['DOCUMENT_OFFICER', 'OFFICER'])
 ON CONFLICT (username) DO NOTHING;

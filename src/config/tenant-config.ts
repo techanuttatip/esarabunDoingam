@@ -46,7 +46,7 @@ export const defaultTenantConfig: TenantSaaSConfig = {
   code: "DOIGAM-SAO",
   docPrefix: "ชร ๕๒๐๐๑",
   slogan: "บริการด้วยใจ โปร่งใส เป็นธรรม มุ่งมั่นพัฒนาตำบลดอยงาม",
-  contactEmail: "saraban@doigam.go.th",
+  contactEmail: "saraban.doigam@gmail.com",
   contactPhone: "053-123456",
   address: "ตำบลดอยงาม อำเภอพาน จังหวัดเชียงราย ๕๗๑๒๐",
   

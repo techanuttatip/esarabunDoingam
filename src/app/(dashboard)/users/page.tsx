@@ -66,7 +66,7 @@ const initialUsers: CivilServantUser[] = [
     section: "งานสารบรรณกลางและเทคโนโลยีสารสนเทศ",
     role: "SUPER_ADMIN",
     scope: "ALL",
-    email: "admin@doigam.go.th",
+    email: "admin.doigam@gmail.com",
     phone: "053-958100",
     status: "active",
     lastLogin: "ออนไลน์ขณะนี้",
@@ -81,7 +81,7 @@ const initialUsers: CivilServantUser[] = [
     section: "ฝ่ายบริหารงานท้องถิ่น",
     role: "EXECUTIVE",
     scope: "ALL",
-    email: "nayok@doigam.go.th",
+    email: "nayok.doigam@gmail.com",
     phone: "053-958101",
     status: "active",
     lastLogin: "วันนี้ 09:15 น.",
@@ -96,7 +96,7 @@ const initialUsers: CivilServantUser[] = [
     section: "งานบริหารทั่วไป",
     role: "PALAD",
     scope: "ALL",
-    email: "palad@doigam.go.th",
+    email: "palad.doigam@gmail.com",
     phone: "053-958102",
     status: "active",
     lastLogin: "วันนี้ 08:45 น.",
@@ -111,7 +111,7 @@ const initialUsers: CivilServantUser[] = [
     section: "งานวิศวกรรมและผังเมือง",
     role: "MANAGER",
     scope: "DEPT",
-    email: "director.tech@doigam.go.th",
+    email: "engineer.doigam@gmail.com",
     phone: "053-958103",
     status: "active",
     lastLogin: "เมื่อวานนี้ 16:30 น.",
@@ -126,7 +126,7 @@ const initialUsers: CivilServantUser[] = [
     section: "งานสารบรรณกลาง",
     role: "DOCUMENT_OFFICER",
     scope: "ALL",
-    email: "sarabun@doigam.go.th",
+    email: "sarabun.doigam@gmail.com",
     phone: "053-958100 ต่อ 12",
     status: "active",
     lastLogin: "ออนไลน์ขณะนี้",
@@ -688,12 +688,12 @@ export default function UsersManagementPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 text-xs block mb-1">
-                    อีเมล (Email / อีเมลส่วนตัวหรืออีเมลราชการ) * :
+                    อีเมลติดต่อ (Gmail / Hotmail / Outlook) * :
                   </label>
                   <input
                     type="email"
                     required
-                    placeholder="เช่น aoiaoi.p@gmail.com หรือ aoiaoi@doigam.go.th"
+                    placeholder="เช่น somchai.p@gmail.com หรือ somchai@hotmail.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-blue-300 bg-blue-50/40 text-xs sm:text-sm text-slate-900 font-medium focus:bg-white"
@@ -858,7 +858,7 @@ export default function UsersManagementPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 text-xs block mb-1">
-                    อีเมล (Email / อีเมลส่วนตัวหรืออีเมลราชการ) * :
+                    อีเมลติดต่อ (Gmail / Hotmail / Outlook) * :
                   </label>
                   <input
                     type="email"

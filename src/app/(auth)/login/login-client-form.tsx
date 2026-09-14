@@ -55,7 +55,7 @@ export const officialAccounts: OfficialUserAccount[] = [
     id: "admin",
     accountId: "DG-001001",
     thaiName: "ผู้ดูแลระบบสารบรรณกลาง (Admin)",
-    aliases: ["admin", "administrator", "superadmin", "admin@doigam.go.th"],
+    aliases: ["admin", "administrator", "superadmin", "admin.doigam@gmail.com", "doigam.sao@gmail.com"],
     username: "admin",
     defaultPassword: "Doigam@2569",
     user: {
@@ -64,7 +64,7 @@ export const officialAccounts: OfficialUserAccount[] = [
       name: "ผู้ดูแลระบบสารบรรณกลาง",
       firstName: "ผู้ดูแลระบบ",
       lastName: "สารบรรณกลาง",
-      email: "admin@doigam.go.th",
+      email: "admin.doigam@gmail.com",
       position: "นักวิชาการคอมพิวเตอร์ / ผู้ดูแลระบบ",
       department: "สำนักปลัด (งานสารบรรณกลาง)",
       roles: ["SUPER_ADMIN", "ADMIN", "PLATFORM_ADMIN", "EXECUTIVE", "PALAD", "MANAGER", "DOCUMENT_OFFICER", "OFFICER"],
@@ -77,7 +77,7 @@ export const officialAccounts: OfficialUserAccount[] = [
     id: "executive",
     accountId: "DG-001002",
     thaiName: "นายก อบต.ดอยงาม (ผู้บริหาร)",
-    aliases: ["nayok", "executive", "nayok@doigam.go.th"],
+    aliases: ["nayok", "executive", "nayok.doigam@gmail.com"],
     username: "nayok",
     defaultPassword: "Doigam@2569",
     user: {
@@ -86,7 +86,7 @@ export const officialAccounts: OfficialUserAccount[] = [
       name: "นายกองค์การบริหารส่วนตำบลดอยงาม",
       firstName: "นายก อบต.",
       lastName: "ดอยงาม",
-      email: "nayok@doigam.go.th",
+      email: "nayok.doigam@gmail.com",
       position: "นายกองค์การบริหารส่วนตำบลดอยงาม",
       department: "สำนักนายก / ผู้บริหาร",
       roles: ["EXECUTIVE"],
@@ -99,7 +99,7 @@ export const officialAccounts: OfficialUserAccount[] = [
     id: "palad",
     accountId: "DG-001003",
     thaiName: "ปลัด อบต.ดอยงาม",
-    aliases: ["palad", "palad@doigam.go.th"],
+    aliases: ["palad", "palad.doigam@gmail.com"],
     username: "palad",
     defaultPassword: "Doigam@2569",
     user: {
@@ -108,7 +108,7 @@ export const officialAccounts: OfficialUserAccount[] = [
       name: "ปลัดองค์การบริหารส่วนตำบลดอยงาม",
       firstName: "ปลัด อบต.",
       lastName: "ดอยงาม",
-      email: "palad@doigam.go.th",
+      email: "palad.doigam@gmail.com",
       position: "ปลัดองค์การบริหารส่วนตำบลดอยงาม",
       department: "สำนักปลัด",
       roles: ["PALAD", "MANAGER", "EXECUTIVE"],
@@ -121,7 +121,7 @@ export const officialAccounts: OfficialUserAccount[] = [
     id: "director-engineer",
     accountId: "DG-001004",
     thaiName: "ผู้อำนวยการกองช่าง",
-    aliases: ["engineer", "director.tech@doigam.go.th"],
+    aliases: ["engineer", "engineer.doigam@gmail.com", "director.tech@gmail.com"],
     username: "engineer",
     defaultPassword: "Doigam@2569",
     user: {
@@ -130,7 +130,7 @@ export const officialAccounts: OfficialUserAccount[] = [
       name: "ผู้อำนวยการกองช่าง",
       firstName: "ผอ.",
       lastName: "กองช่าง",
-      email: "director.tech@doigam.go.th",
+      email: "engineer.doigam@gmail.com",
       position: "ผู้อำนวยการกองช่าง",
       department: "กองช่าง",
       roles: ["MANAGER", "OFFICER"],
@@ -143,7 +143,7 @@ export const officialAccounts: OfficialUserAccount[] = [
     id: "sarabun",
     accountId: "DG-001005",
     thaiName: "เจ้าหน้าที่สารบรรณกลาง",
-    aliases: ["sarabun", "sarabun@doigam.go.th"],
+    aliases: ["sarabun", "sarabun.doigam@gmail.com"],
     username: "sarabun",
     defaultPassword: "Doigam@2569",
     user: {
@@ -152,7 +152,7 @@ export const officialAccounts: OfficialUserAccount[] = [
       name: "เจ้าหน้าที่สารบรรณกลาง",
       firstName: "เจ้าหน้าที่",
       lastName: "สารบรรณกลาง",
-      email: "sarabun@doigam.go.th",
+      email: "sarabun.doigam@gmail.com",
       position: "เจ้าพนักงานธุรการชำนาญงาน",
       department: "สำนักปลัด",
       roles: ["DOCUMENT_OFFICER", "OFFICER"],
@@ -630,7 +630,7 @@ export function LoginClientForm() {
             <input
               type="text"
               required
-              placeholder="กรอกชื่อผู้ใช้งาน หรือ อีเมลราชการ"
+              placeholder="กรอกชื่อผู้ใช้งาน หรือ อีเมล (Gmail / Hotmail ฯลฯ)"
               value={usernameInput}
               onChange={(e) => setUsernameInput(e.target.value)}
               className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF] focus:outline-none transition-all shadow-2xs"

@@ -227,7 +227,8 @@ export default function ProfileAndSignaturePage() {
       if (user.id) saveUserProfile(user.id, updatedFields);
       if (user.accountId) saveUserProfile(user.accountId, updatedFields);
     }
-    if (user?.email === "admin@doigam.go.th" || user?.roles?.includes("SUPER_ADMIN")) {
+    if (user?.email?.includes("admin") || user?.roles?.includes("SUPER_ADMIN")) {
+      saveUserProfile("admin.doigam@gmail.com", updatedFields);
       saveUserProfile("admin@doigam.go.th", updatedFields);
       saveUserProfile("usr-admin", updatedFields);
       saveUserProfile("DG-001001", updatedFields);
@@ -677,7 +678,7 @@ export default function ProfileAndSignaturePage() {
               {/* Contact Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">อีเมลราชการ :</label>
+                  <label className="font-bold text-slate-700 block mb-1">อีเมลติดต่อ (Gmail / Hotmail / Outlook) :</label>
                   <input
                     type="email"
                     value={email}
