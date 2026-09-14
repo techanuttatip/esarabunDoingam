@@ -91,12 +91,12 @@ export function AppTopbar() {
 
   return (
     <>
-      <header className="h-14 px-4 sm:px-5 bg-white border-b border-slate-200/80 flex items-center justify-between gap-4 z-20 shrink-0 shadow-xs">
+      <header className="sticky top-0 z-20 h-14 px-4 sm:px-5 bg-white/85 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between gap-4 shrink-0 transition-all shadow-xs">
         {/* Left: Global Spotlight Search Trigger (Ctrl + K) */}
         <div className="flex-1 max-w-md">
           <button
             onClick={() => setIsCommandOpen(true)}
-            className="w-full h-9 px-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-between text-xs transition-all cursor-pointer group"
+            className="w-full h-9 px-3.5 rounded-xl bg-slate-100/80 hover:bg-slate-100 border border-slate-200/90 text-slate-500 hover:text-slate-800 flex items-center justify-between text-xs transition-all cursor-pointer group accessible-focus"
           >
             <div className="flex items-center gap-2.5">
               <Search className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
@@ -115,7 +115,7 @@ export function AppTopbar() {
         <div className="relative hidden md:block">
           <button
             onClick={() => setIsTenantMenuOpen(!isTenantMenuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-xs font-bold text-slate-700 hover:text-[#0052FF] transition-all cursor-pointer shadow-2xs"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100/80 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-xs font-bold text-slate-700 hover:text-[#0052FF] transition-all cursor-pointer shadow-2xs accessible-focus"
             title="คลิกเพื่อสลับสังกัด อปท. (Multi-Tenant Switcher)"
           >
             <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
@@ -129,7 +129,7 @@ export function AppTopbar() {
           </button>
 
           {isTenantMenuOpen && (
-            <div className="absolute left-0 mt-2 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200 p-2 z-50 animate-in fade-in zoom-in-95 select-none">
+            <div className="absolute left-0 mt-2 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/90 p-2 z-50 animate-in fade-in zoom-in-95 select-none">
               <div className="px-2.5 py-1.5 border-b border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
                 <span>สลับสังกัด อปท. (SaaS Multi-Tenant):</span>
                 <a href="/platform-admin" className="text-blue-600 hover:underline font-bold text-[10px]">

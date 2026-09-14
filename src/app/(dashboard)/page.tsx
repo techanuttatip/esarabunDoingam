@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Inbox,
   Send,
@@ -17,13 +17,29 @@ import {
   Filter,
   ArrowUpRight,
   ShieldCheck,
+  Sparkles,
+  Zap,
+  AlertCircle,
+  ArrowRight,
+  RefreshCw,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/components/providers/session-provider";
-import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
-import { getDocumentStats, getAllDocuments, syncCloudDocuments, StoredDocument } from "@/lib/document-store";
+import {
+  DocumentViewerWorkspace,
+  DocumentData,
+} from "@/components/documents/document-viewer-workspace";
+import {
+  getDocumentStats,
+  getAllDocuments,
+  syncCloudDocuments,
+  StoredDocument,
+} from "@/lib/document-store";
 import { formatThaiDate } from "@/lib/formatters/thai-date";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { getTenantSaaSConfig } from "@/config/tenant-config";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -41,237 +57,524 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"all" | "incoming" | "outgoing" | "pending">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("ALL");
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [tenantConfig, setTenantConfig] = useState(getTenantSaaSConfig());
 
   const userName = session?.user?.name || "ผู้ใช้งานสารบรรณ";
   const userPosition = session?.user?.position || "เจ้าหน้าที่สารบรรณ";
   const userDept = session?.user?.department || "สำนักปลัด";
   const todayThai = formatThaiDate(new Date());
 
+  // Fiscal Year calculation (Thai Buddhist Era: Oct 1 starts new fiscal year)
+  const currentDate = new Date();
+  const currentYearBE = currentDate.getFullYear() + 543;
+  const fiscalYearBE = currentDate.getMonth() >= 9 ? currentYearBE + 1 : currentYearBE;
+
+  const refreshData = () => {
+    setAllDocs(getAllDocuments());
+    setStats(getDocumentStats());
+    setTenantConfig(getTenantSaaSConfig());
+  };
+
   useEffect(() => {
-    const refreshData = () => {
-      setAllDocs(getAllDocuments());
-      setStats(getDocumentStats());
-    };
     refreshData();
 
     // Auto sync latest documents from Supabase Cloud on mount
-    syncCloudDocuments().then(() => {
-      refreshData();
-    });
+    setIsSyncing(true);
+    syncCloudDocuments()
+      .then(() => {
+        refreshData();
+      })
+      .finally(() => {
+        setIsSyncing(false);
+      });
 
-    window.addEventListener("smartsarabun_documents_updated", refreshData);
+    const handleUpdate = () => refreshData();
+    window.addEventListener("smartsarabun_documents_updated", handleUpdate);
+    window.addEventListener("tenant_switched", handleUpdate);
+    window.addEventListener("tenant_config_updated", handleUpdate);
+
     return () => {
-      window.removeEventListener("smartsarabun_documents_updated", refreshData);
+      window.removeEventListener("smartsarabun_documents_updated", handleUpdate);
+      window.removeEventListener("tenant_switched", handleUpdate);
+      window.removeEventListener("tenant_config_updated", handleUpdate);
     };
   }, []);
 
   // Filter documents by tab, search, and department
-  const filteredDocs = allDocs.filter((doc) => {
-    // 1. Tab filter
-    if (activeTab === "incoming" && doc.direction === "outgoing") return false;
-    if (activeTab === "outgoing" && doc.direction !== "outgoing") return false;
-    if (activeTab === "pending" && (doc.status === "completed" || doc.status === "sent")) return false;
+  const filteredDocs = useMemo(() => {
+    return allDocs.filter((doc) => {
+      // 1. Tab filter
+      if (activeTab === "incoming" && doc.direction === "outgoing") return false;
+      if (activeTab === "outgoing" && doc.direction !== "outgoing") return false;
+      if (activeTab === "pending" && (doc.status === "completed" || doc.status === "sent")) return false;
 
-    // 2. Department filter
-    if (selectedDept !== "ALL") {
-      const matchDept = doc.targetDept === selectedDept || doc.senderDept === selectedDept;
-      if (!matchDept) return false;
-    }
+      // 2. Department filter
+      if (selectedDept !== "ALL") {
+        const matchDept = doc.targetDept === selectedDept || doc.senderDept === selectedDept;
+        if (!matchDept) return false;
+      }
 
-    // 3. Search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const matchTitle = doc.title?.toLowerCase().includes(query);
-      const matchDocNo = doc.docNo?.toLowerCase().includes(query);
-      const matchRegNo = doc.regNo?.toLowerCase().includes(query);
-      const matchFrom = doc.from?.toLowerCase().includes(query);
-      if (!matchTitle && !matchDocNo && !matchRegNo && !matchFrom) return false;
-    }
+      // 3. Search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchTitle = doc.title?.toLowerCase().includes(query);
+        const matchDocNo = doc.docNo?.toLowerCase().includes(query);
+        const matchRegNo = doc.regNo?.toLowerCase().includes(query);
+        const matchFrom = doc.from?.toLowerCase().includes(query);
+        if (!matchTitle && !matchDocNo && !matchRegNo && !matchFrom) return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [allDocs, activeTab, selectedDept, searchQuery]);
+
+  // Urgent pending documents (ด่วนที่สุด, ด่วนมาก, ด่วน) that are pending action
+  const urgentDocs = useMemo(() => {
+    return allDocs
+      .filter(
+        (d) =>
+          (d.speed === "ด่วนที่สุด" || d.speed === "ด่วนมาก" || d.speed === "ด่วน") &&
+          d.status !== "completed" &&
+          d.status !== "sent"
+      )
+      .slice(0, 3);
+  }, [allDocs]);
 
   const incomingCount = allDocs.filter((d) => d.direction !== "outgoing").length;
   const outgoingCount = allDocs.filter((d) => d.direction === "outgoing").length;
   const pendingCount = allDocs.filter((d) => d.status !== "completed" && d.status !== "sent").length;
 
   return (
-    <div className="space-y-5 pb-16 font-sans">
+    <div className="space-y-6 pb-20 font-sans">
       {/* ========================================================================= */}
-      {/* 1. EMPLOYEE HEADER BAR (เน้นความชัดเจนและปุ่มทางลัดที่ใช้ทุกวัน)             */}
+      {/* 1. HERO COMMAND BAR (Bento Master Header)                                 */}
       {/* ========================================================================= */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black text-slate-900 font-sans tracking-tight">
-              ระบบงานสารบรรณ อบต.ดอยงาม
+      <div className="bento-card p-6 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white shadow-md relative overflow-hidden border border-slate-800">
+        {/* Subtle decorative glow */}
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 -mb-16 w-64 h-64 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          {/* Left info */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-200 border border-blue-400/30 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                ปีงบประมาณ {fiscalYearBE}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/10 text-slate-200 border border-white/15">
+                {tenantConfig.name}
+              </span>
+              {isSupabaseConfigured() && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin text-emerald-400" : ""}`} />
+                  Cloud Sync พร้อมใช้งาน
+                </span>
+              )}
+            </div>
+
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
+              ศูนย์บัญชาการสารบรรณดิจิทัล
+              <span className="text-xs font-normal px-2 py-0.5 rounded bg-blue-600 text-white font-mono">
+                v2.15
+              </span>
             </h1>
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-[#0052FF] border border-blue-200">
-              งานประจำวัน
-            </span>
+
+            <p className="text-xs sm:text-sm text-slate-300">
+              ยินดีต้อนรับ: <strong className="text-white font-bold">{userName}</strong> ({userPosition}) • {userDept} | ประจำวันที่ <strong>{todayThai}</strong>
+            </p>
           </div>
-          <p className="text-xs text-slate-600">
-            ผู้ใช้งาน: <strong className="text-slate-800">{userName}</strong> ({userPosition}) • {userDept} | ประจำวันที่ <strong>{todayThai}</strong>
-          </p>
-        </div>
 
-        {/* Action Buttons ที่พนักงานกดใช้จริง */}
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-          <Link href="/receive" className="flex-1 sm:flex-initial">
-            <Button
-              size="sm"
-              className="w-full h-9 px-3.5 bg-[#0052FF] hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 cursor-pointer"
-            >
-              <Inbox className="w-4 h-4" />
-              <span>ลงรับหนังสือเข้า</span>
-            </Button>
-          </Link>
+          {/* Right Action buttons */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Link href="/receive">
+              <Button
+                size="sm"
+                className="h-9 px-4 bg-[#0052FF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 cursor-pointer accessible-focus transition-all"
+              >
+                <Inbox className="w-4 h-4" />
+                <span>ลงรับหนังสือเข้า</span>
+              </Button>
+            </Link>
 
-          <Link href="/send" className="flex-1 sm:flex-initial">
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full h-9 px-3.5 border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl gap-1.5 cursor-pointer"
-            >
-              <Send className="w-4 h-4 text-slate-600" />
-              <span>ออกเลขหนังสือส่ง</span>
-            </Button>
-          </Link>
+            <Link href="/send">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 px-4 bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold text-xs rounded-xl gap-1.5 cursor-pointer accessible-focus transition-all"
+              >
+                <Send className="w-4 h-4 text-emerald-400" />
+                <span>ออกเลขหนังสือส่ง</span>
+              </Button>
+            </Link>
 
-          <Link href="/cabinet" className="hidden md:inline-flex">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-9 px-3 border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl gap-1.5 cursor-pointer"
-            >
-              <FolderOpen className="w-4 h-4 text-amber-600" />
-              <span>ตู้เอกสาร</span>
-            </Button>
-          </Link>
+            <Link href="/cabinet">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 px-3.5 bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold text-xs rounded-xl gap-1.5 cursor-pointer accessible-focus transition-all hidden sm:inline-flex"
+              >
+                <FolderOpen className="w-4 h-4 text-amber-400" />
+                <span>ตู้เอกสาร</span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. 4 CORE METRIC CARDS (ตัวเลขงานจริง ไม่มีข้อมูล Mock หรือการ์ดตกแต่ง)     */}
+      {/* 2. 4 CORE METRIC BENTO CARDS                                              */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* หนังสือเข้าวันนี้ */}
         <Link href="/inbox" className="group">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-blue-400 hover:shadow-sm transition-all">
-            <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-2">
-              <span className="flex items-center gap-1.5">
-                <Inbox className="w-4 h-4 text-blue-600" />
-                หนังสือเข้าวันนี้
-              </span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-blue-50 text-[#0052FF] group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <Inbox className="w-5 h-5" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#0052FF] transition-colors" />
+              </div>
+              <p className="text-xs font-bold text-slate-600">หนังสือเข้าวันนี้</p>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
+                  {stats.incomingToday}
+                </span>
+                <span className="text-xs font-bold text-slate-500">ฉบับ</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
-                {stats.incomingToday}
-              </span>
-              <span className="text-xs font-bold text-slate-500">ฉบับ</span>
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1">ลงรับแล้วในสมุดทะเบียนรับ</p>
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              ลงรับในสมุดทะเบียนรับแล้ว
+            </p>
           </div>
         </Link>
 
         {/* หนังสือส่งวันนี้ */}
         <Link href="/outbox" className="group">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-blue-400 hover:shadow-sm transition-all">
-            <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-2">
-              <span className="flex items-center gap-1.5">
-                <Send className="w-4 h-4 text-emerald-600" />
-                หนังสือส่งวันนี้
-              </span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                  <Send className="w-5 h-5" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+              </div>
+              <p className="text-xs font-bold text-slate-600">หนังสือส่งวันนี้</p>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
+                  {stats.outgoingToday}
+                </span>
+                <span className="text-xs font-bold text-slate-500">ฉบับ</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
-                {stats.outgoingToday}
-              </span>
-              <span className="text-xs font-bold text-slate-500">ฉบับ</span>
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1">ออกเลขและส่งออกแล้ว</p>
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              ออกเลขและส่งหนังสือแล้ว
+            </p>
           </div>
         </Link>
 
         {/* งานรอดำเนินการ / เกษียน */}
         <Link href="/approvals" className="group">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-amber-400 hover:shadow-sm transition-all">
-            <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-2">
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-amber-600" />
-                รอดำเนินการ / เกษียน
-              </span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600 transition-colors" />
+          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                  รอลงนาม
+                </span>
+              </div>
+              <p className="text-xs font-bold text-slate-600">รอดำเนินการ / เกษียน</p>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-2xl sm:text-3xl font-black text-amber-600 font-sans">
+                  {stats.pendingCount}
+                </span>
+                <span className="text-xs font-bold text-slate-500">ฉบับ</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-amber-600 font-sans">
-                {stats.pendingCount}
-              </span>
-              <span className="text-xs font-bold text-slate-500">ฉบับ</span>
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1">รอการเกษียนหรือพิจารณา</p>
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              รอการพิจารณาหรือเกษียนงาน
+            </p>
           </div>
         </Link>
 
-        {/* หนังสือทั้งหมดในระบบ */}
+        {/* เอกสารทั้งหมดในระบบ */}
         <Link href="/documents" className="group">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:border-blue-400 hover:shadow-sm transition-all">
-            <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-2">
-              <span className="flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-slate-600" />
-                เอกสารทั้งหมด
-              </span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+              </div>
+              <p className="text-xs font-bold text-slate-600">เอกสารทั้งหมดในระบบ</p>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
+                  {allDocs.length}
+                </span>
+                <span className="text-xs font-bold text-slate-500">ฉบับ</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
-                {allDocs.length}
-              </span>
-              <span className="text-xs font-bold text-slate-500">ฉบับ</span>
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1">บันทึกอยู่ในฐานข้อมูลจริง</p>
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+              บันทึกในฐานข้อมูลเรียบร้อย
+            </p>
           </div>
         </Link>
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. MAIN WORK QUEUE: รายการหนังสือราชการ (ตารางที่ใช้งานจริงเต็มจอ)          */}
+      {/* 3. BENTO ROW 2: URGENT / SLA ALERT TILE + QUICK WORKFLOW LAUNCHER          */}
       {/* ========================================================================= */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left: Urgent Action & SLA Tracker (7 cols) */}
+        <div className="lg:col-span-7 bento-card p-5 bg-gradient-to-br from-rose-50/40 via-white to-amber-50/20 border-rose-200/80 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-rose-100 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-rose-100 text-rose-700">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">
+                    เอกสารด่วน & ติดตามกำหนดเวลา (SLA Monitor)
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    หนังสือราชการเร่งด่วนและงานที่ต้องดำเนินการทันที
+                  </p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                SLA {stats.slaRate}
+              </span>
+            </div>
+
+            {/* List of urgent items or reassuring state */}
+            {urgentDocs.length > 0 ? (
+              <div className="space-y-2">
+                {urgentDocs.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="p-3 rounded-xl bg-white border border-rose-200/80 shadow-2xs hover:border-rose-400 transition-all flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">
+                          {doc.speed}
+                        </span>
+                        <span className="font-mono text-xs font-bold text-blue-900">
+                          {doc.docNo}
+                        </span>
+                        <span className="text-[11px] text-slate-400">• {doc.docDate}</span>
+                      </div>
+                      <p className="text-xs font-bold text-slate-800 truncate">
+                        {doc.title}
+                      </p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        จาก: {doc.from || "หน่วยงานภายนอก"} ➔ กอง: {doc.targetDept || "สำนักปลัด"}
+                      </p>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      onClick={() => setSelectedDoc(doc)}
+                      className="h-8 px-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shrink-0 cursor-pointer shadow-2xs gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>เปิดเกษียนทันที</span>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-6 px-4 rounded-xl bg-emerald-50/50 border border-emerald-100 text-center">
+                <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-600 mb-1.5" />
+                <p className="text-xs font-extrabold text-emerald-900">
+                  ไม่มีเอกสารค้างเกินกำหนด (Zero Overdue)
+                </p>
+                <p className="text-[11px] text-emerald-700 mt-0.5">
+                  ระบบสารบรรณและคิวงานของ อบต.ดอยงาม ทำงานตรงตามเกณฑ์มาตรฐาน SLA 100%
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>เอกสารรอดำเนินการทั้งหมด: <strong className="text-slate-800 font-bold">{pendingCount} ฉบับ</strong></span>
+            <Link
+              href="/approvals"
+              className="text-[#0052FF] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <span>ดูงานเกษียนทั้งหมด</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Right: Quick Workflow Launcher (5 cols) */}
+        <div className="lg:col-span-5 bento-card p-5 bg-white flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-50 text-[#0052FF]">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">
+                    ทางลัดการทำงานสารบรรณ
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    เข้าถึงฟังก์ชันหลักรวดเร็วในคลิกเดียว
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                พร้อมใช้งาน
+              </span>
+            </div>
+
+            {/* 4 Quick Tiles Grid */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <Link
+                href="/receive"
+                className="p-3 rounded-xl border border-slate-200/90 hover:border-blue-500 hover:bg-blue-50/40 transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-blue-50 text-[#0052FF] group-hover:bg-[#0052FF] group-hover:text-white transition-colors">
+                    <Inbox className="w-4 h-4" />
+                  </div>
+                  <span className="text-[9px] font-bold text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded">
+                    ด่วน
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-[#0052FF] transition-colors">
+                    ลงรับหนังสือเข้า
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">ประทับตรา & มอบหมาย</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/send"
+                className="p-3 rounded-xl border border-slate-200/90 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                    <Send className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                    ออกเลขหนังสือส่ง
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">จองเลข & ส่งหนังสือ</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/receive?ocr=true"
+                className="p-3 rounded-xl border border-purple-200 bg-purple-50/20 hover:border-purple-500 hover:bg-purple-50/50 transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-purple-100 text-purple-700 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <span className="text-[9px] font-bold text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">
+                    AI OCR
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-purple-700 transition-colors">
+                    สแกนอัตโนมัติ
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">ดึงข้อมูลด้วย AI Vision</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/templates"
+                className="p-3 rounded-xl border border-slate-200/90 hover:border-amber-500 hover:bg-amber-50/40 transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-2 rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                    <PenTool className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-amber-700 transition-colors">
+                    แม่แบบเอกสาร
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">บันทึกข้อความ & คำสั่ง</p>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          <div className="pt-3 mt-3 border-t border-slate-100 text-center">
+            <Link
+              href="/numbers"
+              className="text-xs font-bold text-slate-600 hover:text-[#0052FF] inline-flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <span>ดูสมุดทะเบียนคุมเลขทั้งหมด</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4. MAIN WORK QUEUE: ทะเบียนและคิวงานสารบรรณ (ตารางแสดงผล Bento Data Table) */}
+      {/* ========================================================================= */}
+      <div className="bento-card bg-white shadow-xs overflow-hidden">
         {/* Controls: Tabs & Search Filter */}
-        <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
           {/* Tabs */}
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold shrink-0">
             <button
               onClick={() => setActiveTab("all")}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                activeTab === "all" ? "bg-white text-slate-900 shadow-xs font-black" : "text-slate-600 hover:text-slate-900"
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer accessible-focus ${
+                activeTab === "all"
+                  ? "bg-white text-slate-900 shadow-xs font-black"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               ทั้งหมด ({allDocs.length})
             </button>
             <button
               onClick={() => setActiveTab("incoming")}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                activeTab === "incoming" ? "bg-white text-[#0052FF] shadow-xs font-black" : "text-slate-600 hover:text-slate-900"
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer accessible-focus ${
+                activeTab === "incoming"
+                  ? "bg-white text-[#0052FF] shadow-xs font-black"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               หนังสือเข้า ({incomingCount})
             </button>
             <button
               onClick={() => setActiveTab("outgoing")}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                activeTab === "outgoing" ? "bg-white text-emerald-700 shadow-xs font-black" : "text-slate-600 hover:text-slate-900"
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer accessible-focus ${
+                activeTab === "outgoing"
+                  ? "bg-white text-emerald-700 shadow-xs font-black"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               หนังสือส่ง ({outgoingCount})
             </button>
             <button
               onClick={() => setActiveTab("pending")}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                activeTab === "pending" ? "bg-white text-amber-700 shadow-xs font-black" : "text-slate-600 hover:text-slate-900"
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer accessible-focus ${
+                activeTab === "pending"
+                  ? "bg-white text-amber-700 shadow-xs font-black"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               รอดำเนินการ ({pendingCount})
@@ -279,22 +582,22 @@ export default function DashboardPage() {
           </div>
 
           {/* Search & Dept Selector */}
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
+          <div className="flex items-center gap-2.5 w-full md:w-auto">
+            <div className="relative flex-1 md:w-72">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="ค้นหาเลขที่, ชื่อเรื่อง, หน่วยงาน..."
+                placeholder="ค้นหาเลขที่, ชื่อเรื่อง, หน่วยงาน... (Ctrl+K)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF]"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF] transition-all"
               />
             </div>
 
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="py-1.5 px-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 focus:outline-none"
+              className="py-1.5 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0052FF] cursor-pointer"
             >
               <option value="ALL">ทุกกอง/สำนัก</option>
               <option value="สำนักปลัด">สำนักปลัด</option>
@@ -310,15 +613,15 @@ export default function DashboardPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 text-slate-700 font-bold border-b border-slate-200">
-                <th className="py-2.5 px-3 whitespace-nowrap">เลขที่หนังสือ / เลขรับ</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">วันที่</th>
-                <th className="py-2.5 px-3 min-w-[240px]">ชื่อเรื่อง</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">จากหน่วยงาน</th>
-                <th className="py-2.5 px-3 whitespace-nowrap">กองผู้รับผิดชอบ</th>
-                <th className="py-2.5 px-3 text-center whitespace-nowrap">ความเร่งด่วน</th>
-                <th className="py-2.5 px-3 text-center whitespace-nowrap">สถานะ</th>
-                <th className="py-2.5 px-3 text-center whitespace-nowrap">การจัดการ</th>
+              <tr className="bg-slate-50/90 text-slate-700 font-bold border-b border-slate-200">
+                <th className="py-3 px-3.5 whitespace-nowrap">เลขที่หนังสือ / เลขรับ</th>
+                <th className="py-3 px-3.5 whitespace-nowrap">วันที่</th>
+                <th className="py-3 px-3.5 min-w-[260px]">ชื่อเรื่อง</th>
+                <th className="py-3 px-3.5 whitespace-nowrap">จากหน่วยงาน</th>
+                <th className="py-3 px-3.5 whitespace-nowrap">กองผู้รับผิดชอบ</th>
+                <th className="py-3 px-3.5 text-center whitespace-nowrap">ความเร่งด่วน</th>
+                <th className="py-3 px-3.5 text-center whitespace-nowrap">สถานะ</th>
+                <th className="py-3 px-3.5 text-center whitespace-nowrap">การจัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -326,19 +629,19 @@ export default function DashboardPage() {
                 filteredDocs.map((doc, idx) => {
                   const speedBadge =
                     doc.speed === "ด่วนที่สุด" ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">
                         ด่วนที่สุด
                       </span>
                     ) : doc.speed === "ด่วนมาก" ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-orange-100 text-orange-800 border border-orange-200">
                         ด่วนมาก
                       </span>
                     ) : doc.speed === "ด่วน" ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
                         ด่วน
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">
                         ปกติ
                       </span>
                     );
@@ -365,11 +668,11 @@ export default function DashboardPage() {
                   return (
                     <tr
                       key={doc.id}
-                      className={`hover:bg-blue-50/40 transition-colors ${
+                      className={`hover:bg-blue-50/50 transition-colors ${
                         idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
                       }`}
                     >
-                      <td className="py-3 px-3 whitespace-nowrap">
+                      <td className="py-3.5 px-3.5 whitespace-nowrap">
                         <div className="font-mono font-bold text-blue-900">{doc.docNo}</div>
                         {doc.regNo && (
                           <div className="text-[10px] text-slate-400 font-mono">
@@ -377,14 +680,14 @@ export default function DashboardPage() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-3 whitespace-nowrap text-slate-600">
+                      <td className="py-3.5 px-3.5 whitespace-nowrap text-slate-600">
                         {doc.docDate || "-"}
                       </td>
-                      <td className="py-3 px-3">
+                      <td className="py-3.5 px-3.5">
                         <button
                           type="button"
                           onClick={() => setSelectedDoc(doc)}
-                          className="font-bold text-slate-900 hover:text-[#0052FF] text-left leading-snug cursor-pointer transition-colors block"
+                          className="font-bold text-slate-900 hover:text-[#0052FF] text-left leading-snug cursor-pointer transition-colors block line-clamp-2"
                         >
                           {doc.title}
                         </button>
@@ -392,23 +695,23 @@ export default function DashboardPage() {
                           {doc.direction === "outgoing" ? "หนังสือส่งออก" : "หนังสือรับเข้า"}
                         </span>
                       </td>
-                      <td className="py-3 px-3 whitespace-nowrap text-slate-700">
+                      <td className="py-3.5 px-3.5 whitespace-nowrap text-slate-700">
                         {doc.from || (doc as any).fromOrg || "ส่วนราชการ"}
                       </td>
-                      <td className="py-3 px-3 whitespace-nowrap font-semibold text-slate-700">
+                      <td className="py-3.5 px-3.5 whitespace-nowrap font-semibold text-slate-700">
                         {doc.targetDept || doc.senderDept || "สำนักปลัด"}
                       </td>
-                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                      <td className="py-3.5 px-3.5 text-center whitespace-nowrap">
                         {speedBadge}
                       </td>
-                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                      <td className="py-3.5 px-3.5 text-center whitespace-nowrap">
                         {statusBadge}
                       </td>
-                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                      <td className="py-3.5 px-3.5 text-center whitespace-nowrap">
                         <Button
                           size="sm"
                           onClick={() => setSelectedDoc(doc)}
-                          className="h-7 px-3 bg-[#0052FF] hover:bg-blue-700 text-white font-bold text-[11px] rounded-lg gap-1 cursor-pointer"
+                          className="h-7 px-3 bg-[#0052FF] hover:bg-blue-700 text-white font-bold text-[11px] rounded-lg gap-1 cursor-pointer accessible-focus shadow-2xs"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>เปิดดู / เกษียน</span>
@@ -438,18 +741,18 @@ export default function DashboardPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. WORKSPACE MODAL (เปิดอ่าน, ประทับตรายาง, และเกษียนหนังสือฉบับจริง)         */}
+      {/* 5. WORKSPACE MODAL (เปิดอ่าน, ประทับตรายาง, และเกษียนหนังสือฉบับจริง)         */}
       {/* ========================================================================= */}
       {selectedDoc && (
         <DocumentViewerWorkspace
           document={selectedDoc}
           onClose={() => setSelectedDoc(null)}
           onSaveDoc={() => {
-            setAllDocs(getAllDocuments());
-            setStats(getDocumentStats());
+            refreshData();
           }}
         />
       )}
     </div>
   );
 }
+

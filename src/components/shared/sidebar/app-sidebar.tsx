@@ -61,9 +61,9 @@ export function AppSidebar() {
     if (filtered.length === 0) return null;
 
     return (
-      <div className="space-y-0.5">
-        <div className="px-3 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-          {title}
+      <div className="space-y-1">
+        <div className="px-3 py-1 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+          <span>{title}</span>
         </div>
         <div className="space-y-0.5">
           {filtered.map((item) => {
@@ -76,9 +76,9 @@ export function AppSidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all accessible-focus ${
                   isActive
-                    ? "bg-[#0052FF] text-white shadow-sm shadow-blue-500/20 font-bold"
+                    ? "bg-gradient-to-r from-[#0052FF] to-blue-700 text-white shadow-sm shadow-blue-500/25 font-bold"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
@@ -137,7 +137,7 @@ export function AppSidebar() {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200/80 shadow-xs flex flex-col justify-between transition-transform duration-300 ${
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white/95 backdrop-blur-md border-r border-slate-200/80 shadow-xs flex flex-col justify-between transition-transform duration-300 ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >

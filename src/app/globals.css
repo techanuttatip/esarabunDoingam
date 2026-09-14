@@ -187,6 +187,48 @@
 }
 
 /* =========================================================================
+   UI/UX PRO MAX v2.0 - BENTO GRID & ACCESSIBILITY TOKENS
+========================================================================= */
+
+.bento-card {
+  background: #ffffff;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(15, 23, 42, 0.03);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-card-interactive {
+  cursor: pointer;
+}
+.bento-card-interactive:hover {
+  border-color: rgba(0, 82, 255, 0.35);
+  box-shadow: 0 12px 30px -6px rgba(0, 82, 255, 0.09), 0 4px 12px rgba(0, 0, 0, 0.02);
+  transform: translateY(-2px);
+}
+
+.bento-card-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+}
+
+.accessible-focus:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.4);
+  border-color: #0052FF;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================================
    OFFICIAL THAI GOVERNMENT DOCUMENT PRINT STYLESHEET (A4 Standard)
    Complies with the Prime Minister's Office Regulation on Correspondence Work
    (ระเบียบสำนักนายกรัฐมนตรีว่าด้วยงานสารบรรณ พ.ศ. ๒๕๒๖ และที่แก้ไขเพิ่มเติม)
