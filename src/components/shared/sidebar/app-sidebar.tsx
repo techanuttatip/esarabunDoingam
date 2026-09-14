@@ -56,8 +56,8 @@ export function AppSidebar() {
     if (filtered.length === 0) return null;
 
     return (
-      <div className="space-y-1">
-        <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+      <div className="space-y-0.5">
+        <div className="px-3 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
           {title}
         </div>
         <div className="space-y-0.5">
@@ -71,16 +71,16 @@ export function AppSidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   isActive
-                    ? "bg-slate-900 text-white shadow-xs font-bold"
+                    ? "bg-[#0052FF] text-white shadow-sm shadow-blue-500/20 font-bold"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive ? "text-blue-400" : "text-slate-400 group-hover:text-slate-700"
+                      isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700"
                     }`}
                   />
                   <span className="truncate">{item.title}</span>
@@ -138,22 +138,22 @@ export function AppSidebar() {
       >
         {/* Top Branding */}
         <div>
-          <div className="p-4 sm:p-5 border-b border-slate-200/80 flex items-center gap-3">
+          <div className="p-3.5 border-b border-slate-200/80 flex items-center gap-3">
             <div className="p-1 rounded-xl bg-slate-50 border border-slate-200 shadow-2xs shrink-0">
-              <DoiNgamLogoEmblem className="w-9 h-9" size={36} />
+              <DoiNgamLogoEmblem className="w-8 h-8" size={32} />
             </div>
             <div className="min-w-0">
-              <span className="font-sans font-black text-sm text-slate-900 tracking-tight block truncate">
+              <span className="font-sans font-black text-xs text-slate-900 tracking-tight block truncate">
                 SMART SARABUN
               </span>
-              <p className="text-[11px] text-blue-600 font-bold truncate">
+              <p className="text-[10px] text-blue-600 font-bold truncate">
                 อบต.ดอยงาม (เชียงราย)
               </p>
             </div>
           </div>
 
           {/* Navigation Items (3 Groups) */}
-          <div className="p-3 space-y-4 overflow-y-auto max-h-[calc(100vh-160px)] select-none">
+          <div className="p-2.5 space-y-2.5 overflow-y-auto max-h-[calc(100vh-140px)] select-none">
             {renderNavSection("งานประจำวัน", navigationConfig.core)}
             {renderNavSection("คลัง & รายงาน", navigationConfig.archive)}
             {renderNavSection("จัดการระบบ", navigationConfig.admin)}
@@ -161,8 +161,8 @@ export function AppSidebar() {
         </div>
 
         {/* User Profile Footer */}
-        <div className="p-3 border-t border-slate-200/80 bg-slate-50/50">
-          <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white border border-slate-200 shadow-2xs">
+        <div className="p-2.5 border-t border-slate-200/80 bg-slate-50/50">
+          <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
             <a
               href="/profile"
               title="จัดการข้อมูลส่วนตัวและลายเซ็นดิจิทัล"

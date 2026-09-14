@@ -180,6 +180,10 @@ export function DocumentViewerWorkspace({
   const [currentDoc, setCurrentDoc] = useState<DocumentData>(document);
   const [selectedDeptBox, setSelectedDeptBox] = useState<string>(document.targetDept || "กองคลัง");
 
+  // Layout Mode: Full Focus A4 (Default per GovTech 2026 standard) vs Split View
+  const [layoutMode, setLayoutMode] = useState<"full_focus" | "split">("full_focus");
+  const [isSideDrawerOpen, setIsSideDrawerOpen] = useState(false);
+
   // Form State for Endorsement
   const [selectedQuickAction, setSelectedQuickAction] = useState<string[]>([]);
   const [customEndorseNote, setCustomEndorseNote] = useState("");
@@ -531,12 +535,35 @@ export function DocumentViewerWorkspace({
           </div>
         </div>
 
-        {/* Center Tools: Real PDF Indicator */}
-        <div className="hidden md:flex items-center gap-2 bg-slate-900/90 px-3.5 py-1.5 rounded-2xl border border-slate-800 backdrop-blur-md shrink-0">
-          <FileText className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs font-black text-white">
-            ไฟล์ PDF สแกนฉบับจริง (ประทับตรายางลงบนกระดาษโดยตรง)
-          </span>
+        {/* Center Tools: Mode Switcher (Full Focus A4 vs Split View) */}
+        <div className="hidden md:flex items-center gap-1 bg-slate-900/90 p-1 rounded-2xl border border-slate-800 backdrop-blur-md shrink-0">
+          <button
+            type="button"
+            onClick={() => setLayoutMode("full_focus")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              layoutMode === "full_focus"
+                ? "bg-[#0052FF] text-white shadow-md shadow-blue-500/20"
+                : "text-slate-400 hover:text-white"
+            }`}
+            title="โหมดโฟกัสกระดาษ A4 เต็มหน้าจอ (Full Focus)"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span>โฟกัสเต็มจอ (Full Focus)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setLayoutMode("split")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              layoutMode === "split"
+                ? "bg-[#0052FF] text-white shadow-md shadow-blue-500/20"
+                : "text-slate-400 hover:text-white"
+            }`}
+            title="โหมดแบ่งสองหน้าจอ (Split View)"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>แบ่งสองจอ (Split View)</span>
+          </button>
         </div>
 
         {/* Right Action Tools */}
@@ -620,8 +647,8 @@ export function DocumentViewerWorkspace({
           </div>
         )}
 
-        {/* LEFT 63%: 100% Real Official Government PDF Document Viewer with Direct In-Paper Stamping */}
-        <div className="w-full lg:w-[63%] bg-slate-950 flex flex-col border-r border-slate-700 overflow-hidden relative select-text print:w-full print:bg-white print:border-none print:overflow-visible">
+        {/* LEFT: 100% Real Official Government PDF Document Viewer with Direct In-Paper Stamping */}
+        <div className={`w-full ${layoutMode === "split" ? "lg:w-[62%]" : "lg:w-full"} bg-slate-950 flex flex-col ${layoutMode === "split" ? "border-r border-slate-700" : ""} overflow-hidden relative select-text print:w-full print:bg-white print:border-none print:overflow-visible transition-all duration-300`}>
           {/* Viewer Sub-Toolbar */}
           <div className="h-10 bg-[#162032] border-b border-slate-700 px-5 flex items-center justify-between text-xs text-slate-300 shrink-0 print:hidden">
             <div className="flex items-center gap-3">
@@ -662,6 +689,18 @@ export function DocumentViewerWorkspace({
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
+
+              {layoutMode === "full_focus" && (
+                <button
+                  type="button"
+                  onClick={() => setIsSideDrawerOpen(true)}
+                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0052FF] hover:bg-blue-600 text-white flex items-center gap-1.5 transition-all shadow-xs cursor-pointer ml-2"
+                  title="เปิดแผงเกษียนฉบับเต็ม"
+                >
+                  <PenTool className="w-3 h-3" />
+                  <span>แผงเกษียน ↗</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -926,10 +965,85 @@ export function DocumentViewerWorkspace({
               </div>
             </div>
           </div>
+
+          {/* FLOATING FAST-ACTION DOCK IN FULL FOCUS MODE */}
+          {layoutMode === "full_focus" && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md border border-slate-700/90 text-white px-3.5 py-2 rounded-2xl shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-3 print:hidden">
+              <span className="text-[11px] font-bold text-slate-400 px-1 hidden sm:inline">
+                เซ็นด่วน:
+              </span>
+              <button 
+                type="button"
+                onClick={() => handleOneClickAction("approve")}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                <span>อนุมัติสั่งการ</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleOneClickAction("propose")}
+                className="px-3.5 py-2 rounded-xl bg-[#0052FF] hover:bg-blue-600 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-blue-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <PenTool className="w-3.5 h-3.5 text-blue-200" />
+                <span>เกษียนเสนอเรื่อง</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleOneClickAction("noted")}
+                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer border border-slate-700"
+              >
+                <span>รับทราบ</span>
+              </button>
+              <div className="w-[1px] h-6 bg-slate-700 mx-1" />
+              <button 
+                type="button"
+                onClick={() => {
+                  setIsSideDrawerOpen(true);
+                  setActiveSideTab("endorse");
+                }}
+                className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/40 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <PenTool className="w-3.5 h-3.5 text-amber-300" />
+                <span>แผงเกษียนฉบับเต็ม ↗</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* RIGHT 37%: Comprehensive Endorsement & Decision Panel */}
-        <div className="w-full lg:w-[37%] bg-white flex flex-col overflow-hidden border-l border-slate-200 text-slate-900 print:hidden">
+        {/* Full Focus Backdrop when Drawer is Open */}
+        {layoutMode === "full_focus" && isSideDrawerOpen && (
+          <div
+            onClick={() => setIsSideDrawerOpen(false)}
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200 print:hidden"
+          />
+        )}
+
+        {/* RIGHT PANEL: Slide-over Drawer in Full Focus OR Split column in Split View */}
+        <div
+          className={
+            layoutMode === "split"
+              ? "w-full lg:w-[38%] bg-white flex flex-col overflow-hidden border-l border-slate-200 text-slate-900 print:hidden"
+              : isSideDrawerOpen
+              ? "fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-white flex flex-col overflow-hidden shadow-2xl border-l border-slate-200 text-slate-900 animate-in slide-in-from-right duration-200 print:hidden"
+              : "hidden"
+          }
+        >
+          {layoutMode === "full_focus" && isSideDrawerOpen && (
+            <div className="p-3.5 bg-[#0e1726] text-white flex items-center justify-between shrink-0 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <PenTool className="w-4 h-4 text-blue-400" />
+                <span className="font-black text-xs">แผงเกษียนและบันทึกสั่งการฉบับเต็ม</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSideDrawerOpen(false)}
+                className="w-7 h-7 rounded-lg bg-white/10 hover:bg-rose-600 flex items-center justify-center text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
           {/* Side Tabs */}
           <div className="flex border-b border-slate-200 bg-slate-50 text-xs shrink-0">
             <button
@@ -1433,10 +1547,16 @@ export function DocumentViewerWorkspace({
             <Button
               variant="outline"
               size="sm"
-              onClick={onClose}
+              onClick={() => {
+                if (layoutMode === "full_focus") {
+                  setIsSideDrawerOpen(false);
+                } else {
+                  onClose?.();
+                }
+              }}
               className="rounded-xl text-xs font-bold"
             >
-              ปิดหน้าต่าง
+              {layoutMode === "full_focus" ? "ปิดแผงเกษียน" : "ปิดหน้าต่าง"}
             </Button>
           </div>
         </div>

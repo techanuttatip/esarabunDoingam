@@ -144,12 +144,12 @@ export default function InboxPage() {
             <table className="w-full text-left border-collapse min-w-[850px] text-xs">
               <thead>
                 <tr className="bg-slate-50 text-slate-800 font-bold border-b border-slate-200">
-                  <th className="p-3.5 w-[14%]">เลขทะเบียนรับ</th>
-                  <th className="p-3.5 w-[16%]">ที่หนังสือ / ลงวันที่</th>
-                  <th className="p-3.5 w-[38%]">เรื่อง / จากหน่วยงาน</th>
-                  <th className="p-3.5 w-[14%]">กองผู้รับผิดชอบ</th>
-                  <th className="p-3.5 w-[10%]">สถานะ</th>
-                  <th className="p-3.5 text-center w-[8%]">จัดการ</th>
+                  <th className="p-2.5 w-[14%]">เลขทะเบียนรับ</th>
+                  <th className="p-2.5 w-[16%]">ที่หนังสือ / ลงวันที่</th>
+                  <th className="p-2.5 w-[38%]">เรื่อง / จากหน่วยงาน</th>
+                  <th className="p-2.5 w-[14%]">กองผู้รับผิดชอบ</th>
+                  <th className="p-2.5 w-[10%]">สถานะ</th>
+                  <th className="p-2.5 text-center w-[8%]">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -161,19 +161,19 @@ export default function InboxPage() {
                         idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
                       }`}
                     >
-                      <td className="p-3.5 font-extrabold text-slate-900 text-sm">
+                      <td className="p-2.5 font-extrabold text-slate-900 text-sm">
                         {doc.regNo}
                         <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
                           รับเมื่อ: {doc.regDate}
                         </span>
                       </td>
 
-                      <td className="p-3.5">
+                      <td className="p-2.5">
                         <span className="font-mono font-bold text-blue-900 block">{doc.docNo}</span>
                         <span className="text-[11px] text-slate-500">{doc.docDate}</span>
                       </td>
 
-                      <td className="p-3.5">
+                      <td className="p-2.5">
                         <div className="flex items-center gap-2">
                           {doc.speed === "ด่วนที่สุด" && (
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-red-100 text-red-800 border border-red-200 shrink-0">
@@ -190,19 +190,19 @@ export default function InboxPage() {
                         <p className="text-[11px] text-slate-500 mt-1">จาก: {doc.from || (doc as any).fromOrg}</p>
                       </td>
 
-                      <td className="p-3.5">
+                      <td className="p-2.5">
                         <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
                           {doc.targetDept}
                         </span>
                       </td>
 
-                      <td className="p-3.5">
+                      <td className="p-2.5">
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900">
                           {doc.status || "ลงรับแล้ว"}
                         </span>
                       </td>
 
-                      <td className="p-3.5 text-center">
+                      <td className="p-2.5 text-center">
                         <Button
                           size="sm"
                           variant="outline"

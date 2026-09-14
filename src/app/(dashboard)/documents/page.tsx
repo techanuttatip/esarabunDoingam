@@ -130,27 +130,27 @@ export default function DocumentsPage() {
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
               <tr>
-                <th className="py-3.5 px-4">เลขที่หนังสือ / เลขรับ</th>
-                <th className="py-3.5 px-4 min-w-[280px]">ชื่อเรื่อง / หมวดหมู่</th>
-                <th className="py-3.5 px-4">ประเภท</th>
-                <th className="py-3.5 px-4">กองเจ้าของเรื่อง</th>
-                <th className="py-3.5 px-4">วันที่</th>
-                <th className="py-3.5 px-4">สถานะ / การจัดเก็บ</th>
-                <th className="py-3.5 px-4 text-center">การจัดการ</th>
+                <th className="py-2.5 px-3.5">เลขที่หนังสือ / เลขรับ</th>
+                <th className="py-2.5 px-3.5 min-w-[280px]">ชื่อเรื่อง / หมวดหมู่</th>
+                <th className="py-2.5 px-3.5">ประเภท</th>
+                <th className="py-2.5 px-3.5">กองเจ้าของเรื่อง</th>
+                <th className="py-2.5 px-3.5">วันที่</th>
+                <th className="py-2.5 px-3.5">สถานะ / การจัดเก็บ</th>
+                <th className="py-2.5 px-3.5 text-center">การจัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredCatalog.length > 0 ? (
                 filteredCatalog.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4">
+                    <td className="py-2.5 px-3.5">
                       <div className="font-mono font-bold text-slate-900">{item.docNo}</div>
                       <div className="text-[10px] text-slate-500 font-mono">
                         {item.type === "แฟ้มจัดเก็บ" ? "รหัสจัดเก็บ: " + item.regNo : "เลขรับ: " + item.regNo}
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4">
+                    <td className="py-2.5 px-3.5">
                       <div className="font-bold text-slate-900 text-xs line-clamp-1">{item.title}</div>
                       {item.archiveFolder ? (
                         <div className="text-[10px] text-purple-700 font-bold mt-0.5 flex items-center gap-1">
@@ -162,7 +162,7 @@ export default function DocumentsPage() {
                       )}
                     </td>
 
-                    <td className="py-3.5 px-4">
+                    <td className="py-2.5 px-3.5">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                         item.type === "หนังสือเข้า"
                           ? "bg-blue-100 text-blue-800 border border-blue-200"
@@ -178,10 +178,10 @@ export default function DocumentsPage() {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 font-bold text-slate-800">{item.dept}</td>
-                    <td className="py-3.5 px-4 text-slate-600">{item.date}</td>
+                    <td className="py-2.5 px-3.5 font-bold text-slate-800">{item.dept}</td>
+                    <td className="py-2.5 px-3.5 text-slate-600">{item.date}</td>
 
-                    <td className="py-3.5 px-4">
+                    <td className="py-2.5 px-3.5">
                       {item.retention ? (
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                           {item.retention}
@@ -199,7 +199,7 @@ export default function DocumentsPage() {
                       )}
                     </td>
 
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="py-2.5 px-3.5 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <Link href={`/verify/${encodeURIComponent(item.id)}`} target="_blank">
                           <Button
