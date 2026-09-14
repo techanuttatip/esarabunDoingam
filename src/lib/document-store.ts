@@ -1,4 +1,5 @@
 import { DocumentData } from "@/components/documents/document-viewer-workspace";
+import { savePdfToIndexedDB } from "@/lib/pdf-storage";
 
 export interface StoredTimelineItem {
   action: string;
@@ -99,6 +100,11 @@ export function saveDocument(doc: Partial<StoredDocument>): StoredDocument {
       updatedAt: now,
     };
 
+    // Save large PDF binary to IndexedDB in background
+    if (newDoc.pdfBase64) {
+      savePdfToIndexedDB(id, newDoc.pdfBase64, newDoc.pdfName || "document.pdf").catch(() => {});
+    }
+
     const existingIndex = docs.findIndex((d) => d.id === id);
     let updatedList: StoredDocument[];
     if (existingIndex >= 0) {
@@ -108,7 +114,18 @@ export function saveDocument(doc: Partial<StoredDocument>): StoredDocument {
       updatedList = [newDoc, ...docs];
     }
 
-    localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(updatedList));
+    try {
+      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(updatedList));
+    } catch (quotaErr) {
+      console.warn("LocalStorage quota warning: stripping heavy base64 to save metadata", quotaErr);
+      // Quota Protection: strip pdfBase64 from older records to save storage space
+      const lightList = updatedList.map((d) => ({
+        ...d,
+        pdfBase64: d.id === id ? d.pdfBase64?.substring(0, 100) : undefined,
+      }));
+      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(lightList));
+    }
+
     window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
     return newDoc;
   } catch (err) {
@@ -124,13 +141,25 @@ export function updateDocument(id: string, updates: Partial<StoredDocument>): St
     const idx = docs.findIndex((d) => d.id === id);
     if (idx < 0) return null;
 
+    if (updates.pdfBase64) {
+      savePdfToIndexedDB(id, updates.pdfBase64, updates.pdfName || "document.pdf").catch(() => {});
+    }
+
     const updated: StoredDocument = {
       ...docs[idx],
       ...updates,
       updatedAt: new Date().toISOString(),
     };
     docs[idx] = updated;
-    localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(docs));
+
+    try {
+      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(docs));
+    } catch (quotaErr) {
+      console.warn("LocalStorage quota exceeded on update, saving metadata safely", quotaErr);
+      const lightDocs = docs.map((d) => ({ ...d, pdfBase64: undefined }));
+      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(lightDocs));
+    }
+
     window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
     return updated;
   } catch (err) {

@@ -54,6 +54,7 @@ import {
   ExternalLink,
   Trash2,
 } from "lucide-react";
+import { getPdfFromIndexedDB, savePdfToIndexedDB } from "@/lib/pdf-storage";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/components/providers/session-provider";
 import { AntiLeakWatermark } from "@/features/security/components/anti-leak-watermark";
@@ -158,6 +159,20 @@ export function DocumentViewerWorkspace({
   );
   const [uploadedPdfBlobUrl, setUploadedPdfBlobUrl] = useState<string | null>(document.pdfUrl || null);
   const [uploadedPdfName, setUploadedPdfName] = useState<string | null>(null);
+
+  // Load PDF from IndexedDB asynchronously if not present in memory
+  useEffect(() => {
+    if (!uploadedPdfBlobUrl && document.id) {
+      getPdfFromIndexedDB(document.id).then((stored) => {
+        if (stored?.data) {
+          const url = typeof stored.data === "string" ? stored.data : URL.createObjectURL(stored.data);
+          setUploadedPdfBlobUrl(url);
+          if (stored.fileName) setUploadedPdfName(stored.fileName);
+          setViewMode("pdf_embed");
+        }
+      });
+    }
+  }, [document.id, uploadedPdfBlobUrl]);
   const [activeSideTab, setActiveSideTab] = useState<"endorse" | "ai_summary" | "detail" | "tracking">("endorse");
 
   // Dynamic document state matching the actual opened document
@@ -353,6 +368,9 @@ export function DocumentViewerWorkspace({
       const blobUrl = URL.createObjectURL(file);
       setUploadedPdfBlobUrl(blobUrl);
       setUploadedPdfName(file.name);
+
+      // Save binary file into IndexedDB (supports large files safely without localStorage 5MB limit)
+      savePdfToIndexedDB(currentDoc.id, file, file.name).catch(() => {});
 
       const reader = new FileReader();
       reader.onload = () => {

@@ -23,6 +23,7 @@ import {
   Info,
 } from "lucide-react";
 import { getSavedUserProfile } from "@/lib/user-store";
+import { createSignedSessionToken } from "@/lib/auth/session-token";
 
 export interface OfficialUserAccount {
   id: string;
@@ -243,20 +244,23 @@ export function LoginClientForm() {
     }
   }, [usernameInput]);
 
+  // Stable countdown timer: only setup/teardown interval when active state changes
+  const isTimerActive = Boolean(lockoutTimer && lockoutTimer > 0);
   useEffect(() => {
-    if (!lockoutTimer || lockoutTimer <= 0) return;
+    if (!isTimerActive) return;
+
     const timer = setInterval(() => {
       setLockoutTimer((prev) => {
-        if (!prev || prev <= 1) {
-          clearInterval(timer);
+        if (prev === null || prev <= 1) {
           setErrorMsg("");
           return null;
         }
         return prev - 1;
       });
     }, 1000);
+
     return () => clearInterval(timer);
-  }, [lockoutTimer]);
+  }, [isTimerActive]);
 
   const getAllAccounts = (): OfficialUserAccount[] => {
     let list = [...officialAccounts];
@@ -468,9 +472,19 @@ export function LoginClientForm() {
       // Security Fix: Add Secure flag (HTTPS-only in production) and SameSite=Strict
       const isSecure = window.location.protocol === "https:";
       const secureFlag = isSecure ? "; Secure" : "";
-      document.cookie = `smart_sarabun_session=1; path=/; SameSite=Strict${secureFlag}`;
-      document.cookie = `smart_sarabun_role=${userObj.roles[0]}; path=/; SameSite=Strict${secureFlag}`;
-      window.location.href = "/";
+
+      createSignedSessionToken(userObj.id, userObj.roles)
+        .then((token) => {
+          document.cookie = `smart_sarabun_token=${token}; path=/; SameSite=Strict${secureFlag}`;
+          document.cookie = `smart_sarabun_session=1; path=/; SameSite=Strict${secureFlag}`;
+          document.cookie = `smart_sarabun_role=${userObj.roles[0]}; path=/; SameSite=Strict${secureFlag}`;
+          window.location.href = "/";
+        })
+        .catch(() => {
+          document.cookie = `smart_sarabun_session=1; path=/; SameSite=Strict${secureFlag}`;
+          document.cookie = `smart_sarabun_role=${userObj.roles[0]}; path=/; SameSite=Strict${secureFlag}`;
+          window.location.href = "/";
+        });
     }
   };
 
