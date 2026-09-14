@@ -79,10 +79,10 @@ export function BookLedgerModal({ isOpen, onClose, defaultBookType = "INCOMING" 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      <div className="glass-card rounded-3xl bg-white max-w-6xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto print:static print:p-0 print:bg-white print:overflow-visible">
+      <div className="glass-card rounded-3xl bg-white max-w-6xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] print:max-h-none print:h-auto print:max-w-none print:border-none print:shadow-none print:rounded-none">
         {/* Modal Header */}
-        <div className="p-4 sm:p-6 bg-slate-50/90 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 shrink-0">
+        <div className="p-4 sm:p-6 bg-slate-50/90 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 shrink-0 print:hidden">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-blue-50 text-[#0052FF] flex items-center justify-center border border-blue-200 shadow-xs">
               <BookOpen className="w-5 h-5" />
@@ -138,7 +138,7 @@ export function BookLedgerModal({ isOpen, onClose, defaultBookType = "INCOMING" 
         </div>
 
         {/* Filters Toolbar */}
-        <div className="p-3 bg-white border-b border-slate-100 px-6 flex flex-wrap items-center justify-between text-xs text-slate-600 shrink-0">
+        <div className="p-3 bg-white border-b border-slate-100 px-6 flex flex-wrap items-center justify-between text-xs text-slate-600 shrink-0 print:hidden">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-1.5">
               <span className="text-slate-400 font-bold">ปีงบประมาณ:</span>
@@ -174,8 +174,11 @@ export function BookLedgerModal({ isOpen, onClose, defaultBookType = "INCOMING" 
         </div>
 
         {/* 2-PAGE SPREAD TABLE VIEW (GOVERNMENT OFFICIAL FORMAT) */}
-        <div className="flex-1 overflow-auto p-4 sm:p-6 bg-slate-100/60 font-sans">
-          <div className="bg-white rounded-2xl border border-slate-300 shadow-md p-6 max-w-5xl mx-auto space-y-4 print:shadow-none print:border-none print:p-0">
+        <div className="flex-1 overflow-auto p-4 sm:p-6 bg-slate-100/60 font-sans print:p-0 print:bg-white print:overflow-visible">
+          <div
+            id="book-ledger-print-area"
+            className="bg-white rounded-2xl border border-slate-300 shadow-md p-6 max-w-5xl mx-auto space-y-4 print-landscape-page print:shadow-none print:border-none print:p-0 print:max-w-none print:w-full"
+          >
             {/* Government Official Header */}
             <div className="text-center space-y-1 pb-3 border-b-2 border-slate-900">
               <h2 className="text-lg font-bold text-slate-900 tracking-wide font-sans">

@@ -231,6 +231,20 @@ export function DocumentViewerWorkspace({
       setTimeout(() => setIsSuccessToast(false), 3000);
     };
 
+  const handlePrint = () => {
+    if (uploadedPdfBlobUrl) {
+      const win = window.open(uploadedPdfBlobUrl, "_blank");
+      if (win) {
+        win.focus();
+        setTimeout(() => win.print(), 500);
+      } else {
+        window.print();
+      }
+    } else {
+      window.print();
+    }
+  };
+
   // AI Thai Voice Dictation State
   const [isVoiceRecording, setIsVoiceRecording] = useState(false);
   const [showVoiceDialog, setShowVoiceDialog] = useState(false);
@@ -482,7 +496,7 @@ export function DocumentViewerWorkspace({
   if (!mounted) return null;
 
   const content = (
-    <div className="fixed inset-0 w-screen h-screen z-[999999] bg-slate-950 flex flex-col overflow-hidden font-sans select-none animate-in fade-in duration-100">
+    <div className="fixed inset-0 w-screen h-screen z-[999999] bg-slate-950 flex flex-col overflow-hidden font-sans select-none animate-in fade-in duration-100 print:static print:w-full print:h-auto print:bg-white print:overflow-visible">
       {/* Hidden File Input */}
       <input
         type="file"
@@ -495,7 +509,7 @@ export function DocumentViewerWorkspace({
       {/* ========================================================================= */}
       {/* 1. TOP COMMAND BAR (100% Full Width Studio Navigation - Clean & Crisp) */}
       {/* ========================================================================= */}
-      <header className="h-16 px-5 bg-[#0e1726] text-white flex items-center justify-between border-b border-slate-800 shrink-0 shadow-lg z-20">
+      <header className="h-16 px-5 bg-[#0e1726] text-white flex items-center justify-between border-b border-slate-800 shrink-0 shadow-lg z-20 print:hidden">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0052FF] to-[#0284c7] text-white flex items-center justify-center font-black text-sm shadow-md border border-white/20 shrink-0">
             สบ
@@ -563,6 +577,17 @@ export function DocumentViewerWorkspace({
             <span>{isArchived ? "จัดเก็บแล้ว (Archived)" : "ปิดเรื่อง & จัดเก็บ"}</span>
           </Button>
 
+          {/* Print A4 Official Document Button */}
+          <Button
+            size="sm"
+            onClick={handlePrint}
+            className="h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white gap-1.5 rounded-xl shadow-md cursor-pointer font-bold"
+            title="พิมพ์เอกสารมาตรฐานขนาด A4 พร้อมตราประทับรับและการเกษียน"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>พิมพ์เอกสาร (A4)</span>
+          </Button>
+
           <Button
             size="sm"
             onClick={() => alert(`ดาวน์โหลดไฟล์เอกสาร PDF พร้อมตราประทับรับ ${currentDoc.regNo || "2785/2569"} เรียบร้อยแล้ว`)}
@@ -585,7 +610,7 @@ export function DocumentViewerWorkspace({
       {/* ========================================================================= */}
       {/* 2. MAIN SPLIT WORKSPACE: 63% Real PDF Document Sheet | 37% Endorsement Panel */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative print:block print:overflow-visible">
         {/* Success Toast */}
         {isSuccessToast && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-5 py-2.5 rounded-2xl shadow-2xl border border-emerald-400 flex items-center gap-2 text-xs font-bold animate-in fade-in slide-in-from-top-2">
@@ -595,9 +620,9 @@ export function DocumentViewerWorkspace({
         )}
 
         {/* LEFT 63%: 100% Real Official Government PDF Document Viewer with Direct In-Paper Stamping */}
-        <div className="w-full lg:w-[63%] bg-slate-950 flex flex-col border-r border-slate-700 overflow-hidden relative select-text">
+        <div className="w-full lg:w-[63%] bg-slate-950 flex flex-col border-r border-slate-700 overflow-hidden relative select-text print:w-full print:bg-white print:border-none print:overflow-visible">
           {/* Viewer Sub-Toolbar */}
-          <div className="h-10 bg-[#162032] border-b border-slate-700 px-5 flex items-center justify-between text-xs text-slate-300 shrink-0">
+          <div className="h-10 bg-[#162032] border-b border-slate-700 px-5 flex items-center justify-between text-xs text-slate-300 shrink-0 print:hidden">
             <div className="flex items-center gap-3">
               <span className="font-bold text-white font-mono">หน้า ๑ / ๑</span>
               <span className="text-slate-600">|</span>
@@ -640,10 +665,11 @@ export function DocumentViewerWorkspace({
           </div>
 
           {/* Real PDF Paper Document Canvas Scrollport */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-950/90 select-text">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-950/90 select-text print:p-0 print:bg-white print:overflow-visible">
             <div
+              id="viewer-document-sheet"
               style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: "top center" }}
-              className="w-full max-w-[760px] bg-white shadow-2xl rounded-sm p-8 sm:p-12 border border-slate-300 text-slate-900 transition-transform relative min-h-[1050px] overflow-hidden"
+              className="w-full max-w-[760px] bg-white shadow-2xl rounded-sm p-8 sm:p-12 border border-slate-300 text-slate-900 transition-transform relative min-h-[1050px] overflow-hidden gov-print-page print:max-w-[210mm] print:min-h-[297mm] print:border-none print:shadow-none print:m-0"
             >
               {/* Dynamic Anti-Leak Watermark over PDF Page */}
               {showWatermark && <AntiLeakWatermark opacity={0.12} />}
@@ -690,7 +716,7 @@ export function DocumentViewerWorkspace({
 
                 {/* 1.2 กึ่งกลางหัวกระดาษ: ตราครุฑมาตรฐาน & วันที่ */}
                 <div className="col-span-4 flex flex-col items-center justify-start text-center pt-1">
-                  <ThaiGaruda className="w-18 h-18 text-slate-950 mb-2" />
+                  <ThaiGaruda className="w-18 h-18 text-slate-950 mb-2" size="standard" />
                   <div className="text-xs font-serif font-bold text-slate-800">
                     {currentDoc.docDate || "๒๔ สิงหาคม ๒๕๖๙"}
                   </div>
@@ -902,7 +928,7 @@ export function DocumentViewerWorkspace({
         </div>
 
         {/* RIGHT 37%: Comprehensive Endorsement & Decision Panel */}
-        <div className="w-full lg:w-[37%] bg-white flex flex-col overflow-hidden border-l border-slate-200 text-slate-900">
+        <div className="w-full lg:w-[37%] bg-white flex flex-col overflow-hidden border-l border-slate-200 text-slate-900 print:hidden">
           {/* Side Tabs */}
           <div className="flex border-b border-slate-200 bg-slate-50 text-xs shrink-0">
             <button

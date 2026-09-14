@@ -188,54 +188,175 @@
 
 /* =========================================================================
    OFFICIAL THAI GOVERNMENT DOCUMENT PRINT STYLESHEET (A4 Standard)
+   Complies with the Prime Minister's Office Regulation on Correspondence Work
+   (ระเบียบสำนักนายกรัฐมนตรีว่าด้วยงานสารบรรณ พ.ศ. ๒๕๒๖ และที่แก้ไขเพิ่มเติม)
 ========================================================================= */
 @media print {
+  /* 1. Page Format: Standard A4 Portrait */
   @page {
     size: A4 portrait;
     margin: 0;
   }
-  
+
+  /* Dedicated Landscape Page for Book Ledgers (แบบ ๑ และ แบบ ๒) */
+  @page landscape-ledger {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  /* 2. Global Document Reset */
   html, body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
     background: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 14pt !important;
-    line-height: 1.5 !important;
+    font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', -apple-system, sans-serif !important;
+    font-size: 16pt !important;
+    line-height: 1.25 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Hide everything except the dedicated print canvas */
+  /* 3. Hide Non-Print UI Chrome */
   header,
   nav,
   aside,
   footer,
-  .no-print,
   button,
+  input,
+  select,
+  textarea,
+  .no-print,
   .app-sidebar,
   .app-topbar,
-  [data-no-print="true"] {
+  [data-no-print="true"],
+  .glass-dock,
+  .toast,
+  [role="status"] {
     display: none !important;
   }
 
-  /* Print Paper Target */
-  #official-paper-print-area,
-  .print-only-paper {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 210mm !important;
-    min-height: 297mm !important;
+  /* 4. Reset Fixed Overlay Modals to In-Flow Transparent Containers */
+  .fixed,
+  .fixed.inset-0 {
+    position: static !important;
+    background: transparent !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
     margin: 0 !important;
-    padding: 2.5cm 2cm 2cm 3cm !important; /* Standard Thai Gov Margins: Top 2.5cm, Bottom 2cm, Right 2cm, Left 3cm */
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* 5. Official Thai Government Document Sheet (A4 Portrait Target) */
+  #official-paper-print-area,
+  #template-preview-print-area,
+  #viewer-document-sheet,
+  .gov-print-page,
+  .print-only-paper {
+    position: static !important;
+    display: block !important;
+    visibility: visible !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 auto !important;
+    /* Official Thai Gov Standard Margins: Top 2.5cm, Bottom 2.0cm, Right 2.0cm, Left 3.0cm */
+    padding: 2.5cm 2.0cm 2.0cm 3.0cm !important;
     box-shadow: none !important;
     border: none !important;
     border-radius: 0 !important;
     transform: none !important;
     background: #ffffff !important;
-    display: block !important;
-    visibility: visible !important;
-    z-index: 99999 !important;
+    color: #000000 !important;
+    page-break-after: always;
+    break-after: page;
+    box-sizing: border-box !important;
+  }
+
+  /* 6. Official Thai Government Typography Specs */
+  .gov-print-page p,
+  #official-paper-print-area p,
+  #viewer-document-sheet p {
+    font-size: 16pt !important;
+    line-height: 1.25 !important;
+    margin-bottom: 6pt !important;
+    color: #000000 !important;
+  }
+
+  .gov-indent,
+  .indent-gov,
+  .gov-print-page .indent-8,
+  #official-paper-print-area .indent-8 {
+    text-indent: 2.5cm !important;
+  }
+
+  /* Official Memo (บันทึกข้อความ) Header Typography: 24pt bold */
+  .gov-memo-title {
+    font-size: 24pt !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  /* Official Order / Announcement Header Typography: 20pt bold */
+  .gov-order-title {
+    font-size: 20pt !important;
+    font-weight: 800 !important;
+  }
+
+  /* 7. Page Break Rules: Avoid breaking signatures, tables, and stamps across pages */
+  table,
+  tr,
+  td,
+  th,
+  .print-avoid-break,
+  .signature-block,
+  .endorsement-box,
+  .stamp-box {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* 8. Official Book Ledger Landscape Print Layout (สมุดทะเบียนรับ-ส่ง) */
+  .print-landscape-page,
+  #book-ledger-print-area {
+    page: landscape-ledger !important;
+    width: 297mm !important;
+    max-width: 297mm !important;
+    min-height: 210mm !important;
+    margin: 0 auto !important;
+    padding: 10mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .print-landscape-page table,
+  #book-ledger-print-area table {
+    border: 2px solid #000000 !important;
+  }
+
+  .print-landscape-page th,
+  .print-landscape-page td,
+  #book-ledger-print-area th,
+  #book-ledger-print-area td {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+  }
+
+  /* 9. Ensure High-Quality Print for Emblems & Seals */
+  img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
+

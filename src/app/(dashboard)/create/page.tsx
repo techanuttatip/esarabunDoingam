@@ -747,9 +747,9 @@ export default function DocumentGeneratorPage() {
           <div
             id="official-paper-print-area"
             ref={printAreaRef}
-            className="w-full max-w-[210mm] min-h-[297mm] bg-white text-slate-900 shadow-2xl rounded-sm p-8 sm:p-14 border border-slate-200 relative select-text font-serif leading-normal"
+            className="w-full max-w-[210mm] min-h-[297mm] bg-white text-slate-900 shadow-2xl rounded-sm p-8 sm:p-14 border border-slate-200 relative select-text font-serif leading-normal gov-print-page print:max-w-[210mm] print:min-h-[297mm] print:border-none print:shadow-none print:m-0"
             style={{
-              fontFamily: "'Sarabun', 'TH Sarabun New', sans-serif",
+              fontFamily: "'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif",
             }}
           >
             {/* Anti-Leak Watermark Background */}
@@ -762,7 +762,7 @@ export default function DocumentGeneratorPage() {
               <div className="space-y-6">
                 {/* Garuda Center */}
                 <div className="flex flex-col items-center justify-center pb-1">
-                  <ThaiGaruda className="w-20 h-20 text-slate-950 mb-2" />
+                  <ThaiGaruda className="w-20 h-20 text-slate-950 mb-2" size="standard" />
                   <h1 className="text-2xl font-black text-slate-950 tracking-wide font-serif">
                     ใบเสร็จรับเงิน
                   </h1>
@@ -851,10 +851,10 @@ export default function DocumentGeneratorPage() {
               <div className="space-y-4">
                 <div className="flex items-start justify-between border-b-2 border-slate-900 pb-3">
                   <div className="shrink-0 pt-0.5">
-                    <ThaiGaruda className="w-14 h-14 text-slate-950" />
+                    <ThaiGaruda className="w-14 h-14 text-slate-950" size="small" />
                   </div>
                   <div className="flex-1 text-center pr-14">
-                    <h1 className="text-2xl font-black tracking-widest text-slate-950 font-serif">
+                    <h1 className="text-2xl font-black tracking-widest text-slate-950 font-serif gov-memo-title">
                       บันทึกข้อความ
                     </h1>
                   </div>
@@ -888,7 +888,7 @@ export default function DocumentGeneratorPage() {
                   <span>{recipient}</span>
                 </div>
 
-                <div className="space-y-3 text-xs leading-relaxed text-justify indent-8 pt-2">
+                <div className="space-y-3 text-xs leading-relaxed text-justify indent-[2.5cm] gov-indent pt-2">
                   <p>{p1}</p>
                   <p>{p2}</p>
                   <p>{p3}</p>
@@ -916,7 +916,7 @@ export default function DocumentGeneratorPage() {
             {templateType === "EXTERNAL" && (
               <div className="space-y-4">
                 <div className="flex flex-col items-center justify-center pb-2">
-                  <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" />
+                  <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" size="standard" />
                 </div>
 
                 <div className="grid grid-cols-12 gap-2 text-xs items-start">
@@ -951,7 +951,7 @@ export default function DocumentGeneratorPage() {
                   </div>
                 </div>
 
-                <div className="space-y-3 text-xs leading-relaxed text-justify indent-8 pt-3">
+                <div className="space-y-3 text-xs leading-relaxed text-justify indent-[2.5cm] gov-indent pt-3">
                   <p>{p1}</p>
                   <p>{p2}</p>
                   <p>{p3}</p>
@@ -971,8 +971,8 @@ export default function DocumentGeneratorPage() {
             {templateType === "ORDER" && (
               <div className="space-y-4">
                 <div className="flex flex-col items-center justify-center pb-2">
-                  <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" />
-                  <h1 className="text-xl font-black text-slate-950 font-serif">
+                  <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" size="standard" />
+                  <h1 className="text-xl font-black text-slate-950 font-serif gov-order-title">
                     คำสั่งองค์การบริหารส่วนตำบลดอยงาม
                   </h1>
                   <p className="text-xs font-bold text-slate-700">
@@ -983,7 +983,7 @@ export default function DocumentGeneratorPage() {
                   </p>
                 </div>
 
-                <div className="space-y-3 text-xs leading-relaxed text-justify indent-8 pt-3">
+                <div className="space-y-3 text-xs leading-relaxed text-justify indent-[2.5cm] gov-indent pt-3">
                   <p>{p1}</p>
                   <p>{p2}</p>
                   <p>{p3}</p>
@@ -1004,8 +1004,8 @@ export default function DocumentGeneratorPage() {
             {templateType === "ANNOUNCEMENT" && (
               <div className="space-y-4">
                 <div className="flex flex-col items-center justify-center pb-2">
-                  <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" />
-                  <h1 className="text-xl font-black text-slate-950 font-serif">
+                  <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" size="standard" />
+                  <h1 className="text-xl font-black text-slate-950 font-serif gov-order-title">
                     ประกาศองค์การบริหารส่วนตำบลดอยงาม
                   </h1>
                   <p className="text-xs font-bold text-slate-900 mt-1">
@@ -1013,7 +1013,7 @@ export default function DocumentGeneratorPage() {
                   </p>
                 </div>
 
-                <div className="space-y-3 text-xs leading-relaxed text-justify indent-8 pt-3">
+                <div className="space-y-3 text-xs leading-relaxed text-justify indent-[2.5cm] gov-indent pt-3">
                   <p>{p1}</p>
                   <p>{p2}</p>
                   <p>{p3}</p>
@@ -1034,7 +1034,7 @@ export default function DocumentGeneratorPage() {
             {templateType === "STAMP" && (
               <div className="space-y-4">
                 <div className="flex flex-col items-center justify-center pb-2">
-                  <ThaiGaruda className="w-20 h-20 text-slate-950 mb-2" />
+                  <ThaiGaruda className="w-20 h-20 text-slate-950 mb-2" size="standard" />
                 </div>
 
                 <div className="space-y-2 text-xs">
@@ -1044,7 +1044,7 @@ export default function DocumentGeneratorPage() {
                   </div>
                 </div>
 
-                <div className="space-y-3 text-xs leading-relaxed text-justify indent-8 pt-4">
+                <div className="space-y-3 text-xs leading-relaxed text-justify indent-[2.5cm] gov-indent pt-4">
                   <p>{p1}</p>
                   <p>{p2}</p>
                   <p>{p3}</p>

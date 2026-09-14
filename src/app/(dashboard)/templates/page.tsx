@@ -243,10 +243,10 @@ export default function TemplatesHubPage() {
       {/* FULL-SCREEN LIVE TEMPLATE PREVIEW MODAL */}
       {/* ======================================================================= */}
       {previewTemplate && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-slate-100 rounded-3xl shadow-2xl border border-slate-300 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden text-slate-900 animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in print:static print:p-0 print:bg-white print:overflow-visible">
+          <div className="bg-slate-100 rounded-3xl shadow-2xl border border-slate-300 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden text-slate-900 animate-in zoom-in-95 print:max-h-none print:h-auto print:max-w-none print:border-none print:shadow-none print:rounded-none print:bg-white print:overflow-visible">
             {/* Modal Top Bar */}
-            <div className="bg-navy-950 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
+            <div className="bg-navy-950 text-white p-4 sm:p-5 flex items-center justify-between shrink-0 print:hidden">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center font-bold">
                   <LayoutTemplate className="w-5 h-5 text-blue-400" />
@@ -288,12 +288,12 @@ export default function TemplatesHubPage() {
             </div>
 
             {/* Modal Body: Live Scrollable A4 Document Sheet */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center print:p-0 print:bg-white print:overflow-visible">
               <div
                 id="template-preview-print-area"
-                className="w-full max-w-[210mm] min-h-[297mm] bg-white text-slate-900 shadow-xl rounded-xs p-8 sm:p-14 border border-slate-200 select-text font-serif leading-normal"
+                className="w-full max-w-[210mm] min-h-[297mm] bg-white text-slate-900 shadow-xl rounded-xs p-8 sm:p-14 border border-slate-200 select-text font-serif leading-normal gov-print-page print:max-w-[210mm] print:min-h-[297mm] print:border-none print:shadow-none print:m-0"
                 style={{
-                  fontFamily: "'Sarabun', 'TH Sarabun New', sans-serif",
+                  fontFamily: "'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif",
                 }}
               >
                 {/* ----------------------------------------------------------- */}
@@ -302,7 +302,7 @@ export default function TemplatesHubPage() {
                 {previewTemplate.docType === "RECEIPT" && (
                   <div className="space-y-6 text-xs">
                     <div className="flex flex-col items-center justify-center pb-1 text-center">
-                      <ThaiGaruda className="w-20 h-20 text-slate-950 mb-2" />
+                      <ThaiGaruda className="w-20 h-20 text-slate-950 mb-2" size="standard" />
                       <h1 className="text-2xl font-black text-slate-950 font-serif">
                         ใบเสร็จรับเงิน
                       </h1>
@@ -386,10 +386,10 @@ export default function TemplatesHubPage() {
                   <div className="space-y-4 text-xs">
                     <div className="flex items-start justify-between border-b-2 border-slate-900 pb-3">
                       <div className="shrink-0 pt-0.5">
-                        <ThaiGaruda className="w-14 h-14 text-slate-950" />
+                        <ThaiGaruda className="w-14 h-14 text-slate-950" size="small" />
                       </div>
                       <div className="flex-1 text-center pr-14">
-                        <h1 className="text-2xl font-black tracking-widest text-slate-950 font-serif">
+                        <h1 className="text-2xl font-black tracking-widest text-slate-950 font-serif gov-memo-title">
                           บันทึกข้อความ
                         </h1>
                       </div>
@@ -437,7 +437,7 @@ export default function TemplatesHubPage() {
                       </div>
                     )}
 
-                    <div className="space-y-3 leading-relaxed text-justify indent-8 pt-2">
+                    <div className="space-y-3 leading-relaxed text-justify indent-[2.5cm] gov-indent pt-2">
                       <p>{previewTemplate.fields.p1}</p>
                       <p>{previewTemplate.fields.p2}</p>
                       <p>{previewTemplate.fields.p3}</p>
@@ -456,7 +456,7 @@ export default function TemplatesHubPage() {
                 {previewTemplate.docType === "EXTERNAL" && (
                   <div className="space-y-4 text-xs">
                     <div className="flex flex-col items-center justify-center pb-2">
-                      <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" />
+                      <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" size="standard" />
                     </div>
 
                     <div className="grid grid-cols-12 gap-2 items-start">
@@ -485,7 +485,7 @@ export default function TemplatesHubPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-3 leading-relaxed text-justify indent-8 pt-3">
+                    <div className="space-y-3 leading-relaxed text-justify indent-[2.5cm] gov-indent pt-3">
                       <p>{previewTemplate.fields.p1}</p>
                       <p>{previewTemplate.fields.p2}</p>
                       <p>{previewTemplate.fields.p3}</p>
@@ -505,8 +505,8 @@ export default function TemplatesHubPage() {
                 {previewTemplate.docType === "ORDER" && (
                   <div className="space-y-4 text-xs">
                     <div className="flex flex-col items-center justify-center pb-2">
-                      <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" />
-                      <h1 className="text-xl font-black text-slate-950 font-serif">
+                      <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" size="standard" />
+                      <h1 className="text-xl font-black text-slate-950 font-serif gov-order-title">
                         คำสั่งองค์การบริหารส่วนตำบลดอยงาม
                       </h1>
                       <p className="font-bold text-slate-700">
@@ -517,7 +517,7 @@ export default function TemplatesHubPage() {
                       </p>
                     </div>
 
-                    <div className="space-y-3 leading-relaxed text-justify indent-8 pt-3">
+                    <div className="space-y-3 leading-relaxed text-justify indent-[2.5cm] gov-indent pt-3">
                       <p>{previewTemplate.fields.p1}</p>
                       <p>{previewTemplate.fields.p2}</p>
                       <p>{previewTemplate.fields.p3}</p>
@@ -538,8 +538,8 @@ export default function TemplatesHubPage() {
                 {previewTemplate.docType === "ANNOUNCEMENT" && (
                   <div className="space-y-4 text-xs">
                     <div className="flex flex-col items-center justify-center pb-2">
-                      <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" />
-                      <h1 className="text-xl font-black text-slate-950 font-serif">
+                      <ThaiGaruda className="w-24 h-24 text-slate-950 mb-2" size="standard" />
+                      <h1 className="text-xl font-black text-slate-950 font-serif gov-order-title">
                         ประกาศองค์การบริหารส่วนตำบลดอยงาม
                       </h1>
                       <p className="font-bold text-slate-900 mt-1">
@@ -547,7 +547,7 @@ export default function TemplatesHubPage() {
                       </p>
                     </div>
 
-                    <div className="space-y-3 leading-relaxed text-justify indent-8 pt-3">
+                    <div className="space-y-3 leading-relaxed text-justify indent-[2.5cm] gov-indent pt-3">
                       <p>{previewTemplate.fields.p1}</p>
                       <p>{previewTemplate.fields.p2}</p>
                       <p>{previewTemplate.fields.p3}</p>
@@ -577,7 +577,7 @@ export default function TemplatesHubPage() {
             </div>
 
             {/* Modal Bottom Footer Actions */}
-            <div className="p-4 bg-white border-t border-slate-200 flex items-center justify-between shrink-0">
+            <div className="p-4 bg-white border-t border-slate-200 flex items-center justify-between shrink-0 print:hidden">
               <span className="text-xs text-slate-500 font-medium">
                 คลิกปุ่ม &quot;นำไปใช้ร่าง&quot; เพื่อเปิดหน้าสร้างเอกสารและแก้ไขข้อความ
               </span>

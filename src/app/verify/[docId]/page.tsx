@@ -56,12 +56,12 @@ export default function DocumentVerificationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4 sm:p-8 font-sans">
-      <div className="max-w-2xl w-full space-y-6">
+    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4 sm:p-8 font-sans print:min-h-0 print:p-0 print:bg-white">
+      <div className="max-w-2xl w-full space-y-6 print:max-w-[210mm] print:m-0 print:space-y-4">
         {/* Header Branding */}
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <ThaiGaruda className="w-16 h-16 text-slate-950" />
+            <ThaiGaruda className="w-16 h-16 text-slate-950" size="standard" />
           </div>
           <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-2">
             ระบบตรวจสอบความถูกต้องของหนังสือราชการอิเล็กทรอนิกส์ (e-Document Verification)
@@ -72,7 +72,7 @@ export default function DocumentVerificationPage() {
         </div>
 
         {/* Verification Status Card */}
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden print:shadow-none print:border print:border-slate-300 print:rounded-xl">
           {/* Status Header Banner */}
           <div className="p-5 sm:p-6 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/40 shadow-inner">
@@ -175,7 +175,7 @@ export default function DocumentVerificationPage() {
             </div>
 
             {/* Actions */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center gap-2">
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-2 print:hidden">
               <Link href="/" className="w-full sm:w-auto flex-1">
                 <Button variant="outline" className="w-full h-11 text-xs font-bold gap-2 rounded-xl border-slate-300">
                   <ArrowLeft className="w-4 h-4" />
