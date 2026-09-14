@@ -73,11 +73,13 @@ CREATE TABLE IF NOT EXISTS documents (
     pdf_name VARCHAR(255),
     timeline JSONB DEFAULT '[]'::jsonb,
     endorsements JSONB DEFAULT '[]'::jsonb,
+    tenant_id TEXT DEFAULT 'e4a2d8a0-4a8a-4c22-9f33-000000000001',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Indexes for lightning-fast queries
+CREATE INDEX IF NOT EXISTS idx_documents_tenant_id ON documents(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_documents_doc_no ON documents(doc_no);
 CREATE INDEX IF NOT EXISTS idx_documents_reg_no ON documents(reg_no);
 CREATE INDEX IF NOT EXISTS idx_documents_direction ON documents(direction);
