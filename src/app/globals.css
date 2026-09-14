@@ -187,15 +187,16 @@
 }
 
 /* =========================================================================
-   UI/UX PRO MAX v2.0 - BENTO GRID & ACCESSIBILITY TOKENS
+   UI/UX PRO MAX v2.0 - BENTO GRID & ACCESSIBILITY TOKENS (GovTech 2026)
+   Accessible & Ethical Enterprise Gateway: High Contrast + Density Modes
 ========================================================================= */
 
 .bento-card {
   background: #ffffff;
   border-radius: 1.25rem;
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(15, 23, 42, 0.03);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid #cbd5e1; /* High-contrast border for budget government monitors */
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
@@ -204,19 +205,57 @@
   cursor: pointer;
 }
 .bento-card-interactive:hover {
-  border-color: rgba(0, 82, 255, 0.35);
-  box-shadow: 0 12px 30px -6px rgba(0, 82, 255, 0.09), 0 4px 12px rgba(0, 0, 0, 0.02);
+  border-color: #0052FF;
+  box-shadow: 0 8px 24px -4px rgba(0, 82, 255, 0.14), 0 2px 8px rgba(15, 23, 42, 0.04);
   transform: translateY(-2px);
 }
 
 .bento-card-gradient {
   background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+  border: 1px solid #cbd5e1;
 }
 
+/* WCAG 2.2 Focus Appearance: Dual ring with 2px white offset */
 .accessible-focus:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.4);
-  border-color: #0052FF;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #0052FF !important;
+  border-color: #0052FF !important;
+}
+
+/* Keyboard Shortcut Visual Badge */
+.kbd-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.375rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.12);
+  line-height: 1;
+}
+
+/* Data Table Density Modes */
+.table-density-compact td,
+.table-density-compact th {
+  padding-top: 0.45rem !important;
+  padding-bottom: 0.45rem !important;
+  font-size: 0.775rem !important;
+}
+.table-density-compact .badge-compact {
+  padding-top: 0.125rem !important;
+  padding-bottom: 0.125rem !important;
+  font-size: 0.7rem !important;
+}
+
+.table-density-comfortable td,
+.table-density-comfortable th {
+  padding-top: 0.85rem !important;
+  padding-bottom: 0.85rem !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

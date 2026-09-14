@@ -20,10 +20,12 @@ import {
   PenTool,
   Settings,
   Building2,
+  Keyboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession, signOut } from "@/components/providers/session-provider";
 import { CommandPalette } from "@/components/shared/command-palette";
+import { KeyboardShortcutsModal } from "@/components/shared/keyboard-shortcuts-modal";
 import {
   getTenantSaaSConfig,
   getAllTenants,
@@ -39,8 +41,24 @@ export function AppTopbar() {
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isTenantMenuOpen, setIsTenantMenuOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [activeTenant, setActiveTenantState] = useState<TenantSaaSConfig>(getTenantSaaSConfig());
   const [allTenants, setAllTenants] = useState<TenantSaaSConfig[]>([]);
+
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement?.tagName || "").toLowerCase();
+      if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") {
+        return;
+      }
+      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKey);
+    return () => window.removeEventListener("keydown", handleGlobalKey);
+  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -210,6 +228,16 @@ export function AppTopbar() {
             )}
           </div>
 
+          {/* Keyboard Shortcuts Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setIsShortcutsOpen(true)}
+            className="w-9 h-9 rounded-xl bg-white/80 hover:bg-blue-50 border border-slate-200/90 text-slate-600 hover:text-[#0052FF] flex items-center justify-center transition-colors shadow-2xs cursor-pointer accessible-focus"
+            title="คู่มือคีย์ลัดการทำงานสารบรรณ (กด ?)"
+          >
+            <Keyboard className="w-4 h-4" />
+          </button>
+
           {/* Notification Bell with Badge & Dropdown */}
           <div className="relative">
             <button
@@ -343,6 +371,12 @@ export function AppTopbar() {
 
       {/* Spotlight Command Palette (Ctrl + K) */}
       <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
+
+      {/* Keyboard Shortcuts Guide Modal */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
     </>
   );
 }

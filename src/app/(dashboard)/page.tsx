@@ -23,6 +23,9 @@ import {
   ArrowRight,
   RefreshCw,
   TrendingUp,
+  LayoutList,
+  StretchHorizontal,
+  Keyboard,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -59,6 +62,7 @@ export default function DashboardPage() {
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [isSyncing, setIsSyncing] = useState(false);
   const [tenantConfig, setTenantConfig] = useState(getTenantSaaSConfig());
+  const [tableDensity, setTableDensity] = useState<"comfortable" | "compact">("comfortable");
 
   const userName = session?.user?.name || "ผู้ใช้งานสารบรรณ";
   const userPosition = session?.user?.position || "เจ้าหน้าที่สารบรรณ";
@@ -74,6 +78,42 @@ export default function DashboardPage() {
     setAllDocs(getAllDocuments());
     setStats(getDocumentStats());
     setTenantConfig(getTenantSaaSConfig());
+  };
+
+  // Load saved density preference and listen for D shortcut
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("smartsarabun_table_density");
+      if (saved === "compact" || saved === "comfortable") {
+        setTableDensity(saved);
+      }
+    } catch {}
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement?.tagName || "").toLowerCase();
+      if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") {
+        return;
+      }
+      if (e.key === "d" || e.key === "D") {
+        e.preventDefault();
+        setTableDensity((prev) => {
+          const next = prev === "comfortable" ? "compact" : "comfortable";
+          try {
+            localStorage.setItem("smartsarabun_table_density", next);
+          } catch {}
+          return next;
+        });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const toggleDensity = (mode: "comfortable" | "compact") => {
+    setTableDensity(mode);
+    try {
+      localStorage.setItem("smartsarabun_table_density", mode);
+    } catch {}
   };
 
   useEffect(() => {
@@ -229,10 +269,10 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* หนังสือเข้าวันนี้ */}
         <Link href="/inbox" className="group">
-          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between">
+          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between border-t-[3.5px] border-t-[#0052FF]">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <div className="p-2.5 rounded-xl bg-blue-50 text-[#0052FF] group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <div className="p-2.5 rounded-xl bg-blue-50 text-[#0052FF] group-hover:bg-[#0052FF] group-hover:text-white transition-colors">
                   <Inbox className="w-5 h-5" />
                 </div>
                 <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#0052FF] transition-colors" />
@@ -245,8 +285,8 @@ export default function DashboardPage() {
                 <span className="text-xs font-bold text-slate-500">ฉบับ</span>
               </div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
               ลงรับในสมุดทะเบียนรับแล้ว
             </p>
           </div>
@@ -254,7 +294,7 @@ export default function DashboardPage() {
 
         {/* หนังสือส่งวันนี้ */}
         <Link href="/outbox" className="group">
-          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between">
+          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between border-t-[3.5px] border-t-emerald-600">
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
@@ -270,8 +310,8 @@ export default function DashboardPage() {
                 <span className="text-xs font-bold text-slate-500">ฉบับ</span>
               </div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
               ออกเลขและส่งหนังสือแล้ว
             </p>
           </div>
@@ -279,13 +319,13 @@ export default function DashboardPage() {
 
         {/* งานรอดำเนินการ / เกษียน */}
         <Link href="/approvals" className="group">
-          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between">
+          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between border-t-[3.5px] border-t-amber-500">
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
                   <Clock className="w-5 h-5" />
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                   รอลงนาม
                 </span>
               </div>
@@ -297,8 +337,8 @@ export default function DashboardPage() {
                 <span className="text-xs font-bold text-slate-500">ฉบับ</span>
               </div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
               รอการพิจารณาหรือเกษียนงาน
             </p>
           </div>
@@ -306,7 +346,7 @@ export default function DashboardPage() {
 
         {/* เอกสารทั้งหมดในระบบ */}
         <Link href="/documents" className="group">
-          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between">
+          <div className="bento-card-interactive p-5 h-full flex flex-col justify-between border-t-[3.5px] border-t-indigo-600">
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
@@ -322,8 +362,8 @@ export default function DashboardPage() {
                 <span className="text-xs font-bold text-slate-500">ฉบับ</span>
               </div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-indigo-500" />
               บันทึกในฐานข้อมูลเรียบร้อย
             </p>
           </div>
@@ -534,14 +574,14 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       {/* 4. MAIN WORK QUEUE: ทะเบียนและคิวงานสารบรรณ (ตารางแสดงผล Bento Data Table) */}
       {/* ========================================================================= */}
-      <div className="bento-card bg-white shadow-xs overflow-hidden">
-        {/* Controls: Tabs & Search Filter */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
+      <div className="bento-card bg-white shadow-xs overflow-hidden border border-slate-300">
+        {/* Controls: Tabs & Search Filter & Density Toggle */}
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 bg-slate-50/50">
           {/* Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold shrink-0">
+          <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-xl text-xs font-bold shrink-0 overflow-x-auto">
             <button
               onClick={() => setActiveTab("all")}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer accessible-focus ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer accessible-focus whitespace-nowrap ${
                 activeTab === "all"
                   ? "bg-white text-slate-900 shadow-xs font-black"
                   : "text-slate-600 hover:text-slate-900"
@@ -551,7 +591,7 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => setActiveTab("incoming")}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer accessible-focus ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer accessible-focus whitespace-nowrap ${
                 activeTab === "incoming"
                   ? "bg-white text-[#0052FF] shadow-xs font-black"
                   : "text-slate-600 hover:text-slate-900"
@@ -561,7 +601,7 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => setActiveTab("outgoing")}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer accessible-focus ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer accessible-focus whitespace-nowrap ${
                 activeTab === "outgoing"
                   ? "bg-white text-emerald-700 shadow-xs font-black"
                   : "text-slate-600 hover:text-slate-900"
@@ -571,7 +611,7 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => setActiveTab("pending")}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer accessible-focus ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer accessible-focus whitespace-nowrap ${
                 activeTab === "pending"
                   ? "bg-white text-amber-700 shadow-xs font-black"
                   : "text-slate-600 hover:text-slate-900"
@@ -581,23 +621,25 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Search & Dept Selector */}
-          <div className="flex items-center gap-2.5 w-full md:w-auto">
-            <div className="relative flex-1 md:w-72">
+          {/* Search, Dept Selector, and Density Switcher */}
+          <div className="flex items-center gap-2.5 flex-wrap w-full lg:w-auto">
+            {/* Search */}
+            <div className="relative flex-1 sm:w-64">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="ค้นหาเลขที่, ชื่อเรื่อง, หน่วยงาน... (Ctrl+K)"
+                placeholder="ค้นหาเลขที่, เรื่อง, หน่วยงาน... (Ctrl+K)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF] transition-all"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0052FF] transition-all font-medium"
               />
             </div>
 
+            {/* Department */}
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="py-1.5 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0052FF] cursor-pointer"
+              className="py-1.5 px-3 text-xs rounded-xl border border-slate-300 bg-white font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0052FF] cursor-pointer"
             >
               <option value="ALL">ทุกกอง/สำนัก</option>
               <option value="สำนักปลัด">สำนักปลัด</option>
@@ -606,61 +648,97 @@ export default function DashboardPage() {
               <option value="กองการศึกษาฯ">กองการศึกษาฯ</option>
               <option value="กองสาธารณสุข">กองสาธารณสุข</option>
             </select>
+
+            {/* View Density Switcher (Comfortable vs Compact) */}
+            <div className="inline-flex items-center p-1 rounded-xl bg-slate-200/80 border border-slate-300 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => toggleDensity("comfortable")}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer accessible-focus flex items-center gap-1.5 ${
+                  tableDensity === "comfortable"
+                    ? "bg-white text-slate-900 shadow-xs font-black"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+                title="มุมมองสบายตา"
+              >
+                <LayoutList className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">สบายตา</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleDensity("compact")}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer accessible-focus flex items-center gap-1.5 ${
+                  tableDensity === "compact"
+                    ? "bg-white text-[#0052FF] shadow-xs font-black"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+                title="มุมมองกะทัดรัด (กด D)"
+              >
+                <StretchHorizontal className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">กะทัดรัด</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Real Document Data Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left border-collapse">
+          <table
+            className={`w-full text-left border-collapse ${
+              tableDensity === "compact"
+                ? "table-density-compact text-[11.5px]"
+                : "table-density-comfortable text-xs"
+            }`}
+          >
             <thead>
-              <tr className="bg-slate-50/90 text-slate-700 font-bold border-b border-slate-200">
-                <th className="py-3 px-3.5 whitespace-nowrap">เลขที่หนังสือ / เลขรับ</th>
-                <th className="py-3 px-3.5 whitespace-nowrap">วันที่</th>
-                <th className="py-3 px-3.5 min-w-[260px]">ชื่อเรื่อง</th>
-                <th className="py-3 px-3.5 whitespace-nowrap">จากหน่วยงาน</th>
-                <th className="py-3 px-3.5 whitespace-nowrap">กองผู้รับผิดชอบ</th>
-                <th className="py-3 px-3.5 text-center whitespace-nowrap">ความเร่งด่วน</th>
-                <th className="py-3 px-3.5 text-center whitespace-nowrap">สถานะ</th>
-                <th className="py-3 px-3.5 text-center whitespace-nowrap">การจัดการ</th>
+              <tr className="bg-slate-100 text-slate-800 font-extrabold border-b-2 border-slate-300">
+                <th className="py-2.5 px-3.5 whitespace-nowrap">เลขที่หนังสือ / เลขรับ</th>
+                <th className="py-2.5 px-3.5 whitespace-nowrap">วันที่</th>
+                <th className="py-2.5 px-3.5 min-w-[260px]">ชื่อเรื่อง</th>
+                <th className="py-2.5 px-3.5 whitespace-nowrap">จากหน่วยงาน</th>
+                <th className="py-2.5 px-3.5 whitespace-nowrap">กองผู้รับผิดชอบ</th>
+                <th className="py-2.5 px-3.5 text-center whitespace-nowrap">ความเร่งด่วน</th>
+                <th className="py-2.5 px-3.5 text-center whitespace-nowrap">สถานะ</th>
+                <th className="py-2.5 px-3.5 text-center whitespace-nowrap">การจัดการ</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-200">
               {filteredDocs.length > 0 ? (
                 filteredDocs.map((doc, idx) => {
                   const speedBadge =
                     doc.speed === "ด่วนที่สุด" ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 badge-compact">
                         ด่วนที่สุด
                       </span>
                     ) : doc.speed === "ด่วนมาก" ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-orange-100 text-orange-800 border border-orange-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-orange-100 text-orange-800 border border-orange-300 badge-compact">
                         ด่วนมาก
                       </span>
                     ) : doc.speed === "ด่วน" ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 badge-compact">
                         ด่วน
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 badge-compact">
                         ปกติ
                       </span>
                     );
 
                   const statusBadge =
                     doc.status === "completed" || doc.status === "sent" ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 badge-compact">
                         {doc.direction === "outgoing" ? "ส่งแล้ว" : "เสร็จสิ้น"}
                       </span>
                     ) : doc.status === "forwarded" ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-900 border border-sky-300 badge-compact">
                         ส่งต่อกองแล้ว
                       </span>
                     ) : doc.status === "assigned" ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-300 badge-compact">
                         มอบหมายแล้ว
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 badge-compact">
                         รอดำเนินการ
                       </span>
                     );
@@ -668,50 +746,86 @@ export default function DashboardPage() {
                   return (
                     <tr
                       key={doc.id}
-                      className={`hover:bg-blue-50/50 transition-colors ${
-                        idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
+                      className={`hover:bg-blue-50/60 transition-colors ${
+                        idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"
                       }`}
                     >
-                      <td className="py-3.5 px-3.5 whitespace-nowrap">
+                      <td
+                        className={`${
+                          tableDensity === "compact" ? "py-2 px-3.5" : "py-3.5 px-3.5"
+                        } whitespace-nowrap`}
+                      >
                         <div className="font-mono font-bold text-blue-900">{doc.docNo}</div>
                         {doc.regNo && (
-                          <div className="text-[10px] text-slate-400 font-mono">
+                          <div className="text-[10px] text-slate-500 font-mono font-semibold">
                             เลขรับ: {doc.regNo}
                           </div>
                         )}
                       </td>
-                      <td className="py-3.5 px-3.5 whitespace-nowrap text-slate-600">
+                      <td
+                        className={`${
+                          tableDensity === "compact" ? "py-2 px-3.5" : "py-3.5 px-3.5"
+                        } whitespace-nowrap text-slate-700 font-medium`}
+                      >
                         {doc.docDate || "-"}
                       </td>
-                      <td className="py-3.5 px-3.5">
+                      <td
+                        className={`${
+                          tableDensity === "compact" ? "py-2 px-3.5" : "py-3.5 px-3.5"
+                        }`}
+                      >
                         <button
                           type="button"
                           onClick={() => setSelectedDoc(doc)}
-                          className="font-bold text-slate-900 hover:text-[#0052FF] text-left leading-snug cursor-pointer transition-colors block line-clamp-2"
+                          className={`font-bold text-slate-900 hover:text-[#0052FF] text-left leading-snug cursor-pointer transition-colors block ${
+                            tableDensity === "compact" ? "line-clamp-1" : "line-clamp-2"
+                          }`}
                         >
                           {doc.title}
                         </button>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                        <span className="text-[10px] text-slate-500 block mt-0.5 font-medium">
                           {doc.direction === "outgoing" ? "หนังสือส่งออก" : "หนังสือรับเข้า"}
                         </span>
                       </td>
-                      <td className="py-3.5 px-3.5 whitespace-nowrap text-slate-700">
+                      <td
+                        className={`${
+                          tableDensity === "compact" ? "py-2 px-3.5" : "py-3.5 px-3.5"
+                        } whitespace-nowrap text-slate-800 font-medium`}
+                      >
                         {doc.from || (doc as any).fromOrg || "ส่วนราชการ"}
                       </td>
-                      <td className="py-3.5 px-3.5 whitespace-nowrap font-semibold text-slate-700">
+                      <td
+                        className={`${
+                          tableDensity === "compact" ? "py-2 px-3.5" : "py-3.5 px-3.5"
+                        } whitespace-nowrap font-semibold text-slate-700`}
+                      >
                         {doc.targetDept || doc.senderDept || "สำนักปลัด"}
                       </td>
-                      <td className="py-3.5 px-3.5 text-center whitespace-nowrap">
+                      <td
+                        className={`${
+                          tableDensity === "compact" ? "py-2 px-3.5" : "py-3.5 px-3.5"
+                        } text-center whitespace-nowrap`}
+                      >
                         {speedBadge}
                       </td>
-                      <td className="py-3.5 px-3.5 text-center whitespace-nowrap">
+                      <td
+                        className={`${
+                          tableDensity === "compact" ? "py-2 px-3.5" : "py-3.5 px-3.5"
+                        } text-center whitespace-nowrap`}
+                      >
                         {statusBadge}
                       </td>
-                      <td className="py-3.5 px-3.5 text-center whitespace-nowrap">
+                      <td
+                        className={`${
+                          tableDensity === "compact" ? "py-2 px-3.5" : "py-3.5 px-3.5"
+                        } text-center whitespace-nowrap`}
+                      >
                         <Button
                           size="sm"
                           onClick={() => setSelectedDoc(doc)}
-                          className="h-7 px-3 bg-[#0052FF] hover:bg-blue-700 text-white font-bold text-[11px] rounded-lg gap-1 cursor-pointer accessible-focus shadow-2xs"
+                          className={`${
+                            tableDensity === "compact" ? "h-6 px-2.5 text-[10px]" : "h-7 px-3 text-[11px]"
+                          } bg-[#0052FF] hover:bg-blue-700 text-white font-bold rounded-lg gap-1 cursor-pointer accessible-focus shadow-2xs`}
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>เปิดดู / เกษียน</span>

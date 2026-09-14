@@ -24,6 +24,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   pageCount?: number
   isLoading?: boolean
+  density?: "comfortable" | "compact"
 }
 
 export function DataTable<TData, TValue>({
@@ -31,6 +32,7 @@ export function DataTable<TData, TValue>({
   data,
   pageCount,
   isLoading,
+  density = "comfortable",
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -70,14 +72,14 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader className="bg-slate-50">
+      <div className="rounded-2xl border border-slate-300 overflow-hidden shadow-xs bg-white">
+        <Table className={density === "compact" ? "table-density-compact" : "table-density-comfortable"}>
+          <TableHeader className="bg-slate-100 border-b-2 border-slate-300">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="text-slate-700 font-semibold">
+                    <TableHead key={header.id} className="text-slate-800 font-extrabold text-xs">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -90,15 +92,16 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="divide-y divide-slate-200">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className="hover:bg-blue-50/50 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className={density === "compact" ? "py-2 px-3 text-[11.5px]" : "py-3 px-3.5"}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
