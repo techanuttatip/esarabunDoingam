@@ -79,7 +79,7 @@ export function SessionProvider({
           setCurrentUser(null);
           setStatus("unauthenticated");
           // If accessing dashboard pages without active tab session, redirect to login
-          if (pathname && !pathname.startsWith("/login") && !pathname.startsWith("/platform-admin")) {
+          if (pathname && !pathname.startsWith("/login") && !pathname.startsWith("/register") && !pathname.startsWith("/platform-admin")) {
             router.replace("/login");
           }
           return;

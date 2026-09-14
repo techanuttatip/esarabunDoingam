@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { verifySignedSessionToken } from "@/lib/auth/session-token";
 
 // Routes that do NOT require authentication
-const PUBLIC_ROUTES = ["/login", "/unauthorized", "/api/auth", "/verify"];
+const PUBLIC_ROUTES = ["/login", "/register", "/unauthorized", "/api/auth", "/verify"];
 
 // Routes that require specific admin roles
 const ADMIN_ROUTES = ["/users", "/roles", "/organization", "/platform-admin", "/settings"];

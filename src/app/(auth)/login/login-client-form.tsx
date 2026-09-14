@@ -26,6 +26,7 @@ import {
   X,
   Fingerprint,
   ExternalLink,
+  UserPlus,
 } from "lucide-react";
 import { getSavedUserProfile } from "@/lib/user-store";
 import { createSignedSessionToken } from "@/lib/auth/session-token";
@@ -192,8 +193,13 @@ function getLockoutState(identifier: string): LockoutState {
   }
 }
 
-function recordFailedAttempt(identifier: string): { isLocked: boolean; remainingAttempts: number; lockedUntil: number | null } {
-  if (typeof window === "undefined" || !identifier) return { isLocked: false, remainingAttempts: MAX_FAILED_ATTEMPTS, lockedUntil: null };
+function recordFailedAttempt(identifier: string): {
+  isLocked: boolean;
+  remainingAttempts: number;
+  lockedUntil: number | null;
+} {
+  if (typeof window === "undefined" || !identifier)
+    return { isLocked: false, remainingAttempts: MAX_FAILED_ATTEMPTS, lockedUntil: null };
   const current = getLockoutState(identifier);
   const newCount = current.count + 1;
   let lockedUntil: number | null = null;
@@ -217,7 +223,11 @@ function clearLockout(identifier: string) {
   localStorage.removeItem(`auth_lockout_${identifier.toLowerCase()}`);
 }
 
-export function LoginClientForm() {
+export function LoginClientForm({
+  onSwitchToRegister,
+}: {
+  onSwitchToRegister?: () => void;
+}) {
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -225,6 +235,7 @@ export function LoginClientForm() {
   const [errorMsg, setErrorMsg] = useState("");
   const [matchedAccount, setMatchedAccount] = useState<OfficialUserAccount | null>(null);
   const [lockoutTimer, setLockoutTimer] = useState<number | null>(null);
+  const [selectedDemoId, setSelectedDemoId] = useState<string | null>(null);
 
   // First-Time Login Password Change States
   const [isFirstLoginMode, setIsFirstLoginMode] = useState(false);
@@ -264,7 +275,6 @@ export function LoginClientForm() {
     }
   }, [usernameInput]);
 
-  // Stable countdown timer: only setup/teardown interval when active state changes
   const isTimerActive = Boolean(lockoutTimer && lockoutTimer > 0);
   useEffect(() => {
     if (!isTimerActive) return;
@@ -299,47 +309,31 @@ export function LoginClientForm() {
             user: {
               id: u.id,
               accountId: u.code || `USR-${u.id.substring(0, 6)}`,
-              name: `${u.firstName} ${u.lastName}`,
+              name: u.name || `${u.firstName} ${u.lastName}`,
               firstName: u.firstName,
               lastName: u.lastName,
               email: u.email,
-              position: u.position || "เจ้าหน้าที่",
-              department: u.department || "สำนักปลัด",
+              phone: u.phone,
+              position: u.position,
+              department: u.department,
               roles: u.roles || ["OFFICER"],
-              mustChangePassword: u.mustChangePassword !== false,
+              mustChangePassword: u.mustChangePassword,
             },
-            badge: u.position || "เจ้าหน้าที่",
-            color: "text-blue-700 bg-blue-50 border-blue-200",
+            badge: "บุคลากร",
+            color: "text-teal-700 bg-teal-50 border-teal-300",
             icon: User,
           }));
           list = [...list, ...mapped];
         }
-      } catch (err) {
-        console.error("Failed to load custom users:", err);
-      }
+      } catch {}
     }
     return list;
   };
 
-  // Auto detect matched account as user types
-  useEffect(() => {
-    if (!usernameInput.trim()) {
-      setMatchedAccount(null);
-      return;
-    }
-    const clean = usernameInput.trim().toLowerCase();
-    const all = getAllAccounts();
-    const found = all.find(
-      (acc) =>
-        acc.thaiName.toLowerCase().includes(clean) ||
-        acc.username.toLowerCase() === clean ||
-        acc.aliases.some((alias) => alias.toLowerCase().includes(clean))
-    );
-    setMatchedAccount(found || null);
-  }, [usernameInput]);
-
-  const handleSelectOfficialUser = (acc: OfficialUserAccount) => {
-    setUsernameInput(acc.thaiName);
+  // 1-Click Role Quick Launcher
+  const handleQuickSelectRole = (acc: OfficialUserAccount) => {
+    setSelectedDemoId(acc.id);
+    setUsernameInput(acc.username);
     setPasswordInput(acc.defaultPassword);
     setMatchedAccount(acc);
     setErrorMsg("");
@@ -353,14 +347,15 @@ export function LoginClientForm() {
     setTimeout(() => {
       const clean = usernameInput.trim().toLowerCase();
 
-      // Check ISO 27001 Lockout State first
       const currentLockout = getLockoutState(clean);
       if (currentLockout.lockedUntil && Date.now() < currentLockout.lockedUntil) {
         const remainingSeconds = Math.ceil((currentLockout.lockedUntil - Date.now()) / 1000);
         const mins = Math.floor(remainingSeconds / 60);
         const secs = remainingSeconds % 60;
         setLockoutTimer(remainingSeconds);
-        setErrorMsg(`🔒 บัญชีนี้ถูกระงับชั่วคราวเป็นเวลา ๑๕ นาที เพื่อความปลอดภัยตามมาตรฐาน ISO/IEC 27001 เนื่องจากกรอกรหัสผ่านผิดเกิน ๕ ครั้ง (เหลือเวลาอีก ${mins} นาที ${secs} วินาที)`);
+        setErrorMsg(
+          `🔒 บัญชีนี้ถูกระงับชั่วคราวเป็นเวลา ๑๕ นาที เพื่อความปลอดภัยตามมาตรฐาน ISO/IEC 27001 เนื่องจากกรอกรหัสผ่านผิดเกิน ๕ ครั้ง (เหลือเวลาอีก ${mins} นาที ${secs} วินาที)`
+        );
         setIsLoading(false);
         return;
       }
@@ -374,12 +369,12 @@ export function LoginClientForm() {
       );
 
       if (!targetAcc) {
-        setErrorMsg("ไม่พบชื่อผู้ใช้งานนี้ในระบบ กรุณาตรวจสอบกับผู้ดูแลระบบ (Admin)");
+        setErrorMsg("ไม่พบชื่อผู้ใช้งานนี้ในระบบ กรุณาตรวจสอบกับผู้ดูแลระบบ (Admin) หรือสมัครสมาชิกใหม่");
         setIsLoading(false);
         return;
       }
 
-      // Check if password matches (either updated password in localStorage or default)
+      // Check password
       let currentStoredPassword = targetAcc.defaultPassword;
       let hasCustomPassword = false;
 
@@ -391,8 +386,6 @@ export function LoginClientForm() {
         }
       }
 
-      // Security Fix: If user has a custom password, ONLY accept the custom password.
-      // Default password should ONLY work for the first-time login flow (to trigger forced change).
       const passwordToCheck = hasCustomPassword ? currentStoredPassword : targetAcc.defaultPassword;
 
       if (passwordInput !== passwordToCheck) {
@@ -400,29 +393,34 @@ export function LoginClientForm() {
         if (lockoutResult.isLocked && lockoutResult.lockedUntil) {
           const remainingSecs = Math.ceil((lockoutResult.lockedUntil - Date.now()) / 1000);
           setLockoutTimer(remainingSecs);
-          setErrorMsg("🔒 บัญชีนี้ถูกระงับชั่วคราวเป็นเวลา ๑๕ นาที เพื่อความปลอดภัยตามมาตรฐาน ISO/IEC 27001 เนื่องจากกรอกรหัสผ่านผิดเกิน ๕ ครั้ง");
+          setErrorMsg(
+            "🔒 บัญชีนี้ถูกระงับชั่วคราวเป็นเวลา ๑๕ นาที เพื่อความปลอดภัยตามมาตรฐาน ISO/IEC 27001 เนื่องจากกรอกรหัสผ่านผิดเกิน ๕ ครั้ง"
+          );
         } else {
-          setErrorMsg(`รหัสผ่านไม่ถูกต้อง (กรอกผิดครั้งที่ ${MAX_FAILED_ATTEMPTS - lockoutResult.remainingAttempts}/${MAX_FAILED_ATTEMPTS} — เหลือโอกาสอีก ${lockoutResult.remainingAttempts} ครั้งก่อนระบบระงับการใช้งานชั่วคราว ๑๕ นาที ตามมาตรฐานความปลอดภัย)`);
+          setErrorMsg(
+            `รหัสผ่านไม่ถูกต้อง (กรอกผิดครั้งที่ ${
+              MAX_FAILED_ATTEMPTS - lockoutResult.remainingAttempts
+            }/${MAX_FAILED_ATTEMPTS} — เหลือโอกาสอีก ${
+              lockoutResult.remainingAttempts
+            } ครั้งก่อนระบบระงับ ๑๕ นาที)`
+          );
         }
         setIsLoading(false);
         return;
       }
 
-      // Successful password check: Clear any recorded failed attempts
       clearLockout(clean);
 
-      // Check if this is the FIRST TIME logging in with the default password
+      // Check first-time login
       if (!hasCustomPassword && passwordInput === targetAcc.defaultPassword) {
-        // Trigger First-Time Login Password Change Flow
         setPendingAccount(targetAcc);
         setIsFirstLoginMode(true);
         setIsLoading(false);
         return;
       }
 
-      // Successful login for returning user who already set a custom password
       completeLogin(targetAcc);
-    }, 450);
+    }, 400);
   };
 
   const handleForcePasswordChange = (e: React.FormEvent) => {
@@ -446,7 +444,6 @@ export function LoginClientForm() {
       return;
     }
 
-    // Save custom password in localStorage
     if (typeof window !== "undefined") {
       localStorage.setItem(`user_pwd_${pendingAccount.user.id}`, newPassword);
       localStorage.setItem(`pwd_changed_at_${pendingAccount.user.id}`, new Date().toISOString());
@@ -455,7 +452,7 @@ export function LoginClientForm() {
     setPasswordChangeSuccess(true);
     setTimeout(() => {
       completeLogin(pendingAccount);
-    }, 1200);
+    }, 1000);
   };
 
   const completeLogin = (acc: OfficialUserAccount) => {
@@ -489,7 +486,7 @@ export function LoginClientForm() {
     if (typeof window !== "undefined") {
       sessionStorage.setItem("smartsarabun_active_session", JSON.stringify(sessionData));
       sessionStorage.setItem("smartsarabun_session_login_time", Date.now().toString());
-      // Security Fix: Add Secure flag (HTTPS-only in production) and SameSite=Strict
+
       const isSecure = window.location.protocol === "https:";
       const secureFlag = isSecure ? "; Secure" : "";
 
@@ -517,35 +514,25 @@ export function LoginClientForm() {
     setTimeout(() => {
       setThaIdStep("success");
       setTimeout(() => {
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("smartsarabun_auth_method", "THAID_DOPA");
-          sessionStorage.setItem("smartsarabun_thaid_verified", "true");
-        }
         completeLogin(acc);
-      }, 900);
-    }, 1100);
+      }, 1000);
+    }, 1200);
   };
 
   // ---------------------------------------------------------------------------
-  // SCREEN 2: Force Password Change for First-Time Users
+  // SCREEN: Force Password Change on First Login
   // ---------------------------------------------------------------------------
   if (isFirstLoginMode && pendingAccount) {
     return (
-      <div className="space-y-5 animate-in fade-in zoom-in-95">
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
-          <div className="flex items-center gap-2 text-amber-900 font-extrabold text-sm">
-            <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
-            <span>เข้าสู่ระบบครั้งแรก — กรุณาตั้งรหัสผ่านใหม่</span>
+      <div className="space-y-4 text-left animate-in fade-in">
+        <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1">
+          <div className="flex items-center gap-2 font-bold text-xs">
+            <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>นโยบายความปลอดภัย: บังคับเปลี่ยนรหัสผ่านในการเข้าใช้งานครั้งแรก</span>
           </div>
-          <p className="text-xs text-amber-800 leading-relaxed">
-            ผู้ดูแลระบบได้สร้างบัญชีผู้ใช้งานให้ท่านเรียบร้อยแล้ว เพื่อความปลอดภัยของข้อมูลราชการ กรุณากำหนดรหัสผ่านใหม่ส่วนตัวของท่านก่อนเริ่มใช้งาน
+          <p className="text-[11px] text-amber-800">
+            ท่านกำลังเข้าสู่ระบบด้วยรหัสผ่านเริ่มต้นของหน่วยงาน กรุณากำหนดรหัสผ่านใหม่ส่วนตัว
           </p>
-        </div>
-
-        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs">
-          <div><strong>ชื่อผู้ใช้งาน :</strong> <span className="text-slate-900 font-bold">{pendingAccount.thaiName}</span></div>
-          <div><strong>ตำแหน่ง :</strong> <span className="text-slate-700">{pendingAccount.user.position}</span></div>
-          <div><strong>สังกัด :</strong> <span className="text-slate-700">{pendingAccount.user.department}</span></div>
         </div>
 
         {passwordChangeError && (
@@ -562,10 +549,10 @@ export function LoginClientForm() {
           </div>
         )}
 
-        <form onSubmit={handleForcePasswordChange} className="space-y-4">
+        <form onSubmit={handleForcePasswordChange} className="space-y-3.5">
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">
-              รหัสผ่านเริ่มต้นปัจจุบัน :
+            <label className="text-xs font-bold text-slate-700 block mb-1">
+              รหัสผ่านเริ่มต้นปัจจุบัน:
             </label>
             <input
               type="text"
@@ -576,7 +563,7 @@ export function LoginClientForm() {
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">
+            <label className="text-xs font-bold text-slate-700 block mb-1">
               กำหนดรหัสผ่านใหม่ (อย่างน้อย ๖ ตัวอักษร) * :
             </label>
             <div className="relative">
@@ -586,7 +573,7 @@ export function LoginClientForm() {
                 placeholder="ตั้งรหัสผ่านใหม่ส่วนตัวของท่าน"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-[#0052FF] focus:outline-none"
               />
               <button
                 type="button"
@@ -599,7 +586,7 @@ export function LoginClientForm() {
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">
+            <label className="text-xs font-bold text-slate-700 block mb-1">
               ยืนยันรหัสผ่านใหม่อีกครั้ง * :
             </label>
             <input
@@ -608,7 +595,7 @@ export function LoginClientForm() {
               placeholder="กรอกรหัสผ่านใหม่อีกครั้งเพื่อยืนยัน"
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-[#0052FF] focus:outline-none"
             />
           </div>
 
@@ -616,10 +603,10 @@ export function LoginClientForm() {
             <button
               type="submit"
               disabled={passwordChangeSuccess}
-              className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+              className="flex-1 py-3 px-4 rounded-xl bg-[#0052FF] hover:bg-blue-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all accessible-focus"
             >
               <KeyRound className="w-4 h-4" />
-              <span>บันทึกรหัสผ่านใหม่ & เข้าสู่ระบบ</span>
+              <span>บันทึกรหัสผ่าน & เข้าสู่ระบบ</span>
             </button>
 
             <button
@@ -628,28 +615,74 @@ export function LoginClientForm() {
                 setIsFirstLoginMode(false);
                 setPendingAccount(null);
               }}
-              className="py-3 px-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-bold"
+              className="py-3 px-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-bold cursor-pointer"
             >
               ยกเลิก
             </button>
           </div>
         </form>
-
-        <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-200 text-[11px] text-blue-900 leading-snug flex items-start gap-2">
-          <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-          <span>
-            หมายเหตุ: ข้อมูลส่วนตัวอื่นๆ และลายมือชื่ออิเล็กทรอนิกส์ (E-Signature) ท่านสามารถเข้าไปจัดการแก้ไขเองได้ในเมนู <strong>&ldquo;โปรไฟล์ & ลายเซ็น&rdquo;</strong> หลังจากเข้าสู่ระบบเสร็จสิ้นแล้ว
-          </span>
-        </div>
       </div>
     );
   }
 
   // ---------------------------------------------------------------------------
-  // SCREEN 1: Standard Official Login Screen
+  // SCREEN: Standard Login Screen
   // ---------------------------------------------------------------------------
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 text-left">
+      {/* 1. Quick Role 1-Click Demo Launcher Chips */}
+      <div className="space-y-2 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-extrabold text-slate-700 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+            <span>เข้าสู่ระบบด่วนตามบทบาท (1-Click Demo):</span>
+          </span>
+          <span className="text-[10px] text-slate-400 font-mono">
+            คลิกเลือกเพื่อเติมข้อมูล
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+          {officialAccounts.map((acc) => {
+            const Icon = acc.icon;
+            const isSelected = selectedDemoId === acc.id;
+            return (
+              <button
+                key={acc.id}
+                type="button"
+                onClick={() => handleQuickSelectRole(acc)}
+                className={`p-2 rounded-xl text-left border text-xs transition-all cursor-pointer flex items-center gap-2 ${
+                  isSelected
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm font-bold"
+                    : "bg-white border-slate-200/90 text-slate-700 hover:border-blue-300 hover:bg-blue-50/50"
+                }`}
+              >
+                <div
+                  className={`p-1 rounded-lg shrink-0 ${
+                    isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-extrabold text-[11px] truncate leading-tight">
+                    {acc.badge}
+                  </p>
+                  <p
+                    className={`text-[9.5px] truncate ${
+                      isSelected ? "text-blue-100" : "text-slate-400"
+                    }`}
+                  >
+                    {acc.username}
+                  </p>
+                </div>
+                {isSelected && <Check className="w-3 h-3 text-white shrink-0 ml-auto" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {errorMsg && (
         <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2 animate-in fade-in">
           <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
@@ -658,9 +691,9 @@ export function LoginClientForm() {
       )}
 
       {/* Main Login Form */}
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-3.5">
         <div>
-          <label className="text-xs font-bold text-slate-700 block mb-1.5">
+          <label className="text-xs font-extrabold text-slate-700 block mb-1.5">
             ชื่อผู้ใช้งาน หรือ อีเมล (Username / Email)
           </label>
           <div className="relative">
@@ -668,17 +701,22 @@ export function LoginClientForm() {
             <input
               type="text"
               required
-              placeholder="กรอกชื่อผู้ใช้งาน หรือ อีเมล (Gmail / Hotmail ฯลฯ)"
+              placeholder="กรอกชื่อผู้ใช้งาน หรือ อีเมล (admin, palad, sarabun ฯลฯ)"
               value={usernameInput}
-              onChange={(e) => setUsernameInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF] focus:outline-none transition-all shadow-2xs"
+              onChange={(e) => {
+                setUsernameInput(e.target.value);
+                setSelectedDemoId(null);
+              }}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF] focus:outline-none transition-all"
             />
           </div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-bold text-slate-700">รหัสผ่าน (Password)</label>
+            <label className="text-xs font-extrabold text-slate-700">
+              รหัสผ่าน (Password)
+            </label>
           </div>
           <div className="relative">
             <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -688,7 +726,7 @@ export function LoginClientForm() {
               placeholder="กรอกรหัสผ่านของท่าน"
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
-              className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs font-mono font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF] focus:outline-none transition-all shadow-2xs"
+              className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs font-mono font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF] focus:outline-none transition-all"
             />
             <button
               type="button"
@@ -703,18 +741,19 @@ export function LoginClientForm() {
         <button
           type="submit"
           disabled={isLoading || (lockoutTimer !== null && lockoutTimer > 0)}
-          className="w-full py-3.5 px-4 rounded-2xl bg-[#0052FF] hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3.5 px-4 rounded-2xl bg-[#0052FF] hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer accessible-focus disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
               <RefreshCw className="w-4 h-4 animate-spin" />
-              <span>กำลังตรวจสอบข้อมูล...</span>
+              <span>กำลังตรวจสอบความถูกต้อง...</span>
             </>
           ) : lockoutTimer !== null && lockoutTimer > 0 ? (
             <>
               <Lock className="w-4 h-4 text-amber-300 animate-pulse" />
               <span>
-                ระงับชั่วคราว (รอ {Math.floor(lockoutTimer / 60)}:{(lockoutTimer % 60).toString().padStart(2, "0")} นาที)
+                ระงับชั่วคราว (รอ {Math.floor(lockoutTimer / 60)}:
+                {(lockoutTimer % 60).toString().padStart(2, "0")} นาที)
               </span>
             </>
           ) : (
@@ -727,7 +766,7 @@ export function LoginClientForm() {
       </form>
 
       {/* Divider */}
-      <div className="relative my-3">
+      <div className="relative my-2">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-slate-200" />
         </div>
@@ -744,7 +783,7 @@ export function LoginClientForm() {
           setThaIdTimer(120);
           setShowThaIdModal(true);
         }}
-        className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#0b192c] via-[#1e3e62] to-[#0052FF] hover:from-[#001f3f] hover:to-[#0041c2] text-white font-bold text-xs shadow-md shadow-blue-900/20 border border-blue-400/30 flex items-center justify-between group transition-all cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+        className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#0b192c] via-[#1e3e62] to-[#0052FF] hover:from-[#001f3f] hover:to-[#0041c2] text-white font-bold text-xs shadow-md shadow-blue-900/20 border border-blue-400/30 flex items-center justify-between group transition-all cursor-pointer accessible-focus"
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-cyan-400/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 group-hover:scale-105 transition-transform">
@@ -763,17 +802,38 @@ export function LoginClientForm() {
           </div>
         </div>
         <div className="flex items-center gap-1 text-cyan-300 text-[11px] font-bold">
-          <QrCode className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+          <QrCode className="w-4 h-4 group-hover:rotate-12 transition-transform" />
           <span className="hidden sm:inline">สแกน QR ↗</span>
         </div>
       </button>
 
-      {/* ThaID Authentication Modal */}
+      {/* Bottom Register Switcher Link */}
+      <div className="pt-2 text-center">
+        {onSwitchToRegister ? (
+          <button
+            type="button"
+            onClick={onSwitchToRegister}
+            className="text-xs text-slate-600 hover:text-[#0052FF] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <span>ยังไม่มีบัญชีบุคลากร?</span>
+            <span className="text-[#0052FF] underline">ลงทะเบียนใหม่ที่นี่ ➔</span>
+          </button>
+        ) : (
+          <a
+            href="/register"
+            className="text-xs text-slate-600 hover:text-[#0052FF] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <span>ยังไม่มีบัญชีบุคลากร?</span>
+            <span className="text-[#0052FF] underline">ลงทะเบียนใหม่ที่นี่ ➔</span>
+          </a>
+        )}
+      </div>
+
+      {/* ThaID Modal */}
       {showThaIdModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 flex flex-col">
-            {/* ThaID Header */}
-            <div className="bg-gradient-to-r from-navy-950 via-slate-900 to-indigo-950 text-white p-5 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300">
                   <Fingerprint className="w-6 h-6" />
@@ -799,7 +859,6 @@ export function LoginClientForm() {
               </button>
             </div>
 
-            {/* ThaID Body */}
             <div className="p-6 space-y-5 text-center">
               {thaIdStep === "qr" && (
                 <div className="space-y-4">
@@ -812,24 +871,19 @@ export function LoginClientForm() {
                     </p>
                   </div>
 
-                  {/* Visual QR Code with Scan Radar Animation */}
-                  <div className="relative w-52 h-52 mx-auto bg-white p-3 rounded-2xl border-2 border-slate-200 shadow-md flex items-center justify-center overflow-hidden">
-                    {/* Animated Scanning Bar */}
+                  {/* QR Box */}
+                  <div className="relative w-48 h-48 mx-auto bg-white p-3 rounded-2xl border-2 border-slate-200 shadow-md flex items-center justify-center overflow-hidden">
                     <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-lg shadow-cyan-400/50 animate-pulse top-1/2 -translate-y-1/2" />
-
                     <svg viewBox="0 0 100 100" className="w-full h-full text-slate-900" fill="currentColor">
                       <rect x="0" y="0" width="30" height="30" rx="3" />
                       <rect x="5" y="5" width="20" height="20" fill="white" />
                       <rect x="10" y="10" width="10" height="10" />
-
                       <rect x="70" y="0" width="30" height="30" rx="3" />
                       <rect x="75" y="5" width="20" height="20" fill="white" />
                       <rect x="80" y="10" width="10" height="10" />
-
                       <rect x="0" y="70" width="30" height="30" rx="3" />
                       <rect x="5" y="75" width="20" height="20" fill="white" />
                       <rect x="10" y="80" width="10" height="10" />
-
                       <rect x="40" y="10" width="8" height="8" />
                       <rect x="52" y="10" width="8" height="8" />
                       <rect x="40" y="25" width="8" height="8" />
@@ -844,31 +898,27 @@ export function LoginClientForm() {
                       <rect x="70" y="85" width="10" height="10" />
                       <rect x="85" y="85" width="10" height="10" />
                     </svg>
-
-                    {/* ThaID Center Emblem */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-10 h-10 rounded-xl bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-blue-900 font-black text-xs">
+                      <div className="w-9 h-9 rounded-xl bg-white shadow border border-slate-200 flex items-center justify-center text-blue-900 font-black text-xs">
                         ThaID
                       </div>
                     </div>
                   </div>
 
-                  {/* Countdown Timer */}
                   <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 font-mono">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                     <span>
-                      QR Code หมดอายุใน {Math.floor(thaIdTimer / 60)}:{(thaIdTimer % 60).toString().padStart(2, "0")} นาที
+                      QR Code หมดอายุใน {Math.floor(thaIdTimer / 60)}:
+                      {(thaIdTimer % 60).toString().padStart(2, "0")} นาที
                     </span>
                   </div>
 
                   {/* 1-Click Simulation / Testing Panel */}
                   <div className="pt-2 border-t border-slate-200 space-y-2 text-left">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        จำลองการสแกนด้วยแอป ThaID (1-Click Test):
-                      </span>
-                    </div>
+                    <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      จำลองการสแกนด้วยแอป ThaID (1-Click Test):
+                    </span>
 
                     <div className="space-y-1.5">
                       <button
@@ -878,7 +928,7 @@ export function LoginClientForm() {
                       >
                         <div className="flex items-center gap-2">
                           <UserCheck className="w-4 h-4 text-amber-600" />
-                          <span>นายก อบต.ดอยงาม (นายสำอางค์ ธรรมโก)</span>
+                          <span>นายก อบต.ดอยงาม</span>
                         </div>
                         <span className="text-[10px] text-amber-700 bg-amber-200/80 px-2 py-0.5 rounded-full font-mono">
                           ผู้บริหาร
@@ -892,7 +942,7 @@ export function LoginClientForm() {
                       >
                         <div className="flex items-center gap-2">
                           <Briefcase className="w-4 h-4 text-indigo-600" />
-                          <span>ปลัด อบต.ดอยงาม (จ่าเอก สมเกียรติ พินิจอักษร)</span>
+                          <span>ปลัด อบต.ดอยงาม</span>
                         </div>
                         <span className="text-[10px] text-indigo-700 bg-indigo-200/80 px-2 py-0.5 rounded-full font-mono">
                           ปลัด
@@ -906,7 +956,7 @@ export function LoginClientForm() {
                       >
                         <div className="flex items-center gap-2">
                           <FileText className="w-4 h-4 text-emerald-600" />
-                          <span>เจ้าหน้าที่สารบรรณกลาง (นางสาวธัญวรรัตน์ ตาสาย)</span>
+                          <span>เจ้าหน้าที่สารบรรณกลาง</span>
                         </div>
                         <span className="text-[10px] text-emerald-700 bg-emerald-200/80 px-2 py-0.5 rounded-full font-mono">
                           สารบรรณ
@@ -919,41 +969,32 @@ export function LoginClientForm() {
 
               {thaIdStep === "authenticating" && (
                 <div className="py-12 space-y-4 animate-in fade-in">
-                  <div className="w-16 h-16 mx-auto rounded-3xl bg-blue-100 text-blue-600 flex items-center justify-center animate-spin">
-                    <RefreshCw className="w-8 h-8" />
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center animate-spin">
+                    <RefreshCw className="w-7 h-7" />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-base font-black text-slate-900">
+                    <h4 className="text-sm font-black text-slate-900">
                       กำลังเชื่อมต่อกับระบบ DOPA OpenID Connect...
                     </h4>
                     <p className="text-xs text-slate-500">
-                      กำลังตรวจสอบความถูกต้องของกุญแจดิจิทัลและหนังสือรับรองอัตลักษณ์
+                      กำลังตรวจสอบความถูกต้องของกุญแจดิจิทัล
                     </p>
-                  </div>
-                  <div className="text-[11px] font-mono text-cyan-600 font-bold">
-                    PID HASH: SHA-256: 8a4c1f... VALID
                   </div>
                 </div>
               )}
 
               {thaIdStep === "success" && (
-                <div className="py-10 space-y-4 animate-in zoom-in-95">
-                  <div className="w-16 h-16 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                    <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                <div className="py-8 space-y-3 animate-in zoom-in-95">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-600" />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-base font-black text-slate-900">
+                    <h4 className="text-sm font-black text-slate-900">
                       ยืนยันตัวตนด้วย ThaID สำเร็จแล้ว!
                     </h4>
                     <p className="text-xs text-slate-600">
                       ยินดีต้อนรับ <strong>{thaIdUser?.thaiName || "ผู้ใช้งาน"}</strong>
                     </p>
-                    <p className="text-[11px] text-slate-400">
-                      ตำแหน่ง: {thaIdUser?.user?.position} ({thaIdUser?.user?.department})
-                    </p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
-                    ✓ ออกเซสชันที่มีการรับรองอัตลักษณ์ดิจิทัลภาครัฐเรียบร้อยแล้ว
                   </div>
                 </div>
               )}
