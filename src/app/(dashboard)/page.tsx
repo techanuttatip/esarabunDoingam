@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -22,7 +22,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/components/providers/session-provider";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
-import { getDocumentStats, getAllDocuments, StoredDocument } from "@/lib/document-store";
+import { getDocumentStats, getAllDocuments, syncCloudDocuments, StoredDocument } from "@/lib/document-store";
 import { formatThaiDate } from "@/lib/formatters/thai-date";
 
 export default function DashboardPage() {
@@ -53,6 +53,11 @@ export default function DashboardPage() {
       setStats(getDocumentStats());
     };
     refreshData();
+
+    // Auto sync latest documents from Supabase Cloud on mount
+    syncCloudDocuments().then(() => {
+      refreshData();
+    });
 
     window.addEventListener("smartsarabun_documents_updated", refreshData);
     return () => {

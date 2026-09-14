@@ -1,5 +1,7 @@
 import { DocumentData } from "@/components/documents/document-viewer-workspace";
 import { savePdfToIndexedDB } from "@/lib/pdf-storage";
+import { cloudDocumentService } from "@/lib/supabase/document-service";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export interface StoredTimelineItem {
   action: string;
@@ -37,6 +39,26 @@ export function getAllDocuments(): StoredDocument[] {
     console.error("Failed to load documents:", err);
     return [];
   }
+}
+
+// Seamless Cloud Synchronizer (Option B)
+export async function syncCloudDocuments(): Promise<StoredDocument[]> {
+  if (typeof window === "undefined" || !isSupabaseConfigured()) {
+    return getAllDocuments();
+  }
+
+  try {
+    const cloudDocs = await cloudDocumentService.getAll();
+    if (cloudDocs && cloudDocs.length > 0) {
+      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(cloudDocs));
+      window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
+      return cloudDocs;
+    }
+  } catch (err) {
+    console.warn("Cloud sync deferred:", err);
+  }
+
+  return getAllDocuments();
 }
 
 export function getIncomingDocuments(): StoredDocument[] {
@@ -127,6 +149,12 @@ export function saveDocument(doc: Partial<StoredDocument>): StoredDocument {
     }
 
     window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
+
+    // Sync with Supabase Cloud in background
+    if (isSupabaseConfigured()) {
+      cloudDocumentService.upsert(newDoc).catch(() => {});
+    }
+
     return newDoc;
   } catch (err) {
     console.error("Failed to save document:", err);
@@ -161,6 +189,12 @@ export function updateDocument(id: string, updates: Partial<StoredDocument>): St
     }
 
     window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
+
+    // Sync with Supabase Cloud in background
+    if (isSupabaseConfigured()) {
+      cloudDocumentService.upsert(updated).catch(() => {});
+    }
+
     return updated;
   } catch (err) {
     console.error("Failed to update document:", err);
@@ -175,6 +209,12 @@ export function deleteDocument(id: string): boolean {
     const filtered = docs.filter((d) => d.id !== id);
     localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(filtered));
     window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
+
+    // Sync deletion with Supabase Cloud in background
+    if (isSupabaseConfigured()) {
+      cloudDocumentService.delete(id).catch(() => {});
+    }
+
     return true;
   } catch (err) {
     console.error("Failed to delete document:", err);
