@@ -62,22 +62,56 @@ import {
   saveTenantSaaSConfig,
   TenantSaaSConfig,
   calculateDaysRemaining,
+  getAllTenants,
+  setActiveTenant,
+  getActiveTenantId,
+  provisionNewTenant,
+  deleteTenant,
+  exportTenantSovereignData,
 } from "@/config/tenant-config";
+import { getRawAllDocuments } from "@/lib/document-store";
 
 export default function PlatformAdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<"tenants" | "saas_config">("tenants");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Live Tenant SaaS Configuration State
+  // Live Multi-Tenant SaaS Directory State
+  const [tenantsList, setTenantsList] = useState<TenantSaaSConfig[]>([]);
+  const [activeTenantId, setActiveTenantIdState] = useState<string>("");
   const [saasConfig, setSaasConfig] = useState<TenantSaaSConfig>(getTenantSaaSConfig());
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  // Provision New Tenant Modal State
+  const [isProvisionModalOpen, setIsProvisionModalOpen] = useState(false);
+  const [provisionForm, setProvisionForm] = useState({
+    name: "",
+    code: "",
+    docPrefix: "",
+    contactEmail: "",
+    contactPhone: "",
+    address: "",
+    licenseTier: "TRIAL_30_DAYS" as TenantSaaSConfig["licenseTier"],
+    maxUsers: 50,
+    maxStorageMb: 20480,
+  });
 
   // Live Real Counts from System Storage
   const [actualUserCount, setActualUserCount] = useState<number>(1);
   const [actualDocCount, setActualDocCount] = useState<number>(0);
 
-  useEffect(() => {
+  const refreshDirectory = () => {
+    setTenantsList(getAllTenants());
+    setActiveTenantIdState(getActiveTenantId());
     setSaasConfig(getTenantSaaSConfig());
+  };
+
+  useEffect(() => {
+    refreshDirectory();
+
+    const handleDirUpdate = () => refreshDirectory();
+    window.addEventListener("tenant_directory_updated", handleDirUpdate);
+    window.addEventListener("tenant_config_updated", handleDirUpdate);
+    window.addEventListener("tenant_switched", handleDirUpdate);
 
     if (typeof window !== "undefined") {
       try {
@@ -99,13 +133,86 @@ export default function PlatformAdminDashboardPage() {
         console.error("Error reading system counts:", e);
       }
     }
+
+    return () => {
+      window.removeEventListener("tenant_directory_updated", handleDirUpdate);
+      window.removeEventListener("tenant_config_updated", handleDirUpdate);
+      window.removeEventListener("tenant_switched", handleDirUpdate);
+    };
   }, []);
 
   const handleSaveSaaSConfig = (updated: TenantSaaSConfig) => {
     setSaasConfig(updated);
     saveTenantSaaSConfig(updated);
-    setSaveSuccessMsg("บันทึกการตั้งค่าและบังคับใช้กับระบบของ อบต.ดอยงาม สำเร็จเรียบร้อย!");
+    refreshDirectory();
+    setSaveSuccessMsg(`บันทึกการตั้งค่าและบังคับใช้กับระบบของ ${updated.name} สำเร็จเรียบร้อย!`);
     setTimeout(() => setSaveSuccessMsg(null), 4000);
+  };
+
+  const handleSwitchTenant = (tenantId: string) => {
+    setActiveTenant(tenantId);
+    setActiveTenantIdState(tenantId);
+    const target = tenantsList.find((t) => t.id === tenantId) || getTenantSaaSConfig();
+    setSaasConfig(target);
+    setSaveSuccessMsg(`⚡ สลับเข้าสู่ "${target.name}" เรียบร้อยแล้ว! แผงควบคุมและระบบสารบรรณจะเชื่อมโยงกับ อปท. นี้`);
+    setTimeout(() => setSaveSuccessMsg(null), 4000);
+  };
+
+  const handleOpenConfigureTenant = (tenant: TenantSaaSConfig) => {
+    setSaasConfig(tenant);
+    setActiveTab("saas_config");
+  };
+
+  const handleDeleteTenant = (tenant: TenantSaaSConfig) => {
+    if (confirm(`ยืนยันการลบองค์กร "${tenant.name}" ออกจากระบบ SaaS หรือไม่? ข้อมูลการตั้งค่าจะถูกลบถาวร`)) {
+      deleteTenant(tenant.id);
+      refreshDirectory();
+      setSaveSuccessMsg(`ลบองค์กร "${tenant.name}" เรียบร้อยแล้ว`);
+      setTimeout(() => setSaveSuccessMsg(null), 4000);
+    }
+  };
+
+  const handleExportTenant = (tenant: TenantSaaSConfig) => {
+    const rawDocs = getRawAllDocuments().filter((d) => (d.tenantId || "e4a2d8a0-4a8a-4c22-9f33-000000000001") === tenant.id);
+    exportTenantSovereignData(tenant.id, rawDocs);
+    setSaveSuccessMsg(`📦 ดาวน์โหลดชุดข้อมูลส่งมอบราชการ (Sovereign Archive) ของ "${tenant.name}" สำเร็จ! (${rawDocs.length} ฉบับ)`);
+    setTimeout(() => setSaveSuccessMsg(null), 4000);
+  };
+
+  const handleCreateNewTenantSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!provisionForm.name || !provisionForm.code || !provisionForm.docPrefix) {
+      alert("กรุณากรอกชื่อองค์กร, รหัสย่อ และรหัสหมวดหนังสือให้ครบถ้วน");
+      return;
+    }
+
+    const created = provisionNewTenant({
+      name: provisionForm.name,
+      code: provisionForm.code,
+      docPrefix: provisionForm.docPrefix,
+      contactEmail: provisionForm.contactEmail || `saraban.${provisionForm.code.toLowerCase()}@gmail.com`,
+      contactPhone: provisionForm.contactPhone,
+      address: provisionForm.address,
+      licenseTier: provisionForm.licenseTier,
+      maxUsers: Number(provisionForm.maxUsers) || 50,
+      maxStorageMb: Number(provisionForm.maxStorageMb) || 20480,
+    });
+
+    setIsProvisionModalOpen(false);
+    refreshDirectory();
+    setProvisionForm({
+      name: "",
+      code: "",
+      docPrefix: "",
+      contactEmail: "",
+      contactPhone: "",
+      address: "",
+      licenseTier: "TRIAL_30_DAYS",
+      maxUsers: 50,
+      maxStorageMb: 20480,
+    });
+    setSaveSuccessMsg(`🎉 เปิดใช้งาน Tenant ใหม่ "${created.name}" [${created.code}] เรียบร้อยแล้ว! พร้อมโควต้าทดลองใช้ 30 วัน`);
+    setTimeout(() => setSaveSuccessMsg(null), 5000);
   };
 
   const handleAddTrialDays = (days: number) => {
@@ -644,104 +751,336 @@ export default function PlatformAdminDashboardPage() {
           </div>
         )}
 
-        {/* TAB 1: TENANTS DIRECTORY (CARD VIEW - CLEAN & REAL DATA) */}
+        {/* TAB 1: TENANTS DIRECTORY (CARD VIEW - CLEAN & REAL MULTI-TENANT DATA) */}
         {activeTab === "tenants" && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-black text-slate-900">ทะเบียน อปท. & หน่วยงานผู้ใช้งานจริง (Tenant Directory)</h3>
-                <p className="text-xs text-slate-500 mt-0.5">รายชื่อองค์กรปกครองส่วนท้องถิ่นที่เปิดใช้งานระบบ SmartSarabun</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-black text-slate-900">ทะเบียน อปท. & หน่วยงานผู้ใช้งานจริง (Tenant Directory)</h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-100 text-[#0052FF]">
+                    {tenantsList.length} หน่วยงาน
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  รายชื่อองค์กรปกครองส่วนท้องถิ่นที่เปิดใช้งานระบบ SmartSarabun (สลับเข้าใช้งาน, ปรับแต่งสิทธิ์ หรือสำรองข้อมูลราชการ)
+                </p>
               </div>
+
+              <Button
+                onClick={() => setIsProvisionModalOpen(true)}
+                className="bg-gradient-to-r from-[#0052FF] to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs rounded-2xl h-10 px-4 gap-2 shadow-md shadow-blue-500/20 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ เพิ่ม อปท. / เทศบาลใหม่</span>
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Doi Ngam Tenant Card */}
-              <div className="glass-card rounded-3xl p-6 bg-white/90 backdrop-blur-xl border border-slate-200 shadow-md hover:shadow-xl hover:border-blue-400 transition-all space-y-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 p-2 flex items-center justify-center shrink-0 shadow-sm">
-                      <Building2 className="w-8 h-8 text-[#0052FF]" />
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-base sm:text-lg text-slate-900">{saasConfig.name}</h4>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs font-mono font-bold bg-blue-50 text-[#0052FF] px-2.5 py-0.5 rounded-md border border-blue-200">
-                          {saasConfig.code}
-                        </span>
-                        <span className="text-xs text-slate-500">• {saasConfig.docPrefix || "ชร ๕๒๐๐๑/ว"}</span>
+              {tenantsList
+                .filter(
+                  (t) =>
+                    !searchQuery ||
+                    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    t.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    t.contactEmail.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((tenant) => {
+                  const isActiveTenant = tenant.id === activeTenantId;
+                  const daysRemaining = calculateDaysRemaining(tenant.trialExpiresAt);
+
+                  return (
+                    <div
+                      key={tenant.id}
+                      className={`glass-card rounded-3xl p-6 bg-white/90 backdrop-blur-xl border transition-all space-y-5 relative overflow-hidden ${
+                        isActiveTenant
+                          ? "border-[#0052FF] shadow-lg shadow-blue-500/10 ring-2 ring-blue-500/20"
+                          : "border-slate-200 shadow-md hover:shadow-xl hover:border-blue-300"
+                      }`}
+                    >
+                      {isActiveTenant && (
+                        <div className="absolute top-0 right-0 bg-[#0052FF] text-white text-[10px] font-black px-3 py-1 rounded-bl-xl shadow-xs flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          <span>อปท. ที่ใช้งานอยู่ในระบบหลัก</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-start justify-between gap-3 pt-1">
+                        <div className="flex items-center gap-3.5">
+                          <div className={`w-14 h-14 rounded-2xl border p-2 flex items-center justify-center shrink-0 shadow-sm ${
+                            isActiveTenant ? "bg-blue-100/70 border-blue-300 text-[#0052FF]" : "bg-slate-50 border-slate-200 text-slate-700"
+                          }`}>
+                            <Building2 className="w-8 h-8" />
+                          </div>
+                          <div>
+                            <h4 className="font-extrabold text-base sm:text-lg text-slate-900 flex items-center gap-2">
+                              <span>{tenant.name}</span>
+                            </h4>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs font-mono font-bold bg-blue-50 text-[#0052FF] px-2.5 py-0.5 rounded-md border border-blue-200">
+                                {tenant.code}
+                              </span>
+                              <span className="text-xs text-slate-500">• {tenant.docPrefix}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {!isActiveTenant && (
+                          tenant.licenseStatus === "ACTIVE" ? (
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                              🟢 ACTIVE
+                            </span>
+                          ) : tenant.licenseStatus === "SUSPENDED" ? (
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
+                              🔴 LOCKED
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                              ⏳ TRIAL
+                            </span>
+                          )
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100 text-xs">
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                          <span className="text-[10px] text-slate-400 block font-medium">โควต้าผู้ใช้</span>
+                          <span className="font-bold text-slate-900 font-mono">{tenant.maxUsers} Users</span>
+                        </div>
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                          <span className="text-[10px] text-slate-400 block font-medium">โควต้าพื้นที่</span>
+                          <span className="font-bold text-slate-900 font-mono">{(tenant.maxStorageMb / 1024).toFixed(0)} GB</span>
+                        </div>
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                          <span className="text-[10px] text-slate-400 block font-medium">แพ็กเกจสัญญา</span>
+                          <span className="font-bold text-blue-700 font-mono text-[11px] truncate block">
+                            {tenant.licenseTier}
+                          </span>
+                        </div>
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                          <span className="text-[10px] text-slate-400 block font-medium">วันคงเหลือ</span>
+                          <span className="font-bold text-amber-600 font-mono">
+                            {tenant.licenseStatus === "ACTIVE" ? "ตลอดสัญญา" : `${daysRemaining} วัน`}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+                        <div className="text-xs text-slate-500 truncate max-w-[200px]">
+                          <span>ติดต่อ: </span>
+                          <strong className="text-blue-700 font-mono">{tenant.contactEmail}</strong>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          {/* 1. Switch Active Tenant Button */}
+                          {!isActiveTenant ? (
+                            <Button
+                              size="sm"
+                              onClick={() => handleSwitchTenant(tenant.id)}
+                              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs rounded-xl h-8 px-3 gap-1 shadow-sm cursor-pointer"
+                              title="สลับหน้าจอระบบสารบรรณให้แสดงข้อมูลของ อปท. นี้"
+                            >
+                              <Zap className="w-3.5 h-3.5" />
+                              <span>สลับเข้าใช้งาน</span>
+                            </Button>
+                          ) : (
+                            <a
+                              href="/"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-50 text-[#0052FF] hover:bg-blue-100 border border-blue-200 text-xs font-bold transition-colors"
+                            >
+                              <span>ไปที่ระบบงาน ➔</span>
+                            </a>
+                          )}
+
+                          {/* 2. Configure License & Identity */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenConfigureTenant(tenant)}
+                            className="text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-xs rounded-xl h-8 px-2.5 gap-1 cursor-pointer"
+                            title="ปรับแต่ง License, อัตลักษณ์ และโมดูล"
+                          >
+                            <Sliders className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">ตั้งค่า</span>
+                          </Button>
+
+                          {/* 3. Export Sovereign Archive */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleExportTenant(tenant)}
+                            className="text-slate-700 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 text-xs rounded-xl h-8 px-2.5 gap-1 cursor-pointer"
+                            title="ดาวน์โหลดชุดข้อมูลส่งมอบราชการ (Sovereign Archive)"
+                          >
+                            <HardDrive className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="hidden sm:inline">สำรองข้อมูล</span>
+                          </Button>
+
+                          {/* 4. Delete Tenant (Only non-default) */}
+                          {tenant.id !== "e4a2d8a0-4a8a-4c22-9f33-000000000001" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteTenant(tenant)}
+                              className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs rounded-xl h-8 px-2 cursor-pointer"
+                              title="ลบหน่วยงานนี้"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  );
+                })}
 
-                  {saasConfig.licenseStatus === "ACTIVE" ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
-                      🟢 ACTIVE (สัญญาทางการ)
-                    </span>
-                  ) : saasConfig.licenseStatus === "SUSPENDED" ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
-                      🔴 LOCKED (ระงับชั่วคราว)
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
-                      ⏳ TRIAL 30 DAYS
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100 text-xs">
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
-                    <span className="text-[10px] text-slate-400 block font-medium">ผู้ใช้งานจริงในระบบ</span>
-                    <span className="font-bold text-slate-900 font-mono">{actualUserCount} / {saasConfig.maxUsers} Users</span>
-                  </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
-                    <span className="text-[10px] text-slate-400 block font-medium">เอกสารในระบบ</span>
-                    <span className="font-bold text-slate-900 font-mono">{actualDocCount} ฉบับ</span>
-                  </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
-                    <span className="text-[10px] text-slate-400 block font-medium">วันทดลองคงเหลือ</span>
-                    <span className="font-bold text-amber-600 font-mono">{calculateDaysRemaining(saasConfig.trialExpiresAt)} วัน</span>
-                  </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
-                    <span className="text-[10px] text-slate-400 block font-medium">เลขที่สัญญา</span>
-                    <span className="font-bold text-slate-800 font-mono text-[11px] truncate block">
-                      {saasConfig.contractNo || "DG-SaaS-2569/001"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                  <div className="text-xs text-slate-500">
-                    <span>ผู้ประสานงาน/อีเมล: </span>
-                    <strong className="text-blue-700 font-mono">{saasConfig.contactEmail || "admin.doigam@gmail.com"}</strong>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => setActiveTab("saas_config")}
-                    className="bg-gradient-to-r from-[#0052FF] to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs rounded-xl h-9 px-4 gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer"
-                  >
-                    <Sliders className="w-3.5 h-3.5" />
-                    <span>⚙️ เข้าไปจัดการข้อมูล (Manage Tenant)</span>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Add New Tenant Card */}
+              {/* Add New Tenant Card Trigger */}
               <div
-                onClick={() => {
-                  alert("ระบบรองรับการเปิด Sub-tenant ใหม่สำหรับ อปท. อื่นๆ กรุณาติดต่อทีมวิศวกร");
-                }}
-                className="rounded-3xl p-8 border-2 border-dashed border-slate-300 bg-white/50 hover:bg-white hover:border-blue-400 transition-all flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs group"
+                onClick={() => setIsProvisionModalOpen(true)}
+                className="rounded-3xl p-8 border-2 border-dashed border-slate-300 bg-white/50 hover:bg-white hover:border-blue-400 transition-all flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs group min-h-[220px]"
               >
                 <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-[#0052FF] flex items-center justify-center transition-colors mb-3">
                   <Plus className="w-7 h-7" />
                 </div>
                 <h4 className="font-bold text-base text-slate-900 group-hover:text-[#0052FF]">
-                  + เพิ่ม อปท. / เทศบาลใหม่ (Add New Tenant)
+                  + เพิ่ม อปท. / เทศบาลใหม่ (Provision New Tenant)
                 </h4>
                 <p className="text-xs text-slate-500 max-w-xs mt-1">
-                  สร้าง Sub-domain, ฐานข้อมูล และโควต้า 30-Day Trial ให้กับ อบต. หรือเทศบาลแห่งใหม่
+                  สร้าง Sub-domain, อัตลักษณ์เฉพาะตัว และโควต้า 30-Day Trial ให้กับ อบต. หรือเทศบาลแห่งใหม่
                 </p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 4. PROVISION NEW TENANT MODAL */}
+        {isProvisionModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0052FF] flex items-center justify-center">
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-900 text-base">เปิดใช้งาน อปท. / เทศบาลใหม่ (New Tenant)</h3>
+                    <p className="text-[11px] text-slate-500">สร้าง Tenant ประจำหน่วยงานบนแพลตฟอร์มคลาวด์</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsProvisionModalOpen(false)}
+                  className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateNewTenantSubmit} className="space-y-3.5 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">ชื่อองค์กรปกครองส่วนท้องถิ่น (อปท.) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="เช่น เทศบาลตำบลแม่สรวย หรือ องค์การบริหารส่วนตำบลป่าอ้อดอนชัย"
+                    value={provisionForm.name}
+                    onChange={(e) => setProvisionForm({ ...provisionForm, name: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">รหัสหน่วยงาน (Tenant Code) *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="เช่น MAESUAI-TES"
+                      value={provisionForm.code}
+                      onChange={(e) => setProvisionForm({ ...provisionForm, code: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 font-mono uppercase text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">รหัสหมวดหนังสือ (Prefix) *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="เช่น ชร ๕๘๐๐๑"
+                      value={provisionForm.docPrefix}
+                      onChange={(e) => setProvisionForm({ ...provisionForm, docPrefix: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-blue-700 focus:ring-2 focus:ring-[#0052FF]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">อีเมลทางการ (Contact Email)</label>
+                    <input
+                      type="email"
+                      placeholder="saraban.local@gmail.com"
+                      value={provisionForm.contactEmail}
+                      onChange={(e) => setProvisionForm({ ...provisionForm, contactEmail: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 focus:ring-2 focus:ring-[#0052FF]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">แพ็กเกจสัญญาเริ่มต้น</label>
+                    <select
+                      value={provisionForm.licenseTier}
+                      onChange={(e) => setProvisionForm({ ...provisionForm, licenseTier: e.target.value as any })}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 text-slate-900 font-bold focus:ring-2 focus:ring-[#0052FF] bg-white"
+                    >
+                      <option value="TRIAL_30_DAYS">⏳ ทดลองใช้ ๓๐ วัน (Trial)</option>
+                      <option value="STARTER">📦 STARTER (อปท. ขนาดเล็ก 30 ที่นั่ง)</option>
+                      <option value="PROFESSIONAL">💼 PROFESSIONAL (เทศบาลตำบล 80 ที่นั่ง)</option>
+                      <option value="ENTERPRISE">🏢 ENTERPRISE (เทศบาลเมือง/อบจ. 150+ ที่นั่ง)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">โควต้าผู้ใช้งานสูงสุด (Users)</label>
+                    <input
+                      type="number"
+                      value={provisionForm.maxUsers}
+                      onChange={(e) => setProvisionForm({ ...provisionForm, maxUsers: Number(e.target.value) })}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">โควต้าพื้นที่ (MB)</label>
+                    <input
+                      type="number"
+                      value={provisionForm.maxStorageMb}
+                      onChange={(e) => setProvisionForm({ ...provisionForm, maxStorageMb: Number(e.target.value) })}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 font-mono text-slate-900"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsProvisionModalOpen(false)}
+                    className="rounded-xl h-10 px-4 text-slate-600 cursor-pointer"
+                  >
+                    ยกเลิก
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-gradient-to-r from-[#0052FF] to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl h-10 px-5 gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>สร้างและเปิดใช้งาน Tenant ทันที</span>
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>
         )}

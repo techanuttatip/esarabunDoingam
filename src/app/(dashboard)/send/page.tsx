@@ -28,10 +28,12 @@ import {
   Clock,
   SendHorizontal,
   FileCheck,
+  Zap,
 } from "lucide-react";
 
 import { getActiveDepartments, DepartmentOption } from "@/lib/departments";
-import { getOutgoingDocuments, saveDocument, updateDocument } from "@/lib/document-store";
+import { getOutgoingDocuments, saveDocument, updateDocument, dispatchCrossTenantDocument } from "@/lib/document-store";
+import { getAllTenants, getActiveTenantId, TenantSaaSConfig } from "@/config/tenant-config";
 import { useEffect } from "react";
 
 export type SpeedLevel = "ปกติ" | "ด่วน" | "ด่วนมาก" | "ด่วนที่สุด";
@@ -121,6 +123,18 @@ export default function SendPage() {
   const [showSendModal, setShowSendModal] = useState(false);
   const [dispatchChannel, setDispatchChannel] = useState("ระบบสารบรรณอิเล็กทรอนิกส์ (E-Saraban)");
   const [trackingNo, setTrackingNo] = useState("");
+  const [otherTenants, setOtherTenants] = useState<TenantSaaSConfig[]>([]);
+  const [targetTenantId, setTargetTenantId] = useState<string>("");
+  const [dispatchSuccessToast, setDispatchSuccessToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    const activeId = getActiveTenantId();
+    const others = getAllTenants().filter((t) => t.id !== activeId);
+    setOtherTenants(others);
+    if (others.length > 0) {
+      setTargetTenantId(others[0].id);
+    }
+  }, []);
 
   // Cancel Modal State
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -268,34 +282,53 @@ export default function SendPage() {
     e.preventDefault();
     if (!selectedDoc) return;
 
+    let crossTenantTargetName = "";
+    if (dispatchChannel.includes("E-Saraban") && targetTenantId) {
+      const targetT = otherTenants.find((t) => t.id === targetTenantId);
+      if (targetT) {
+        crossTenantTargetName = targetT.name;
+        dispatchCrossTenantDocument(selectedDoc as any, targetTenantId, trackingNo);
+      }
+    }
+
+    const noteText = crossTenantTargetName
+      ? `จัดส่งตรงผ่านเครือข่ายสารบรรณ SaaS ไปยัง "${crossTenantTargetName}" ${trackingNo ? `(อ้างอิง: ${trackingNo})` : ""}`
+      : `จัดส่งผ่าน: ${dispatchChannel} ${trackingNo ? `(เลขติดตาม: ${trackingNo})` : ""}`;
+
     const updated = {
       ...selectedDoc,
       status: "sent" as OutgoingStatus,
-      dispatchChannel,
+      dispatchChannel: crossTenantTargetName ? `SaaS Inter-Agency Network (➔ ${crossTenantTargetName})` : dispatchChannel,
       trackingNo,
-      dispatchDate: "28 ส.ค. 2569",
+      dispatchDate: new Date().toLocaleDateString("th-TH"),
       timeline: [
         ...selectedDoc.timeline,
         {
           action: "จัดส่งหนังสือเรียบร้อย",
-          time: "เมื่อสักครู่",
+          time: new Date().toLocaleDateString("th-TH") + " " + new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.",
           actor: "เจ้าหน้าที่งานสารบรรณ",
-          note: `จัดส่งผ่าน: ${dispatchChannel} ${trackingNo ? `(เลขติดตาม: ${trackingNo})` : ""}`,
+          note: noteText,
         },
       ],
     };
 
     updateDocument(selectedDoc.id, {
       status: "sent",
-      dispatchChannel,
+      dispatchChannel: updated.dispatchChannel,
       trackingNo,
-      dispatchDate: "28 ส.ค. 2569",
+      dispatchDate: updated.dispatchDate,
       timeline: updated.timeline,
     });
 
     setDocuments((prev) => prev.map((d) => (d.id === selectedDoc.id ? updated : d)));
     setSelectedDoc(updated);
     setShowSendModal(false);
+
+    const toastMsg = crossTenantTargetName
+      ? `🎉 จัดส่งหนังสือตรงเข้ากล่องหนังสือเข้า (Inbox) ของ "${crossTenantTargetName}" สำเร็จเรียบร้อยแล้วแบบ Real-time!`
+      : `บันทึกการจัดส่งหนังสือ ${selectedDoc.docNo} สำเร็จเรียบร้อยแล้ว`;
+    setDispatchSuccessToast(toastMsg);
+    setTimeout(() => setDispatchSuccessToast(null), 6000);
   };
 
   const handleArchive = (doc: OutgoingDocItem) => {
@@ -399,6 +432,26 @@ export default function SendPage() {
           </Button>
         </div>
       </div>
+
+      {dispatchSuccessToast && (
+        <div className="p-4 rounded-2xl bg-emerald-600 text-white flex items-center justify-between shadow-xl shadow-emerald-600/25 border border-emerald-500 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-6 h-6 shrink-0" />
+            <div>
+              <p className="font-bold text-sm">{dispatchSuccessToast}</p>
+              <p className="text-xs text-emerald-100">
+                ระบบได้เชื่อมต่อและอัปเดตข้อมูลบนเครือข่ายสารบรรณคลาวด์เรียบร้อยแล้ว
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setDispatchSuccessToast(null)}
+            className="p-1.5 hover:bg-white/20 rounded-lg text-white cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Data Table Search & Filters */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -928,6 +981,30 @@ export default function SendPage() {
                   <option value="ไปรษณีย์อิเล็กทรอนิกส์ (E-mail)">ไปรษณีย์อิเล็กทรอนิกส์ (E-mail)</option>
                 </select>
               </div>
+
+              {dispatchChannel.includes("E-Saraban") && otherTenants.length > 0 && (
+                <div className="p-3.5 bg-blue-50/90 rounded-2xl border border-blue-200 space-y-2 animate-in fade-in">
+                  <div className="flex items-center gap-1.5 text-blue-950 font-bold">
+                    <Zap className="w-4 h-4 text-blue-600" />
+                    <span>ส่งตรงผ่านเครือข่าย SaaS ถึง อปท. ปลายทาง:</span>
+                  </div>
+                  <select
+                    value={targetTenantId}
+                    onChange={(e) => setTargetTenantId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-blue-300 font-bold bg-white text-slate-900 shadow-2xs"
+                  >
+                    {otherTenants.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        🏛️ {t.name} ({t.code})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-blue-800 leading-relaxed font-medium">
+                    ⚡ หนังสือจะถูกส่งเข้ากล่อง &quot;หนังสือเข้า (Inbox)&quot; ของ{" "}
+                    <strong>{otherTenants.find((t) => t.id === targetTenantId)?.name}</strong> อัตโนมัติ พร้อมตรวจรับทางอิเล็กทรอนิกส์
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="font-bold text-slate-700 block mb-1">เลขพัสดุ / หมายเหตุติดตาม :</label>

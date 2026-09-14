@@ -24,8 +24,13 @@ export function AppSidebar() {
 
   useEffect(() => {
     const update = () => setTenantConfig(getTenantSaaSConfig());
+    update();
     window.addEventListener("tenant_config_updated", update);
-    return () => window.removeEventListener("tenant_config_updated", update);
+    window.addEventListener("tenant_switched", update);
+    return () => {
+      window.removeEventListener("tenant_config_updated", update);
+      window.removeEventListener("tenant_switched", update);
+    };
   }, []);
 
   const userRoles = session?.user?.roles || [];
@@ -147,7 +152,7 @@ export function AppSidebar() {
                 SMART SARABUN
               </span>
               <p className="text-[10px] text-blue-600 font-bold truncate">
-                อบต.ดอยงาม (เชียงราย)
+                {tenantConfig.name}
               </p>
             </div>
           </div>

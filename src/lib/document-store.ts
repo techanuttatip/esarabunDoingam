@@ -2,6 +2,7 @@ import { DocumentData } from "@/components/documents/document-viewer-workspace";
 import { savePdfToIndexedDB } from "@/lib/pdf-storage";
 import { cloudDocumentService } from "@/lib/supabase/document-service";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { getActiveTenantId, getTenantById, defaultTenantConfig } from "@/config/tenant-config";
 
 export interface StoredTimelineItem {
   action: string;
@@ -12,6 +13,7 @@ export interface StoredTimelineItem {
 
 export interface StoredDocument extends Omit<DocumentData, "docType"> {
   docType: any;
+  tenantId?: string;
   direction?: "incoming" | "outgoing";
   status?: string;
   senderDept?: string;
@@ -29,16 +31,38 @@ export interface StoredDocument extends Omit<DocumentData, "docType"> {
 
 const DOCS_STORAGE_KEY = "smartsarabun_all_documents";
 
-export function getAllDocuments(): StoredDocument[] {
+export function getRawAllDocuments(): StoredDocument[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(DOCS_STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw);
+    const all = JSON.parse(raw);
+    return Array.isArray(all) ? all : [];
   } catch (err) {
-    console.error("Failed to load documents:", err);
+    console.error("Failed to load raw documents:", err);
     return [];
   }
+}
+
+export function saveRawAllDocuments(docs: StoredDocument[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(docs));
+  } catch (quotaErr) {
+    console.warn("LocalStorage quota warning: stripping heavy base64 to save metadata", quotaErr);
+    const lightList = docs.map((d) => ({
+      ...d,
+      pdfBase64: undefined,
+    }));
+    localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(lightList));
+  }
+}
+
+export function getAllDocuments(filterByActiveTenant: boolean = true): StoredDocument[] {
+  const all = getRawAllDocuments();
+  if (!filterByActiveTenant) return all;
+  const activeTenantId = getActiveTenantId();
+  return all.filter((d) => (d.tenantId || defaultTenantConfig.id) === activeTenantId);
 }
 
 // Seamless Cloud Synchronizer (Option B)
@@ -77,11 +101,13 @@ export function getDocumentById(id: string): StoredDocument | null {
 export function saveDocument(doc: Partial<StoredDocument>): StoredDocument {
   if (typeof window === "undefined") return doc as StoredDocument;
   try {
-    const docs = getAllDocuments();
+    const docs = getRawAllDocuments();
     const id = doc.id || `doc-${Date.now()}`;
     const now = new Date().toISOString();
+    const activeTenantId = getActiveTenantId();
     const newDoc: StoredDocument = {
       id,
+      tenantId: doc.tenantId || activeTenantId,
       docNo: doc.docNo || "เลขที่รอดำเนินการ",
       regNo: doc.regNo,
       regDate: doc.regDate,
@@ -136,18 +162,7 @@ export function saveDocument(doc: Partial<StoredDocument>): StoredDocument {
       updatedList = [newDoc, ...docs];
     }
 
-    try {
-      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(updatedList));
-    } catch (quotaErr) {
-      console.warn("LocalStorage quota warning: stripping heavy base64 to save metadata", quotaErr);
-      // Quota Protection: strip pdfBase64 from older records to save storage space
-      const lightList = updatedList.map((d) => ({
-        ...d,
-        pdfBase64: d.id === id ? d.pdfBase64?.substring(0, 100) : undefined,
-      }));
-      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(lightList));
-    }
-
+    saveRawAllDocuments(updatedList);
     window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
 
     // Sync with Supabase Cloud in background
@@ -165,7 +180,7 @@ export function saveDocument(doc: Partial<StoredDocument>): StoredDocument {
 export function updateDocument(id: string, updates: Partial<StoredDocument>): StoredDocument | null {
   if (typeof window === "undefined" || !id) return null;
   try {
-    const docs = getAllDocuments();
+    const docs = getRawAllDocuments();
     const idx = docs.findIndex((d) => d.id === id);
     if (idx < 0) return null;
 
@@ -180,14 +195,7 @@ export function updateDocument(id: string, updates: Partial<StoredDocument>): St
     };
     docs[idx] = updated;
 
-    try {
-      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(docs));
-    } catch (quotaErr) {
-      console.warn("LocalStorage quota exceeded on update, saving metadata safely", quotaErr);
-      const lightDocs = docs.map((d) => ({ ...d, pdfBase64: undefined }));
-      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(lightDocs));
-    }
-
+    saveRawAllDocuments(docs);
     window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
 
     // Sync with Supabase Cloud in background
@@ -205,9 +213,9 @@ export function updateDocument(id: string, updates: Partial<StoredDocument>): St
 export function deleteDocument(id: string): boolean {
   if (typeof window === "undefined" || !id) return false;
   try {
-    const docs = getAllDocuments();
+    const docs = getRawAllDocuments();
     const filtered = docs.filter((d) => d.id !== id);
-    localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(filtered));
+    saveRawAllDocuments(filtered);
     window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
 
     // Sync deletion with Supabase Cloud in background
@@ -220,6 +228,54 @@ export function deleteDocument(id: string): boolean {
     console.error("Failed to delete document:", err);
     return false;
   }
+}
+
+// Cross-Tenant Inter-Agency Document Dispatcher
+export function dispatchCrossTenantDocument(
+  sourceDoc: StoredDocument,
+  targetTenantId: string,
+  dispatchNote?: string
+): StoredDocument | null {
+  if (typeof window === "undefined") return null;
+  const targetTenant = getTenantById(targetTenantId);
+  const senderTenant = getTenantById(sourceDoc.tenantId || getActiveTenantId()) || defaultTenantConfig;
+  if (!targetTenant) return null;
+
+  const now = new Date();
+  const regTime = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.";
+  const regDate = now.toLocaleDateString("th-TH");
+  
+  // Calculate next incoming registry number for target tenant
+  const targetDocs = getRawAllDocuments().filter((d) => (d.tenantId || defaultTenantConfig.id) === targetTenantId);
+  const nextRegNo = `${targetDocs.length + 101}/${now.getFullYear() + 543}`;
+
+  const incomingDoc: StoredDocument = {
+    ...sourceDoc,
+    id: `doc-in-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    tenantId: targetTenantId,
+    direction: "incoming",
+    status: "registered",
+    from: senderTenant.name,
+    to: targetTenant.name,
+    regNo: nextRegNo,
+    regDate: regDate,
+    regTime: regTime,
+    timeline: [
+      {
+        action: "รับหนังสืออิเล็กทรอนิกส์ข้าม อปท. (SaaS Inter-Agency Network)",
+        time: `${regDate} ${regTime}`,
+        actor: `เครือข่ายสารบรรณกลางดิจิทัล (${senderTenant.code} ➔ ${targetTenant.code})`,
+        note: dispatchNote || `รับส่งตรงผ่านคลาวด์สารบรรณภาครัฐ จาก ${senderTenant.name} เลขที่หนังสือ ${sourceDoc.docNo}`,
+      },
+    ],
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+  };
+
+  const raw = getRawAllDocuments();
+  saveRawAllDocuments([incomingDoc, ...raw]);
+  window.dispatchEvent(new CustomEvent("smartsarabun_documents_updated"));
+  return incomingDoc;
 }
 
 export function getDocumentStats() {

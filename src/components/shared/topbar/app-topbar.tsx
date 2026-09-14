@@ -19,10 +19,18 @@ import {
   FileText,
   PenTool,
   Settings,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession, signOut } from "@/components/providers/session-provider";
 import { CommandPalette } from "@/components/shared/command-palette";
+import {
+  getTenantSaaSConfig,
+  getAllTenants,
+  setActiveTenant,
+  TenantSaaSConfig,
+} from "@/config/tenant-config";
+import { useEffect } from "react";
 
 export function AppTopbar() {
   const { data: session } = useSession();
@@ -30,6 +38,25 @@ export function AppTopbar() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isTenantMenuOpen, setIsTenantMenuOpen] = useState(false);
+  const [activeTenant, setActiveTenantState] = useState<TenantSaaSConfig>(getTenantSaaSConfig());
+  const [allTenants, setAllTenants] = useState<TenantSaaSConfig[]>([]);
+
+  useEffect(() => {
+    const update = () => {
+      setActiveTenantState(getTenantSaaSConfig());
+      setAllTenants(getAllTenants());
+    };
+    update();
+    window.addEventListener("tenant_config_updated", update);
+    window.addEventListener("tenant_directory_updated", update);
+    window.addEventListener("tenant_switched", update);
+    return () => {
+      window.removeEventListener("tenant_config_updated", update);
+      window.removeEventListener("tenant_directory_updated", update);
+      window.removeEventListener("tenant_switched", update);
+    };
+  }, []);
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
@@ -82,6 +109,61 @@ export function AppTopbar() {
               <span>K</span>
             </div>
           </button>
+        </div>
+
+        {/* Center: Active Tenant Indicator & Quick Switcher */}
+        <div className="relative hidden md:block">
+          <button
+            onClick={() => setIsTenantMenuOpen(!isTenantMenuOpen)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-xs font-bold text-slate-700 hover:text-[#0052FF] transition-all cursor-pointer shadow-2xs"
+            title="คลิกเพื่อสลับสังกัด อปท. (Multi-Tenant Switcher)"
+          >
+            <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="font-bold truncate max-w-[180px]">
+              {activeTenant.name}
+            </span>
+            <span className="font-mono text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">
+              {activeTenant.code}
+            </span>
+            <ChevronDown className="w-3 h-3 opacity-70" />
+          </button>
+
+          {isTenantMenuOpen && (
+            <div className="absolute left-0 mt-2 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200 p-2 z-50 animate-in fade-in zoom-in-95 select-none">
+              <div className="px-2.5 py-1.5 border-b border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                <span>สลับสังกัด อปท. (SaaS Multi-Tenant):</span>
+                <a href="/platform-admin" className="text-blue-600 hover:underline font-bold text-[10px]">
+                  ศูนย์ควบคุม ➔
+                </a>
+              </div>
+              <div className="space-y-1 mt-1 max-h-60 overflow-y-auto">
+                {allTenants.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      setActiveTenant(t.id);
+                      setIsTenantMenuOpen(false);
+                    }}
+                    className={`w-full text-left p-2 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                      t.id === activeTenant.id
+                        ? "bg-blue-600 text-white font-bold"
+                        : "hover:bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-bold">{t.name}</p>
+                      <p className={`text-[10px] truncate ${t.id === activeTenant.id ? "text-blue-100" : "text-slate-400"}`}>
+                        {t.docPrefix} • {t.licenseTier}
+                      </p>
+                    </div>
+                    {t.id === activeTenant.id && (
+                      <CheckCircle2 className="w-4 h-4 text-white shrink-0 ml-2" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right: Quick Actions & Notifications & Profile */}
