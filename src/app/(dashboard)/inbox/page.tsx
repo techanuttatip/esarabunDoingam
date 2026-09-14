@@ -2,23 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Inbox,
   Search,
-  Filter,
-  FileText,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  Download,
-  Eye,
-  Plus,
-  Stamp,
   BookOpen,
-  ArrowDownToLine,
-  FileSpreadsheet,
+  Plus,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { getIncomingDocuments, StoredDocument } from "@/lib/document-store";
@@ -58,36 +48,33 @@ export default function InboxPage() {
     return true;
   });
 
-
-
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="กล่องหนังสือเข้า (Incoming Registry Inbox)"
-          description="ทะเบียนรับหนังสือราชการภายนอก และงานที่ส่งต่อเข้าสู่ส่วนราชการ อบต.ดอยงาม"
-        />
+      <PageHeader
+        title="กล่องหนังสือเข้า (Incoming Registry Inbox)"
+        description="ทะเบียนรับหนังสือราชการภายนอก และงานที่ส่งต่อเข้าสู่ส่วนราชการ อบต.ดอยงาม"
+        action={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button asChild variant="outline" className="text-xs font-extrabold rounded-xl h-10 px-4 gap-1.5 border-slate-300 text-slate-700 hover:bg-slate-100 shadow-2xs">
+              <Link href="/receive">
+                <BookOpen className="w-4 h-4 text-[#0052FF]" />
+                <span>สมุดทะเบียนรับฉบับเต็ม</span>
+              </Link>
+            </Button>
 
-        <div className="flex items-center gap-2">
-          <Button asChild variant="outline" className="text-xs font-bold rounded-xl h-10 px-4 gap-1.5 border-slate-300">
-            <Link href="/receive">
-              <BookOpen className="w-4 h-4 text-blue-700" />
-              สมุดทะเบียนรับฉบับเต็ม
-            </Link>
-          </Button>
-
-          <Button asChild className="bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-xs">
-            <Link href="/receive">
-              <Plus className="w-4 h-4 text-amber-300" />
-              + ลงรับหนังสือภายนอก
-            </Link>
-          </Button>
-        </div>
-      </div>
+            <Button asChild className="bg-[#0052FF] hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-sm transition-all active:scale-[0.98]">
+              <Link href="/receive">
+                <Plus className="w-4 h-4 text-white" />
+                <span>+ ลงรับหนังสือภายนอก</span>
+              </Link>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-300 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -95,7 +82,7 @@ export default function InboxPage() {
             placeholder="ค้นหาเลขที่, เลขรับ, เรื่อง, หรือหน่วยงานต้นทาง..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-navy-600 focus:outline-none"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0052FF] focus:outline-none"
           />
         </div>
 
@@ -103,7 +90,7 @@ export default function InboxPage() {
           <select
             value={selectedDept}
             onChange={(e) => setSelectedDept(e.target.value)}
-            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
+            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-[#0052FF] focus:outline-none cursor-pointer"
           >
             <option value="ALL">ทุกกอง/สำนัก</option>
             <option value="สำนักปลัด">สำนักปลัด</option>
@@ -116,7 +103,7 @@ export default function InboxPage() {
           <select
             value={selectedSpeed}
             onChange={(e) => setSelectedSpeed(e.target.value)}
-            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
+            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-[#0052FF] focus:outline-none cursor-pointer"
           >
             <option value="ALL">ทุกชั้นความเร็ว</option>
             <option value="ปกติ">ปกติ</option>
@@ -127,29 +114,29 @@ export default function InboxPage() {
         </div>
       </div>
 
-      {/* Inbox Documents Table */}
-      <Card className="shadow-xs border-slate-200 overflow-hidden rounded-2xl">
-        <CardHeader className="bg-slate-100/90 px-6 py-4 border-b border-slate-200 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
-            <Inbox className="w-4.5 h-4.5 text-blue-700" />
-            รายการหนังสือเข้ารอจัดการ ({filteredDocs.length} ฉบับ)
-          </CardTitle>
-          <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200">
-            ปีงบประมาณ 2569
+      {/* Inbox Documents Table Card */}
+      <div className="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden">
+        <div className="bg-slate-100/90 px-6 py-4 border-b border-slate-300 flex flex-row items-center justify-between">
+          <div className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <Inbox className="w-5 h-5 text-[#0052FF]" />
+            <span>รายการหนังสือเข้ารอจัดการ ({filteredDocs.length} ฉบับ)</span>
+          </div>
+          <span className="text-xs font-bold text-slate-600 bg-white px-3 py-1 rounded-full border border-slate-300 shadow-2xs">
+            ปีงบประมาณ ๒๕๖๙
           </span>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-0">
+        <div className="p-0">
           <div className="w-full overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[850px] text-xs">
               <thead>
-                <tr className="bg-slate-50 text-slate-800 font-bold border-b border-slate-200">
-                  <th className="p-2.5 w-[14%]">เลขทะเบียนรับ</th>
-                  <th className="p-2.5 w-[16%]">ที่หนังสือ / ลงวันที่</th>
-                  <th className="p-2.5 w-[38%]">เรื่อง / จากหน่วยงาน</th>
-                  <th className="p-2.5 w-[14%]">กองผู้รับผิดชอบ</th>
-                  <th className="p-2.5 w-[10%]">สถานะ</th>
-                  <th className="p-2.5 text-center w-[8%]">จัดการ</th>
+                <tr className="bg-slate-100 text-slate-800 font-extrabold border-b-2 border-slate-300">
+                  <th className="p-3.5 w-[14%] whitespace-nowrap">เลขทะเบียนรับ</th>
+                  <th className="p-3.5 w-[16%] whitespace-nowrap">ที่หนังสือ / ลงวันที่</th>
+                  <th className="p-3.5 w-[38%] min-w-[260px]">เรื่อง / จากหน่วยงาน</th>
+                  <th className="p-3.5 w-[14%] whitespace-nowrap">กองผู้รับผิดชอบ</th>
+                  <th className="p-3.5 w-[10%] text-center whitespace-nowrap">สถานะ</th>
+                  <th className="p-3.5 text-center w-[8%] whitespace-nowrap">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -161,19 +148,19 @@ export default function InboxPage() {
                         idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"
                       }`}
                     >
-                      <td className="p-2.5 font-extrabold text-slate-900 text-sm">
+                      <td className="p-3.5 font-extrabold text-slate-900 text-sm">
                         {doc.regNo}
                         <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
                           รับเมื่อ: {doc.regDate}
                         </span>
                       </td>
 
-                      <td className="p-2.5">
+                      <td className="p-3.5">
                         <span className="font-mono font-bold text-blue-900 block">{doc.docNo}</span>
                         <span className="text-[11px] text-slate-500">{doc.docDate}</span>
                       </td>
 
-                      <td className="p-2.5">
+                      <td className="p-3.5">
                         <div className="flex items-center gap-2">
                           {doc.speed === "ด่วนที่สุด" && (
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-red-100 text-red-800 border border-red-200 shrink-0">
@@ -190,26 +177,26 @@ export default function InboxPage() {
                         <p className="text-[11px] text-slate-500 mt-1">จาก: {doc.from || (doc as any).fromOrg}</p>
                       </td>
 
-                      <td className="p-2.5">
+                      <td className="p-3.5">
                         <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
                           {doc.targetDept}
                         </span>
                       </td>
 
-                      <td className="p-2.5">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900">
+                      <td className="p-3.5 text-center">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-200">
                           {doc.status || "ลงรับแล้ว"}
                         </span>
                       </td>
 
-                      <td className="p-2.5 text-center">
+                      <td className="p-3.5 text-center">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => setSelectedDocForViewer(doc)}
-                          className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50 cursor-pointer"
+                          className="h-8 px-2.5 text-xs font-bold rounded-xl border-slate-300 text-slate-700 hover:bg-slate-100 cursor-pointer"
                         >
-                          <Eye className="w-3.5 h-3.5 mr-1" />
+                          <Eye className="w-3.5 h-3.5 mr-1 text-[#0052FF]" />
                           เปิดดู
                         </Button>
                       </td>
@@ -227,8 +214,8 @@ export default function InboxPage() {
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Document Viewer Modal */}
       {selectedDocForViewer && (

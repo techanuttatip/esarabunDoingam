@@ -192,13 +192,21 @@
 ========================================================================= */
 
 .bento-card {
-  background: #ffffff;
+  background-color: #ffffff;
   border-radius: 1.25rem;
   border: 1px solid #cbd5e1; /* High-contrast border for budget government monitors */
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
+}
+
+/* Dedicated High-Contrast Deep Navy Hero Command Bar */
+.bento-hero-banner {
+  background: linear-gradient(135deg, #071224 0%, #0c2044 50%, #08152e 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 10px 30px -5px rgba(2, 6, 23, 0.6) !important;
 }
 
 .bento-card-interactive {

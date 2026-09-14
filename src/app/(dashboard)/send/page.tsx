@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Send,
@@ -405,33 +404,32 @@ export default function SendPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="ระบบหนังสือส่ง (Outgoing Document & Dispatch Engine)"
-          description="ร่างหนังสือส่ง ขอจองเลขประจำกอง ตรวจสอบ อนุมัติออกเลข และบันทึกการจัดส่งไปยังหน่วยงานภายนอก"
-        />
+      {/* Page Header */}
+      <PageHeader
+        title="ระบบหนังสือส่ง (Outgoing Document & Dispatch Engine)"
+        description="ร่างหนังสือส่ง ขอจองเลขประจำกอง ตรวจสอบ อนุมัติออกเลข และบันทึกการจัดส่งไปยังหน่วยงานภายนอก"
+        action={
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Link href="/create">
+              <Button
+                variant="outline"
+                className="bg-white border-slate-300 hover:bg-indigo-50 text-slate-800 hover:text-indigo-900 font-extrabold text-xs sm:text-sm rounded-xl h-10 px-3.5 gap-2 shadow-2xs cursor-pointer"
+              >
+                <FilePlus className="w-4 h-4 text-indigo-600" />
+                <span>พิมพ์ร่างหนังสือ (Studio)</span>
+              </Button>
+            </Link>
 
-        <div className="flex items-center gap-2">
-          <Link href="/create">
             <Button
-              variant="outline"
-              className="bg-indigo-50 border-indigo-200 text-indigo-900 hover:bg-indigo-100 font-bold text-xs sm:text-sm rounded-xl h-10 px-3.5 gap-2 shadow-2xs cursor-pointer"
+              onClick={() => setShowCreateModal(true)}
+              className="bg-[#0052FF] hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-sm cursor-pointer transition-all active:scale-[0.98]"
             >
-              <FilePlus className="w-4 h-4 text-purple-600" />
-              พิมพ์ร่างหนังสือ (Studio)
+              <Plus className="w-4 h-4 text-white" />
+              <span>+ ลงทะเบียนส่งใหม่</span>
             </Button>
-          </Link>
-
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-xs cursor-pointer"
-          >
-            <Plus className="w-4 h-4 text-amber-300" />
-            + ลงทะเบียนส่งใหม่
-          </Button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {dispatchSuccessToast && (
         <div className="p-4 rounded-2xl bg-emerald-600 text-white flex items-center justify-between shadow-xl shadow-emerald-600/25 border border-emerald-500 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -454,7 +452,7 @@ export default function SendPage() {
       )}
 
       {/* Data Table Search & Filters */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-300 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -462,7 +460,7 @@ export default function SendPage() {
             placeholder="ค้นหาเลขที่, เรื่อง หรือหน่วยงานปลายทาง..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-navy-600 focus:outline-none"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0052FF] focus:outline-none"
           />
         </div>
 
@@ -470,7 +468,7 @@ export default function SendPage() {
           <select
             value={selectedDept}
             onChange={(e) => setSelectedDept(e.target.value)}
-            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
+            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-[#0052FF] focus:outline-none cursor-pointer"
           >
             <option value="ALL">ทุกสำนัก/กอง</option>
             {availableDepartments.map((d) => (
@@ -483,7 +481,7 @@ export default function SendPage() {
           <select
             value={selectedSpeed}
             onChange={(e) => setSelectedSpeed(e.target.value)}
-            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
+            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-[#0052FF] focus:outline-none cursor-pointer"
           >
             <option value="ALL">ทุกความเร่งด่วน</option>
             <option value="ปกติ">ปกติ</option>
@@ -495,7 +493,7 @@ export default function SendPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
+            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-[#0052FF] focus:outline-none cursor-pointer"
           >
             <option value="ALL">ทุกสถานะหนังสือ</option>
             <option value="draft">ฉบับร่าง</option>
@@ -508,28 +506,28 @@ export default function SendPage() {
         </div>
       </div>
 
-      {/* Outgoing Documents Table */}
-      <Card className="shadow-xs border-slate-200 overflow-hidden rounded-2xl">
-        <CardHeader className="bg-slate-100/90 px-6 py-4 border-b border-slate-200 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
-            <Send className="w-4.5 h-4.5 text-blue-700" />
-            สมุดทะเบียนส่งหนังสือราชการ ({filteredDocs.length} รายการ)
-          </CardTitle>
-          <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200">
-            ปีงบประมาณ 2569
+      {/* Outgoing Documents Table Card */}
+      <div className="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden">
+        <div className="bg-slate-100/90 px-6 py-4 border-b border-slate-300 flex flex-row items-center justify-between">
+          <div className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <Send className="w-5 h-5 text-[#0052FF]" />
+            <span>สมุดทะเบียนส่งหนังสือราชการ ({filteredDocs.length} รายการ)</span>
+          </div>
+          <span className="text-xs font-bold text-slate-600 bg-white px-3 py-1 rounded-full border border-slate-300 shadow-2xs">
+            ปีงบประมาณ ๒๕๖๙
           </span>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-0">
+        <div className="p-0">
           <div className="w-full overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[950px] text-xs">
               <thead>
-                <tr className="bg-slate-50 text-slate-800 font-bold border-b border-slate-200">
-                  <th className="p-3.5 w-[18%]">เลขที่หนังสือส่ง</th>
-                  <th className="p-3.5 w-[36%]">เรื่อง / ถึงหน่วยงาน</th>
-                  <th className="p-3.5 w-[14%]">กองเจ้าของเรื่อง</th>
-                  <th className="p-3.5 w-[12%]">สถานะงาน</th>
-                  <th className="p-3.5 text-center w-[20%]">การจัดการ</th>
+                <tr className="bg-slate-100 text-slate-800 font-extrabold border-b-2 border-slate-300">
+                  <th className="p-3.5 w-[18%] whitespace-nowrap">เลขที่หนังสือส่ง</th>
+                  <th className="p-3.5 w-[36%] min-w-[280px]">เรื่อง / ถึงหน่วยงาน</th>
+                  <th className="p-3.5 w-[14%] whitespace-nowrap">กองเจ้าของเรื่อง</th>
+                  <th className="p-3.5 w-[12%] text-center whitespace-nowrap">สถานะงาน</th>
+                  <th className="p-3.5 text-center w-[20%] whitespace-nowrap">การจัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -547,7 +545,7 @@ export default function SendPage() {
                             ? "text-red-600 line-through"
                             : doc.status === "draft"
                             ? "text-slate-400 font-normal italic"
-                            : "text-navy-950"
+                            : "text-slate-900"
                         }`}
                       >
                         {doc.docNo}
@@ -576,7 +574,7 @@ export default function SendPage() {
                       </span>
                     </td>
 
-                    <td className="p-3.5">{getStatusBadge(doc.status)}</td>
+                    <td className="p-3.5 text-center">{getStatusBadge(doc.status)}</td>
 
                     <td className="p-3.5 text-center">
                       <div className="flex items-center justify-center gap-1.5">
@@ -587,9 +585,9 @@ export default function SendPage() {
                             setSelectedDoc(doc);
                             setShowDetailModal(true);
                           }}
-                          className="h-8 px-2.5 text-xs font-bold rounded-lg border-slate-300 text-blue-700 hover:bg-blue-50"
+                          className="h-8 px-2.5 text-xs font-bold rounded-xl border-slate-300 text-slate-700 hover:bg-slate-100 cursor-pointer"
                         >
-                          <Eye className="w-3.5 h-3.5 mr-1" />
+                          <Eye className="w-3.5 h-3.5 mr-1 text-[#0052FF]" />
                           เปิดดู
                         </Button>
 
@@ -598,7 +596,7 @@ export default function SendPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleReserveNumber(doc)}
-                            className="h-8 px-2 text-xs font-bold rounded-lg border-amber-300 text-amber-800 hover:bg-amber-50"
+                            className="h-8 px-2 text-xs font-bold rounded-xl border-amber-300 text-amber-800 hover:bg-amber-50 cursor-pointer"
                           >
                             <Bookmark className="w-3.5 h-3.5 mr-1" />
                             จองเลข
@@ -609,7 +607,7 @@ export default function SendPage() {
                           <Button
                             size="sm"
                             onClick={() => handleIssueNumber(doc)}
-                            className="h-8 px-2 text-xs font-bold rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white cursor-pointer"
+                            className="h-8 px-2 text-xs font-bold rounded-xl bg-[#0052FF] hover:bg-blue-700 text-white cursor-pointer shadow-xs"
                           >
                             <FileCheck className="w-3.5 h-3.5 mr-1" />
                             ออกเลข
@@ -622,8 +620,8 @@ export default function SendPage() {
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* =========================================================================
           MODAL 1: VIEW OUTGOING DETAIL & WORKFLOW TIMELINE

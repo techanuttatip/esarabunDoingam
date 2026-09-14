@@ -99,33 +99,32 @@ export default function TasksPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <PageHeader
-          title="งานของฉัน (My Work Priority Hub)"
-          description="ศูนย์รวมคิวงานที่ต้องดำเนินการ ฉบับร่างหนังสือราชการ ตรวจพิจารณา เกษียนความเห็น และลงนามตามลำดับความสำคัญ"
-        />
+      <PageHeader
+        title="งานของฉัน (My Work Priority Hub)"
+        description="ศูนย์รวมคิวงานที่ต้องดำเนินการ ฉบับร่างหนังสือราชการ ตรวจพิจารณา เกษียนความเห็น และลงนามตามลำดับความสำคัญ"
+        action={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link href="/create">
+              <Button
+                variant="outline"
+                className="bg-white border-slate-300 text-slate-800 hover:bg-indigo-50 hover:text-indigo-950 font-extrabold text-xs sm:text-sm rounded-xl h-10 px-3.5 gap-2 shadow-2xs cursor-pointer"
+              >
+                <FilePlus className="w-4 h-4 text-indigo-600" />
+                <span>+ สร้างร่างหนังสือใหม่</span>
+              </Button>
+            </Link>
 
-        <div className="flex items-center gap-2">
-          <Link href="/create">
-            <Button
-              variant="outline"
-              className="bg-indigo-50 border-indigo-200 text-indigo-900 hover:bg-indigo-100 font-bold text-xs sm:text-sm rounded-xl h-10 px-3.5 gap-2 shadow-2xs cursor-pointer"
-            >
-              <FilePlus className="w-4 h-4 text-purple-600" />
-              + สร้างร่างหนังสือใหม่
-            </Button>
-          </Link>
-
-          <span className="text-xs font-bold text-slate-500 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-2xs font-mono">
-            คิวงานทั้งหมด: {allTasks.length} รายการ
-          </span>
-        </div>
-      </div>
+            <span className="text-xs font-extrabold text-slate-600 bg-white px-3 py-2 rounded-xl border border-slate-300 shadow-2xs font-mono">
+              คิวงานทั้งหมด: {allTasks.length} รายการ
+            </span>
+          </div>
+        }
+      />
 
       {/* Filter Tabs & Search Bar */}
-      <div className="glass-card rounded-3xl p-4 bg-white/80 border border-white/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="rounded-2xl p-4 bg-white border border-slate-300 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Category Tabs */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl overflow-x-auto text-xs font-bold">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl overflow-x-auto text-xs font-bold border border-slate-200">
           {[
             { id: "all", label: "ทั้งหมด", count: allTasks.length },
             { id: "drafts", label: "ฉบับร่างของฉัน", count: savedDrafts.length },
@@ -139,15 +138,15 @@ export default function TasksPage() {
               onClick={() => setFilterTab(tab.id as any)}
               className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 filterTab === tab.id
-                  ? "bg-white text-[#0052FF] shadow-2xs font-black"
+                  ? "bg-[#0052FF] text-white shadow-xs font-extrabold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
               <span>{tab.label}</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                   filterTab === tab.id
-                    ? "bg-blue-100 text-[#0052FF]"
+                    ? "bg-white/20 text-white"
                     : "bg-slate-200 text-slate-600"
                 }`}
               >
@@ -165,7 +164,7 @@ export default function TasksPage() {
             placeholder="ค้นหาในคิวงาน..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0052FF]"
           />
         </div>
       </div>
@@ -176,10 +175,10 @@ export default function TasksPage() {
           filteredTasks.map((task) => (
             <div
               key={task.id}
-              className={`glass-card rounded-3xl p-5 border shadow-sm hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 group ${
+              className={`rounded-2xl p-5 border shadow-xs hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 group ${
                 task.isDraft
                   ? "bg-purple-50/40 border-purple-200 hover:border-purple-300"
-                  : "bg-white/90 border-white/90 hover:border-blue-300"
+                  : "bg-white border-slate-300 hover:border-blue-400"
               }`}
             >
               <div className="space-y-2 min-w-0 flex-1">

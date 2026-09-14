@@ -317,71 +317,70 @@ export default function NumbersPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="ระบบการออกเลขสารบรรณ (Core Numbering Domain & Concurrency Engine)"
-          description="จัดการสมุดทะเบียนเลขรับ-ส่ง การจองเลขล่วงหน้า การแทรกเลขลูก (/1) และการขีดฆ่ายกเลิกเลข ปลอดภัยด้วย Pessimistic Lock"
-        />
+      <PageHeader
+        title="ระบบการออกเลขสารบรรณ (Core Numbering Domain & Concurrency Engine)"
+        description="จัดการสมุดทะเบียนเลขรับ-ส่ง การจองเลขล่วงหน้า การแทรกเลขลูก (/1) และการขีดฆ่ายกเลิกเลข ปลอดภัยด้วย Pessimistic Lock"
+        action={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              onClick={() => setShowInsertModal(true)}
+              variant="outline"
+              className="text-xs font-extrabold rounded-xl h-10 px-3.5 gap-1.5 border-slate-300 text-slate-700 hover:bg-slate-100 shadow-2xs cursor-pointer"
+            >
+              <CornerDownRight className="w-4 h-4 text-purple-700" />
+              <span>แทรกเลขลูก (/1)</span>
+            </Button>
 
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => setShowInsertModal(true)}
-            variant="outline"
-            className="text-xs font-bold rounded-xl h-10 px-3.5 gap-1.5 border-slate-300"
-          >
-            <CornerDownRight className="w-4 h-4 text-purple-700" />
-            แทรกเลขลูก (/1)
-          </Button>
-
-          <Button
-            onClick={() => setShowReserveModal(true)}
-            className="bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-xs cursor-pointer"
-          >
-            <Bookmark className="w-4 h-4 text-amber-300" />
-            + จองเลขสารบรรณล่วงหน้า
-          </Button>
-        </div>
-      </div>
+            <Button
+              onClick={() => setShowReserveModal(true)}
+              className="bg-[#0052FF] hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-sm cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <Bookmark className="w-4 h-4 text-white" />
+              <span>+ จองเลขสารบรรณล่วงหน้า</span>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-fit overflow-x-auto">
+      <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-300 shadow-xs w-fit overflow-x-auto">
         <button
           onClick={() => setActiveTab("dashboard")}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === "dashboard" ? "bg-white text-navy-950 shadow-xs" : "text-slate-600 hover:text-slate-900"
+            activeTab === "dashboard" ? "bg-[#0052FF] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
           }`}
         >
-          <Layers className="w-4 h-4 text-blue-700" />
+          <Layers className="w-4 h-4" />
           <span>แดชบอร์ดลำดับเลข</span>
         </button>
 
         <button
           onClick={() => setActiveTab("series")}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === "series" ? "bg-white text-navy-950 shadow-xs" : "text-slate-600 hover:text-slate-900"
+            activeTab === "series" ? "bg-[#0052FF] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
           }`}
         >
-          <BookOpen className="w-4 h-4 text-indigo-700" />
+          <BookOpen className="w-4 h-4" />
           <span>สมุดทะเบียนเลข ({seriesList.length} สมุด)</span>
         </button>
 
         <button
           onClick={() => setActiveTab("records")}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === "records" ? "bg-white text-navy-950 shadow-xs" : "text-slate-600 hover:text-slate-900"
+            activeTab === "records" ? "bg-[#0052FF] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
           }`}
         >
-          <Hash className="w-4 h-4 text-emerald-700" />
+          <Hash className="w-4 h-4" />
           <span>รายการเลขในสมุด ({records.length} เลข)</span>
         </button>
 
         <button
           onClick={() => setActiveTab("history")}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-            activeTab === "history" ? "bg-white text-navy-950 shadow-xs" : "text-slate-600 hover:text-slate-900"
+            activeTab === "history" ? "bg-[#0052FF] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
           }`}
         >
-          <History className="w-4 h-4 text-amber-700" />
+          <History className="w-4 h-4" />
           <span>ประวัติและ Audit Trail ({historyList.length})</span>
         </button>
       </div>

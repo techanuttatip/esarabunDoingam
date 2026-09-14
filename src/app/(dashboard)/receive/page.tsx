@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Inbox,
@@ -418,36 +417,35 @@ export default function ReceivePage() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="ระบบทะเบียนหนังสือรับ (Incoming Document Register)"
-          description="บริหารจัดการกระบวนการลงรับหนังสือราชการภายนอก การประทับตรายาง การส่งต่อกอง และการมอบหมายงาน"
-        />
+    <div className="space-y-6 pb-12 font-sans">
+      {/* Page Header */}
+      <PageHeader
+        title="ระบบทะเบียนหนังสือรับ (Incoming Document Register)"
+        description="บริหารจัดการกระบวนการลงรับหนังสือราชการภายนอก การประทับตรายาง การส่งต่อกอง และการมอบหมายงาน สอดคล้องตามระเบียบสารบรรณ"
+        action={
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Button
+              variant="outline"
+              onClick={() => setShowAiAssistantModal(true)}
+              className="bg-purple-50 border border-purple-300 text-purple-900 hover:bg-purple-100 font-extrabold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-2xs cursor-pointer transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-purple-600 fill-purple-200" />
+              <span>AI OCR ผู้ช่วยสแกน</span>
+            </Button>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowAiAssistantModal(true)}
-            className="bg-indigo-50 border-indigo-200 text-indigo-900 hover:bg-indigo-100 font-bold text-xs sm:text-sm rounded-xl h-10 px-3.5 gap-2 shadow-2xs cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-            AI OCR ผู้ช่วยสแกน
-          </Button>
-
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-xs cursor-pointer"
-          >
-            <Plus className="w-4 h-4 text-amber-300" />
-            + ลงรับหนังสือภายนอกใหม่
-          </Button>
-        </div>
-      </div>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-[#0052FF] hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-md cursor-pointer transition-all accessible-focus"
+            >
+              <Plus className="w-4 h-4 text-white" />
+              <span>+ ลงรับหนังสือภายนอกใหม่</span>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Data Table Search & Filters */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-300 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -455,7 +453,7 @@ export default function ReceivePage() {
             placeholder="ค้นหาเลขที่, เลขรับ, เรื่อง หรือหน่วยงานต้นทาง..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-navy-600 focus:outline-none"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0052FF] focus:outline-none transition-all font-medium"
           />
         </div>
 
@@ -463,7 +461,7 @@ export default function ReceivePage() {
           <select
             value={selectedDept}
             onChange={(e) => setSelectedDept(e.target.value)}
-            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
+            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-[#0052FF] focus:outline-none cursor-pointer"
           >
             <option value="ALL">ทุกสำนัก/กอง</option>
             {availableDepartments.map((d) => (
@@ -476,7 +474,7 @@ export default function ReceivePage() {
           <select
             value={selectedSpeed}
             onChange={(e) => setSelectedSpeed(e.target.value)}
-            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
+            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-[#0052FF] focus:outline-none cursor-pointer"
           >
             <option value="ALL">ทุกความเร่งด่วน</option>
             <option value="ปกติ">ปกติ</option>
@@ -488,7 +486,7 @@ export default function ReceivePage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white"
+            className="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-[#0052FF] focus:outline-none cursor-pointer"
           >
             <option value="ALL">ทุกสถานะงาน</option>
             <option value="registered">ลงรับแล้ว</option>
@@ -499,29 +497,29 @@ export default function ReceivePage() {
         </div>
       </div>
 
-      {/* Incoming Documents Table */}
-      <Card className="shadow-xs border-slate-200 overflow-hidden rounded-2xl">
-        <CardHeader className="bg-slate-100/90 px-6 py-4 border-b border-slate-200 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
-            <Inbox className="w-4.5 h-4.5 text-blue-700" />
-            สมุดทะเบียนรับหนังสือราชการ ({filteredDocs.length} รายการ)
-          </CardTitle>
-          <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200">
-            ปีงบประมาณ 2569
+      {/* Incoming Documents Table Card */}
+      <div className="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden">
+        <div className="bg-slate-100/90 px-6 py-4 border-b border-slate-300 flex flex-row items-center justify-between">
+          <div className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <Inbox className="w-5 h-5 text-[#0052FF]" />
+            <span>สมุดทะเบียนรับหนังสือราชการ ({filteredDocs.length} รายการ)</span>
+          </div>
+          <span className="text-xs font-bold text-slate-600 bg-white px-3 py-1 rounded-full border border-slate-300 shadow-2xs">
+            ปีงบประมาณ ๒๕๖๙
           </span>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-0">
+        <div className="p-0">
           <div className="w-full overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[950px] text-xs">
               <thead>
-                <tr className="bg-slate-50 text-slate-800 font-bold border-b border-slate-200">
-                  <th className="p-3.5 w-[14%]">เลขทะเบียนรับ</th>
-                  <th className="p-3.5 w-[16%]">ที่หนังสือ / ลงวันที่</th>
-                  <th className="p-3.5 w-[36%]">เรื่อง / จากหน่วยงาน</th>
-                  <th className="p-3.5 w-[14%]">กองผู้รับผิดชอบ</th>
-                  <th className="p-3.5 w-[10%]">สถานะงาน</th>
-                  <th className="p-3.5 text-center w-[10%]">เปิดดู & สั่งการ</th>
+                <tr className="bg-slate-100 text-slate-800 font-extrabold border-b-2 border-slate-300">
+                  <th className="p-3.5 w-[14%] whitespace-nowrap">เลขทะเบียนรับ</th>
+                  <th className="p-3.5 w-[16%] whitespace-nowrap">ที่หนังสือ / ลงวันที่</th>
+                  <th className="p-3.5 w-[36%] min-w-[280px]">เรื่อง / จากหน่วยงาน</th>
+                  <th className="p-3.5 w-[14%] whitespace-nowrap">กองผู้รับผิดชอบ</th>
+                  <th className="p-3.5 w-[10%] text-center whitespace-nowrap">สถานะงาน</th>
+                  <th className="p-3.5 text-center w-[10%] whitespace-nowrap">เปิดดู & สั่งการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -624,8 +622,8 @@ export default function ReceivePage() {
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* =========================================================================
           MODAL 1: VIEW INCOMING DETAIL & WORKFLOW TIMELINE

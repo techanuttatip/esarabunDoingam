@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   FileText,
@@ -65,30 +64,29 @@ export default function DocumentsPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="ระบบสารบรรณและคลังเอกสารราชการ (Document File & Archive Repository)"
-          description="ศูนย์รวมทะเบียนหนังสือรับ หนังสือส่ง คำสั่ง ประกาศ และแฟ้มคลังเอกสารจัดเก็บตามระเบียบสารบรรณ"
-        />
+      <PageHeader
+        title="ระบบสารบรรณและคลังเอกสารราชการ (Document File & Archive Repository)"
+        description="ศูนย์รวมทะเบียนหนังสือรับ หนังสือส่ง คำสั่ง ประกาศ และแฟ้มคลังเอกสารจัดเก็บตามระเบียบสารบรรณ"
+        action={
+          <div className="flex items-center gap-2">
+            <Link href="/create">
+              <Button variant="outline" className="text-xs sm:text-sm font-extrabold rounded-xl h-10 px-3.5 border-slate-300 text-slate-700 hover:bg-slate-100 shadow-2xs">
+                ร่างหนังสือส่ง (Studio)
+              </Button>
+            </Link>
 
-        <div className="flex items-center gap-2">
-          <Link href="/create">
-            <Button variant="outline" className="text-xs sm:text-sm font-bold rounded-xl h-10 px-3.5 border-slate-300">
-              สร้างร่างหนังสือ
-            </Button>
-          </Link>
-
-          <Link href="/receive">
-            <Button className="bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-xs cursor-pointer">
-              <Plus className="w-4 h-4 text-amber-300" />
-              + ลงรับหนังสือเข้า
-            </Button>
-          </Link>
-        </div>
-      </div>
+            <Link href="/receive">
+              <Button className="bg-[#0052FF] hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-xl h-10 px-4 gap-2 shadow-sm cursor-pointer transition-all active:scale-[0.98]">
+                <Plus className="w-4 h-4 text-white" />
+                <span>+ ลงรับหนังสือเข้า</span>
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       {/* Filter Tabs & Search */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-300 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {[
             { id: "ALL", label: "เอกสารทั้งหมด" },
@@ -103,8 +101,8 @@ export default function DocumentsPage() {
               onClick={() => setActiveType(tab.id)}
               className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
                 activeType === tab.id
-                  ? "bg-navy-900 text-white shadow-xs"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  ? "bg-[#0052FF] text-white shadow-xs"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
               }`}
             >
               {tab.label}
@@ -119,16 +117,16 @@ export default function DocumentsPage() {
             placeholder="ค้นหาเลขที่, เรื่อง หรือชื่อแฟ้ม..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-navy-600 focus:outline-none"
+            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-[#0052FF] focus:outline-none"
           />
         </div>
       </div>
 
-      {/* Catalog Table */}
-      <Card className="rounded-2xl border-slate-200 shadow-xs overflow-hidden">
+      {/* Catalog Table Card */}
+      <div className="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+            <thead className="bg-slate-100 text-slate-800 font-extrabold border-b-2 border-slate-300">
               <tr>
                 <th className="py-2.5 px-3.5">เลขที่หนังสือ / เลขรับ</th>
                 <th className="py-2.5 px-3.5 min-w-[280px]">ชื่อเรื่อง / หมวดหมู่</th>
@@ -236,7 +234,7 @@ export default function DocumentsPage() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
 
       {/* PDF Viewer Modal */}
       {selectedViewerDoc && (

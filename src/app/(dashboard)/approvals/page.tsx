@@ -2,23 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   CheckSquare,
   PenTool,
   Clock,
   CheckCircle2,
-  FileText,
-  Eye,
-  Send,
   Zap,
-  Filter,
   Check,
-  AlertTriangle,
-  UserCheck,
-  RotateCcw,
-  Sparkles,
 } from "lucide-react";
 import { DocumentViewerWorkspace, DocumentData } from "@/components/documents/document-viewer-workspace";
 import { useSession } from "@/components/providers/session-provider";
@@ -124,22 +115,21 @@ export default function ApprovalsPage() {
   return (
     <div className="space-y-5 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <PageHeader
-          title="คิวงานรอการพิจารณา / อนุมัติ (Executive Approvals)"
-          description="รายการหนังสือราชการที่เสนอถึงท่านเพื่อพิจารณากลั่นกรอง เกษียนสั่งการ หรือลงนามอนุมัติ"
-        />
-
-        {selectedIds.length > 0 && (
-          <Button
-            onClick={handleBatchApprove}
-            className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm rounded-xl h-10 px-5 gap-2 shadow-md animate-in zoom-in-95 cursor-pointer"
-          >
-            <Zap className="w-4 h-4 text-amber-300" />
-            อนุมัติรายการที่เลือก ({selectedIds.length} ฉบับ)
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="คิวงานรอการพิจารณา / อนุมัติ (Executive Approvals)"
+        description="รายการหนังสือราชการที่เสนอถึงท่านเพื่อพิจารณากลั่นกรอง เกษียนสั่งการ หรือลงนามอนุมัติ"
+        action={
+          selectedIds.length > 0 ? (
+            <Button
+              onClick={handleBatchApprove}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl h-10 px-5 gap-2 shadow-sm animate-in zoom-in-95 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <Zap className="w-4 h-4 text-amber-300" />
+              <span>อนุมัติรายการที่เลือก ({selectedIds.length} ฉบับ)</span>
+            </Button>
+          ) : undefined
+        }
+      />
 
       {actionSuccessMsg && (
         <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs sm:text-sm font-bold flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2">
@@ -150,80 +140,74 @@ export default function ApprovalsPage() {
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-amber-500 shadow-xs rounded-2xl">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-500">รอท่านพิจารณา</p>
-              <p className="text-2xl font-black text-amber-700 mt-1">
-                {approvalList.length} ฉบับ
-              </p>
-              <span className="text-[10px] text-slate-500 font-medium">เฉลี่ย SLA 24 ชม.</span>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
-              <Clock className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl border border-slate-300 border-l-4 border-l-amber-500 shadow-xs p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-slate-500">รอท่านพิจารณา</p>
+            <p className="text-2xl font-black text-amber-700 mt-1">
+              {approvalList.length} ฉบับ
+            </p>
+            <span className="text-[10px] text-slate-500 font-medium">เฉลี่ย SLA 24 ชม.</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+            <Clock className="w-5 h-5" />
+          </div>
+        </div>
 
-        <Card className="border-l-4 border-l-red-500 shadow-xs rounded-2xl">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-500">หนังสือด่วนที่สุด</p>
-              <p className="text-2xl font-black text-red-600 mt-1">
-                {approvalList.filter((d) => d.speed === "ด่วนที่สุด").length} ฉบับ
-              </p>
-              <span className="text-[10px] text-red-600 font-bold">ต้องดำเนินการทันที</span>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
-              <Zap className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl border border-slate-300 border-l-4 border-l-red-500 shadow-xs p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-slate-500">หนังสือด่วนที่สุด</p>
+            <p className="text-2xl font-black text-red-600 mt-1">
+              {approvalList.filter((d) => d.speed === "ด่วนที่สุด").length} ฉบับ
+            </p>
+            <span className="text-[10px] text-red-600 font-bold">ต้องดำเนินการทันที</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
+            <Zap className="w-5 h-5" />
+          </div>
+        </div>
 
-        <Card className="border-l-4 border-l-emerald-600 shadow-xs rounded-2xl">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-slate-500">อนุมัติแล้วเดือนนี้</p>
-              <p className="text-2xl font-black text-slate-800 mt-1">48 ฉบับ</p>
-              <span className="text-[10px] text-emerald-600 font-bold">เฉลี่ย 2.5 ชม. / ฉบับ</span>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl border border-slate-300 border-l-4 border-l-emerald-600 shadow-xs p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-slate-500">อนุมัติแล้วเดือนนี้</p>
+            <p className="text-2xl font-black text-slate-800 mt-1">48 ฉบับ</p>
+            <span className="text-[10px] text-emerald-600 font-bold">เฉลี่ย 2.5 ชม. / ฉบับ</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+        </div>
       </div>
 
-      {/* Main Approval Table */}
-      <Card className="shadow-xs border-slate-200 overflow-hidden rounded-2xl">
-        <CardHeader className="bg-slate-100/90 px-6 py-4 border-b border-slate-200 flex flex-row items-center justify-between">
-          <CardTitle className="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-            <CheckSquare className="w-4 h-4 text-blue-700" />
-            รายการหนังสือรอการพิจารณา / สั่งการ
-          </CardTitle>
+      {/* Main Approval Table Card */}
+      <div className="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden">
+        <div className="bg-slate-100/90 px-6 py-4 border-b border-slate-300 flex flex-row items-center justify-between">
+          <div className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <CheckSquare className="w-5 h-5 text-[#0052FF]" />
+            <span>รายการหนังสือรอการพิจารณา / สั่งการ ({approvalList.length} รายการ)</span>
+          </div>
           <div className="flex items-center gap-2 text-xs">
             <Button
               size="sm"
               variant="outline"
               onClick={handleSelectAll}
-              className="text-xs rounded-xl h-8 font-bold border-slate-300"
+              className="text-xs rounded-xl h-8 font-extrabold border-slate-300 text-slate-700 hover:bg-white cursor-pointer"
             >
               {selectedIds.length === approvalList.length ? "ยกเลิกการเลือกทั้งหมด" : "เลือกทั้งหมด"}
             </Button>
           </div>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-0">
+        <div className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-slate-800 font-bold border-b border-slate-200 text-xs">
+                <tr className="bg-slate-100 text-slate-800 font-extrabold border-b-2 border-slate-300 text-xs">
                   <th className="p-3.5 w-10 text-center">
                     <input
                       type="checkbox"
                       checked={selectedIds.length > 0 && selectedIds.length === approvalList.length}
                       onChange={handleSelectAll}
-                      className="rounded border-slate-300 text-navy-700 cursor-pointer"
+                      className="rounded border-slate-300 text-[#0052FF] cursor-pointer"
                     />
                   </th>
                   <th className="p-3.5 whitespace-nowrap">ความเร็ว</th>
@@ -250,7 +234,7 @@ export default function ApprovalsPage() {
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => toggleSelect(doc.id)}
-                            className="rounded border-slate-300 text-navy-700 cursor-pointer"
+                            className="rounded border-slate-300 text-[#0052FF] cursor-pointer"
                           />
                         </td>
                         <td className="p-3.5 whitespace-nowrap align-middle">
@@ -266,7 +250,7 @@ export default function ApprovalsPage() {
                             {doc.speed}
                           </span>
                         </td>
-                        <td className="p-3.5 font-bold text-navy-950 whitespace-nowrap align-middle">
+                        <td className="p-3.5 font-mono font-bold text-slate-900 whitespace-nowrap align-middle">
                           {doc.docNo}
                         </td>
                         <td className="p-3.5 font-bold text-slate-900 align-middle">
@@ -277,7 +261,7 @@ export default function ApprovalsPage() {
                           <p className="text-[10px] text-slate-500">{doc.senderDept}</p>
                         </td>
                         <td className="p-3.5 whitespace-nowrap align-middle">
-                          <span className="font-bold text-navy-900 block">{doc.waitingFor}</span>
+                          <span className="font-bold text-slate-900 block">{doc.waitingFor}</span>
                           <span className="text-[10px] text-amber-700 font-semibold">
                             {doc.slaRemaining}
                           </span>
@@ -288,7 +272,7 @@ export default function ApprovalsPage() {
                             <Button
                               size="sm"
                               onClick={() => handleQuickSingleApprove(doc)}
-                              className="h-8 px-2.5 text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold gap-1 rounded-xl shadow-xs cursor-pointer"
+                              className="h-8 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold gap-1 rounded-xl shadow-xs cursor-pointer"
                               title="อนุมัติและประทับตรายางเกษียนด่วน"
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -299,7 +283,7 @@ export default function ApprovalsPage() {
                             <Button
                               size="sm"
                               onClick={() => setSelectedDocForViewer(doc)}
-                              className="h-8 px-3 text-xs bg-navy-900 hover:bg-navy-800 text-white font-bold gap-1 rounded-xl shadow-xs cursor-pointer"
+                              className="h-8 px-3 text-xs bg-[#0052FF] hover:bg-blue-700 text-white font-extrabold gap-1 rounded-xl shadow-xs cursor-pointer"
                             >
                               <PenTool className="w-3.5 h-3.5 text-amber-300" />
                               เปิดตรวจ & เกษียน
@@ -320,8 +304,8 @@ export default function ApprovalsPage() {
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Document Workspace Integration */}
       {selectedDocForViewer && (

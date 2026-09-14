@@ -190,25 +190,25 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       {/* 1. HERO COMMAND BAR (Bento Master Header)                                 */}
       {/* ========================================================================= */}
-      <div className="bento-card p-6 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white shadow-md relative overflow-hidden border border-slate-800">
+      <div className="bento-card bento-hero-banner p-6 text-white shadow-xl relative overflow-hidden">
         {/* Subtle decorative glow */}
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-16 w-64 h-64 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 -mb-16 w-64 h-64 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           {/* Left info */}
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-200 border border-blue-400/30 flex items-center gap-1.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-blue-500/30 text-blue-100 border border-blue-400/40 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 ปีงบประมาณ {fiscalYearBE}
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/10 text-slate-200 border border-white/15">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/15 text-white border border-white/20">
                 {tenantConfig.name}
               </span>
               {isSupabaseConfigured() && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                  <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin text-emerald-400" : ""}`} />
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/25 text-emerald-200 border border-emerald-400/30 flex items-center gap-1">
+                  <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin text-emerald-300" : ""}`} />
                   Cloud Sync พร้อมใช้งาน
                 </span>
               )}
@@ -216,13 +216,13 @@ export default function DashboardPage() {
 
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
               ศูนย์บัญชาการสารบรรณดิจิทัล
-              <span className="text-xs font-normal px-2 py-0.5 rounded bg-blue-600 text-white font-mono">
+              <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-600 text-white font-mono shadow-xs">
                 v2.15
               </span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-slate-300">
-              ยินดีต้อนรับ: <strong className="text-white font-bold">{userName}</strong> ({userPosition}) • {userDept} | ประจำวันที่ <strong>{todayThai}</strong>
+            <p className="text-xs sm:text-sm text-slate-200">
+              ยินดีต้อนรับ: <strong className="text-white font-extrabold">{userName}</strong> ({userPosition}) • {userDept} | ประจำวันที่ <strong>{todayThai}</strong>
             </p>
           </div>
 
@@ -231,7 +231,7 @@ export default function DashboardPage() {
             <Link href="/receive">
               <Button
                 size="sm"
-                className="h-9 px-4 bg-[#0052FF] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 cursor-pointer accessible-focus transition-all"
+                className="h-9 px-4 bg-[#0052FF] hover:bg-blue-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md gap-1.5 cursor-pointer accessible-focus transition-all"
               >
                 <Inbox className="w-4 h-4" />
                 <span>ลงรับหนังสือเข้า</span>
@@ -239,25 +239,23 @@ export default function DashboardPage() {
             </Link>
 
             <Link href="/send">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-9 px-4 bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold text-xs rounded-xl gap-1.5 cursor-pointer accessible-focus transition-all"
+              <button
+                type="button"
+                className="h-9 px-4 bg-white/15 hover:bg-white/25 active:scale-95 text-white border border-white/30 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer accessible-focus transition-all shadow-xs"
               >
-                <Send className="w-4 h-4 text-emerald-400" />
+                <Send className="w-4 h-4 text-emerald-300" />
                 <span>ออกเลขหนังสือส่ง</span>
-              </Button>
+              </button>
             </Link>
 
             <Link href="/cabinet">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-9 px-3.5 bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold text-xs rounded-xl gap-1.5 cursor-pointer accessible-focus transition-all hidden sm:inline-flex"
+              <button
+                type="button"
+                className="h-9 px-3.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white border border-white/30 font-bold text-xs rounded-xl items-center gap-1.5 cursor-pointer accessible-focus transition-all hidden sm:inline-flex shadow-xs"
               >
-                <FolderOpen className="w-4 h-4 text-amber-400" />
+                <FolderOpen className="w-4 h-4 text-amber-300" />
                 <span>ตู้เอกสาร</span>
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
