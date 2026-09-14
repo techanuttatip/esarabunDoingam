@@ -66,6 +66,7 @@ import Link from "next/link";
 // Digital Signature Component (Renders actual signature image from profile or clean Thai signature font)
 function DigitalSignature({ name, signatureUrl, className = "h-8" }: { name: string; signatureUrl?: string; className?: string }) {
   if (signatureUrl) {
+    /* eslint-disable-next-line @next/next/no-img-element */
     return <img src={signatureUrl} alt={`ลายมือชื่อ ${name}`} className={`${className} object-contain`} />;
   }
   return (

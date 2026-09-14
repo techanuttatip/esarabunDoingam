@@ -500,6 +500,7 @@ export default function ProfileAndSignaturePage() {
                       {/* Rendered Signature Area */}
                       <div className="h-16 flex items-center justify-end pr-4">
                         {signatureDataUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
                           <img
                             src={signatureDataUrl}
                             alt="ลายเซ็นดิจิทัล"

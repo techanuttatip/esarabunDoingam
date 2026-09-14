@@ -35,8 +35,8 @@ export default function TrackingPage() {
     const loadDocs = () => {
       const stored = getAllDocuments();
       setAllDocs(stored);
-      if (stored.length > 0 && !selectedDocId) {
-        setSelectedDocId(stored[0].id);
+      if (stored.length > 0) {
+        setSelectedDocId((prev) => prev || stored[0].id);
       }
     };
     loadDocs();
